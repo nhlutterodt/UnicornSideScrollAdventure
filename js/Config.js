@@ -13,6 +13,27 @@ export const Config = {
     // Environment
     GROUND_HEIGHT: 60,
 
+    // Power Ups
+    POWERUP_SPAWN_INTERVAL: 8.0, // Every 8 seconds on average
+    ABILITIES: [
+        {
+            id: 'lasers',
+            name: 'Eye Lasers',
+            icon: '👁️',
+            color: '#ff0000',
+            duration: 60, // 60 seconds
+            uses: null
+        },
+        {
+            id: 'roar',
+            name: 'Explosive Roar',
+            icon: '🦁',
+            color: '#ffa500',
+            duration: 120, // 2 minutes
+            uses: 10 // 10 uses
+        }
+    ],
+
     // Gameplay
     INITIAL_GAME_SPEED: 350,   // Pixels per second
     SPEED_INCREMENT: 20,       // Speed increase per interval

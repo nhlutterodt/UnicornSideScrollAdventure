@@ -16,9 +16,12 @@ export class InputManager {
     }
 
     init() {
-        // Spacebar listener
+        // Keyboard listeners
         const keyHandler = (e) => {
             if (e.code === 'Space') this.triggerAction('jump');
+            if (e.code === 'KeyE') this.triggerAction('useAbility');
+            if (e.code === 'KeyQ') this.triggerAction('cycleLeft');
+            if (e.code === 'KeyR') this.triggerAction('cycleRight');
         };
         
         // Touch/Mouse listener

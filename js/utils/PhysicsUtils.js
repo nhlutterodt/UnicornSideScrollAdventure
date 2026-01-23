@@ -9,6 +9,7 @@ export const CollisionLayers = {
     OBSTACLE: 1 << 1,
     PLATFORM: 1 << 2,
     PARTICLE: 1 << 3,
+    POWERUP: 1 << 4,
     ALL: 0xFFFFFFFF
 };
 

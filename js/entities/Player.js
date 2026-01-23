@@ -15,7 +15,7 @@ export class Player extends Entity {
 
         // Collision Setup
         this.collisionLayer = CollisionLayers.PLAYER;
-        this.collisionMask = CollisionLayers.OBSTACLE | CollisionLayers.PLATFORM;
+        this.collisionMask = CollisionLayers.OBSTACLE | CollisionLayers.PLATFORM | CollisionLayers.POWERUP;
         this.collisionPadding = 10;
 
         // Visual properties from asset pipeline
@@ -23,10 +23,17 @@ export class Player extends Entity {
         this.appearance = AssetPipeline.resolveUnicornColors(this.outfit);
         
         this.onGameOver = null; // Callback for Game class
+
+        // Power-up System
+        this.abilities = [];
+        this.currentAbilityIndex = -1;
     }
 
     update(dt, context) {
         const { config, logicalHeight, platforms } = context;
+        
+        // Update Abilities (Time-based constraints)
+        this.updateAbilities(dt);
         
         const oldY = this.y;
         
@@ -78,6 +85,88 @@ export class Player extends Entity {
                 this.isGrounded = true;
             }
         }
+    }
+
+    // --- Ability System ---
+
+    addAbility(abilityData) {
+        const ability = {
+            ...abilityData,
+            remainingTime: abilityData.duration || (abilityData.duration === 0 ? 0 : null),
+            remainingUses: abilityData.uses || (abilityData.uses === 0 ? 0 : null)
+        };
+        
+        this.abilities.push(ability);
+        
+        // Auto-select first ability if none selected
+        if (this.currentAbilityIndex === -1) {
+            this.currentAbilityIndex = 0;
+        }
+    }
+
+    updateAbilities(dt) {
+        for (let i = this.abilities.length - 1; i >= 0; i--) {
+            const ability = this.abilities[i];
+            
+            // Time-based depletion
+            if (ability.remainingTime !== null) {
+                ability.remainingTime -= dt;
+                if (ability.remainingTime <= 0) {
+                    this.removeAbility(i);
+                    continue;
+                }
+            }
+        }
+    }
+
+    removeAbility(index) {
+        this.abilities.splice(index, 1);
+        
+        // Adjust index
+        if (this.abilities.length === 0) {
+            this.currentAbilityIndex = -1;
+        } else if (this.currentAbilityIndex >= this.abilities.length) {
+            this.currentAbilityIndex = this.abilities.length - 1;
+        } else if (this.currentAbilityIndex === index) {
+            // If we removed the current one, stay on the same index but wrap if needed
+            if (this.currentAbilityIndex >= this.abilities.length) {
+                this.currentAbilityIndex = 0;
+            }
+        }
+    }
+
+    cycleAbility(direction) {
+        if (this.abilities.length <= 1) return;
+        
+        this.currentAbilityIndex += direction;
+        
+        if (this.currentAbilityIndex >= this.abilities.length) {
+            this.currentAbilityIndex = 0;
+        } else if (this.currentAbilityIndex < 0) {
+            this.currentAbilityIndex = this.abilities.length - 1;
+        }
+    }
+
+    useAbility() {
+        if (this.currentAbilityIndex === -1) return;
+        
+        const ability = this.abilities[this.currentAbilityIndex];
+        
+        // Execute ability logic (placeholder for actual effects)
+        console.log(`Executing ability: ${ability.name}`);
+        
+        // Use-based depletion
+        if (ability.remainingUses !== null) {
+            ability.remainingUses--;
+            if (ability.remainingUses <= 0) {
+                this.removeAbility(this.currentAbilityIndex);
+            }
+        }
+    }
+
+    get currentAbility() {
+        if (this.currentAbilityIndex === -1) return null;
+        return this.abilities[this.currentAbilityIndex];
     }
 
     jump(config, onJump) {

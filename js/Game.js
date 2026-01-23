@@ -11,6 +11,7 @@ import { Obstacle } from './entities/Obstacle.js';
 import { Cloud } from './entities/Cloud.js';
 import { Platform } from './entities/Platform.js';
 import { Particle } from './entities/Particle.js';
+import { PowerUp } from './entities/PowerUp.js';
 
 import { Config } from './Config.js';
 import { PhysicsUtils } from './utils/PhysicsUtils.js';
@@ -36,6 +37,7 @@ export class Game {
         this.finalScoreElement = Dom.get('finalScore');
         this.startHighScoreElement = Dom.get('startHighScore');
         this.gameOverHighScoreElement = Dom.get('gameOverHighScore');
+        this.abilityInventoryElement = Dom.get('abilityInventory');
 
         // State & Systems
         this.state = new StateController(this.container, 'START');
@@ -64,6 +66,27 @@ export class Game {
             }
         });
 
+        this.input.on('useAbility', () => {
+            if (this.state.current === 'PLAYING') {
+                this.player.useAbility();
+                this.updateAbilityUI();
+            }
+        });
+
+        this.input.on('cycleLeft', () => {
+            if (this.state.current === 'PLAYING') {
+                this.player.cycleAbility(-1);
+                this.updateAbilityUI();
+            }
+        });
+
+        this.input.on('cycleRight', () => {
+            if (this.state.current === 'PLAYING') {
+                this.player.cycleAbility(1);
+                this.updateAbilityUI();
+            }
+        });
+
         // UI Listeners
         Dom.all('.js-start-btn').forEach(btn => {
             btn.addEventListener('click', () => this.start());
@@ -84,6 +107,7 @@ export class Game {
         this.platformTimer = 0;
         this.cloudTimer = 0;
         this.particleTimer = 0;
+        this.powerUpTimer = 0;
         this.currentSpawnInterval = Config.SPAWN_INTERVAL_START;
 
         // Entities
@@ -223,11 +247,58 @@ export class Game {
             new Cloud(this.logicalWidth + 100, Math.random() * (LOGICAL_HEIGHT - 150));
         }
 
+        this.powerUpTimer += dt;
+        if (this.powerUpTimer > Config.POWERUP_SPAWN_INTERVAL) {
+            this.powerUpTimer = 0;
+            const abilityData = Config.ABILITIES[Math.floor(Math.random() * Config.ABILITIES.length)];
+            const y = 100 + Math.random() * (LOGICAL_HEIGHT - 300);
+            new PowerUp(this.logicalWidth + 100, y, abilityData);
+        }
+
         // 2. Polymorphic Entity Update
         engineRegistry.updateAll(dt, context);
 
-        // 3. Centralized Collision Resolution
+        // 3. Update Ability UI (Optimized: only if abilities exist)
+        if (this.player.abilities.length > 0) {
+            this.updateAbilityUI();
+        } else if (this.abilityInventoryElement && this.abilityInventoryElement.children.length > 0) {
+            this.abilityInventoryElement.innerHTML = '';
+        }
+
+        // 4. Collision Detection
         CollisionSystem.resolve(engineRegistry);
+    }
+
+    updateAbilityUI() {
+        if (!this.abilityInventoryElement) return;
+
+        // Clear existing card
+        this.abilityInventoryElement.innerHTML = '';
+
+        this.player.abilities.forEach((ability, index) => {
+            const card = document.createElement('div');
+            card.className = `ability-card ${index === this.player.currentAbilityIndex ? 'active' : ''}`;
+            
+            const icon = document.createElement('div');
+            icon.className = 'ability-icon';
+            icon.textContent = ability.icon;
+            
+            const info = document.createElement('div');
+            info.className = 'ability-info';
+            
+            let infoText = '';
+            if (ability.remainingTime !== null) {
+                infoText += `${Math.ceil(ability.remainingTime)}s`;
+            }
+            if (ability.remainingUses !== null) {
+                infoText += (infoText ? ' | ' : '') + `${ability.remainingUses} uses`;
+            }
+            info.textContent = infoText;
+            
+            card.appendChild(icon);
+            card.appendChild(info);
+            this.abilityInventoryElement.appendChild(card);
+        });
     }
 
     draw() {

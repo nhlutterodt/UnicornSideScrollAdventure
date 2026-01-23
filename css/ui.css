@@ -87,4 +87,9 @@
     color: #4A148C !important;
     transform: scale(1.05);
 }
+.btn-saved {
+    background: #ffd700 !important; /* Gold */
+    color: #4A148C !important;
+    transform: scale(1.05);
+}
 
