@@ -28,7 +28,8 @@ export const Config = {
             name: 'Sparkle Heart',
             icon: '💖',
             color: '#ff3366',
-            value: 1
+            value: 1,
+            weight: 10
         },
         {
             id: 'invincibility_star',
@@ -36,7 +37,8 @@ export const Config = {
             name: 'Magic Star',
             icon: '⭐',
             color: '#fffb00',
-            duration: 5
+            duration: 5,
+            weight: 5
         },
         {
             id: 'gravity_feather',
@@ -45,7 +47,8 @@ export const Config = {
             icon: '🪶',
             color: '#7afcff',
             duration: 8,
-            modifier: { gravityMultiplier: 0.5 }
+            modifier: { gravityMultiplier: 0.5 },
+            weight: 15
         },
         {
             id: 'heavy_stone',
@@ -54,17 +57,20 @@ export const Config = {
             icon: '🪨',
             color: '#808080',
             duration: 8,
-            modifier: { gravityMultiplier: 1.5, jumpMultiplier: 0.8 }
+            modifier: { gravityMultiplier: 1.5, jumpMultiplier: 0.8 },
+            weight: 5
         },
         {
             id: 'ability_lasers',
             type: 'ability',
-            abilityId: 'lasers'
+            abilityId: 'lasers',
+            weight: 30
         },
         {
             id: 'ability_roar',
             type: 'ability',
-            abilityId: 'roar'
+            abilityId: 'roar',
+            weight: 30
         }
     ],
 

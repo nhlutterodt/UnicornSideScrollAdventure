@@ -3,6 +3,7 @@ import { Config } from '../Config.js';
 import { AssetPipeline } from '../systems/AssetPipeline.js';
 import { CollisionLayers } from '../utils/PhysicsUtils.js';
 import { BeamEffect } from '../systems/EffectSystem.js';
+import { AbilityManager } from '../systems/AbilityManager.js';
 
 /**
  * PLAYER.js
@@ -120,6 +121,12 @@ export class Player extends Entity {
                 this.vy = 0;
                 this.isGrounded = true;
             }
+        }
+
+        if (other.entityType === 'item') {
+            AbilityManager.apply(this, other.itemData, { particles });
+            if (particles) particles.play('PICKUP_BURST', { x: this.x + this.width / 2, y: this.y + this.height / 2 });
+            other.destroy();
         }
     }
 

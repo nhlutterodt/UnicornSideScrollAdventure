@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item System Lab - Unicorn Magic Run</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/abilities.css">
+    <link rel="stylesheet" href="css/lab.css">
+</head>
+<body class="lab-body">
+    <h1 class="lab-title">🧪 Item & Ability System Lab</h1>
+
+    <div class="lab-layout">
+        <section class="lab-viewport">
+            <div class="lab-canvas-wrapper">
+                <canvas id="labCanvas" class="lab-canvas" width="900" height="500"></canvas>
+                
+                <div class="lab-stats-overlay">
+                    <div id="livesStat" class="lab-stat-badge">💖 x1</div>
+                    <div id="physicsStat" class="lab-stat-badge">⚡ Normal Physics</div>
+                    <div id="invincibilityStat" class="lab-stat-badge is-hidden">⭐ Invincible!</div>
+                </div>
+
+                <div id="abilityInventory" class="lab-inventory"></div>
+            </div>
+
+            <div id="eventLog" class="lab-log">
+                <div class="lab-log-entry">System Initialized... Waiting for item interaction.</div>
+            </div>
+        </section>
+
+        <aside class="lab-controls">
+            <div>
+                <h3 class="lab-heading-small">Manual Spawning</h3>
+                <div id="itemSpawnButtons" class="lab-spawn-grid">
+                    <!-- Buttons injected via JS -->
+                </div>
+            </div>
+
+            <hr class="lab-separator">
+
+            <div>
+                <h3 class="lab-heading-small">Level Generation Test</h3>
+                <button id="toggleAutoSpawn" class="lab-btn lab-btn-primary lab-btn-full">
+                    ▶️ Start Wave Generation
+                </button>
+            </div>
+
+            <div>
+                <h3 class="lab-heading-small">Hotkeys</h3>
+                <ul class="lab-hotkeys-list">
+                    <li><b>Space</b>: Use selected ability</li>
+                    <li><b>WASD</b>: Move player (Test collisions)</li>
+                    <li><b>Q/E</b>: Cycle abilities</li>
+                </ul>
+            </div>
+            
+            <a href="index.html" class="lab-btn lab-btn-back">
+                🏠 Back to Game
+            </a>
+        </aside>
+    </div>
+
+    <script type="module" src="js/items-test-main.js"></script>
+</body>
+</html>

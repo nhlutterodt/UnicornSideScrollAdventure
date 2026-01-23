@@ -6,84 +6,28 @@
     <title>Particle System Lab</title>
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/base.css">
-    <style>
-        body {
-            background: #1a1a2e;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .test-container {
-            position: relative;
-            border: 2px solid #4a4e69;
-            border-radius: 8px;
-            background: #16213e;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        canvas {
-            display: block;
-            background: #0f3460;
-        }
-        .controls {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            max-width: 800px;
-            padding: 20px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-        }
-        .btn {
-            background: #e94560;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: transform 0.1s, background 0.2s;
-        }
-        .btn:hover {
-            background: #ff4d6d;
-            transform: translateY(-2px);
-        }
-        .btn:active {
-            transform: translateY(0);
-        }
-        .debug-panel {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            pointer-events: none;
-        }
-    </style>
+    <link rel="stylesheet" href="css/lab.css">
 </head>
-<body>
-    <h1>✨ Particle Engine Laboratory</h1>
+<body class="lab-body">
+    <h1 class="lab-title">✨ Particle Engine Laboratory</h1>
     
-    <div class="test-container">
-        <canvas id="testCanvas" width="800" height="500"></canvas>
-        <div id="debugInfo" class="debug-panel"></div>
+    <div class="test-container lab-canvas-wrapper">
+        <canvas id="testCanvas" class="lab-canvas" width="800" height="500"></canvas>
+        <div id="debugInfo" class="lab-debug-panel"></div>
     </div>
 
-    <div class="controls">
-        <button class="btn" data-effect="TRAIL">Magic Trail</button>
-        <button class="btn" data-effect="LAND_DUST">Land Dust</button>
-        <button class="btn" data-effect="IMPACT_SPARK">Impact Sparks</button>
-        <button class="btn" data-effect="PICKUP_BURST">Pickup Burst</button>
-        <button class="btn" id="toggleDebug">Toggle Debug</button>
-        <button class="btn" id="clearParticles">Clear All</button>
+    <div class="lab-controls lab-mt-20">
+        <div class="lab-spawn-grid">
+            <button class="lab-btn" data-effect="TRAIL">Magic Trail</button>
+            <button class="lab-btn" data-effect="LAND_DUST">Land Dust</button>
+            <button class="lab-btn" data-effect="IMPACT_SPARK">Impact Sparks</button>
+            <button class="lab-btn" data-effect="PICKUP_BURST">Pickup Burst</button>
+            <button class="lab-btn lab-btn-back lab-btn-full" id="toggleDebug">Toggle Debug</button>
+            <button class="lab-btn lab-btn-back lab-btn-full" id="clearParticles">Clear All</button>
+        </div>
     </div>
 
-    <p style="color: #999; margin-top: 10px;">Click anywhere on canvas to trigger 'Impact Sparks'</p>
+    <p class="lab-text-muted lab-mt-10">Click anywhere on canvas to trigger 'Impact Sparks'</p>
 
     <script type="module" src="js/particle-test-main.js"></script>
 </body>

@@ -15,8 +15,17 @@ export class LevelUtils {
     static spawnRandomItem(x, y) {
         if (!Config.ITEMS || Config.ITEMS.length === 0) return null;
 
-        // Simple weighted random if added later, for now just random uniform
-        const itemData = Config.ITEMS[Math.floor(Math.random() * Config.ITEMS.length)];
+        const totalWeight = Config.ITEMS.reduce((sum, item) => sum + (item.weight || 10), 0);
+        let random = Math.random() * totalWeight;
+        
+        let itemData = Config.ITEMS[0];
+        for (const item of Config.ITEMS) {
+            if (random < (item.weight || 10)) {
+                itemData = item;
+                break;
+            }
+            random -= (item.weight || 10);
+        }
         
         // If it's an ability type, we might want to enrich it with ability details
         const enrichedData = { ...itemData };
