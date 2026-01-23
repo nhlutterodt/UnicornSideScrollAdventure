@@ -10,12 +10,13 @@ import { Player } from './entities/Player.js';
 import { Obstacle } from './entities/Obstacle.js';
 import { Cloud } from './entities/Cloud.js';
 import { Platform } from './entities/Platform.js';
-import { Particle } from './entities/Particle.js';
 import { PowerUp } from './entities/PowerUp.js';
 
 import { Config } from './Config.js';
 import { PhysicsUtils } from './utils/PhysicsUtils.js';
 import { CollisionSystem } from './systems/CollisionSystem.js';
+import { ParticleSystem } from './systems/ParticleSystem.js';
+import { EffectSystem } from './systems/EffectSystem.js';
 
 /**
  * GAME.js
@@ -43,6 +44,10 @@ export class Game {
         this.state = new StateController(this.container, 'START');
         this.input = new InputManager(this.canvas);
         this.loop = new GameLoop(this.update.bind(this), this.draw.bind(this));
+        
+        // Effects System (Visual + Audio)
+        this.particles = new ParticleSystem();
+        this.effects = new EffectSystem(this.particles);
 
         // Persistent State
         this.highScore = Storage.load('highScore', 0);
@@ -62,13 +67,16 @@ export class Game {
         // Input handling
         this.input.on('jump', () => {
             if (this.state.current === 'PLAYING') {
-                this.player.jump(Config, (x, y, color) => this.spawnParticles(x, y, color || '#ffffff', 10));
+                this.player.jump(Config, (x, y, color) => {
+                    this.particles.play('LAND_DUST', { x, y, color });
+                });
             }
         });
 
         this.input.on('useAbility', () => {
             if (this.state.current === 'PLAYING') {
-                this.player.useAbility();
+                const context = { registry: engineRegistry, particles: this.particles };
+                this.player.useAbility(this.effects, context);
                 this.updateAbilityUI();
             }
         });
@@ -184,12 +192,6 @@ export class Game {
         }
     }
 
-    spawnParticles(x, y, color, count) {
-        for (let i = 0; i < count; i++) {
-            new Particle(x, y, color, this.gameSpeed);
-        }
-    }
-
     update(dt) {
         if (this.state.current !== 'PLAYING') return;
 
@@ -198,6 +200,8 @@ export class Game {
             logicalHeight: LOGICAL_HEIGHT,
             gameSpeed: this.gameSpeed,
             platforms: engineRegistry.getByType('platform'),
+            registry: engineRegistry,
+            particles: this.particles,
             onObstaclePassed: () => {
                 this.score++;
                 if (this.scoreElement) this.scoreElement.textContent = `Score: ${this.score}`;
@@ -214,7 +218,7 @@ export class Game {
             this.particleTimer = 0;
             const trailColors = this.player.appearance.trail.colors;
             const color = trailColors[Math.floor(Math.random() * trailColors.length)];
-            this.spawnParticles(this.player.x, this.player.y + 25, color, 1);
+            this.particles.play('TRAIL', { x: this.player.x, y: this.player.y + 25, color });
         }
 
         this.obstacleTimer += dt;
@@ -255,7 +259,11 @@ export class Game {
             new PowerUp(this.logicalWidth + 100, y, abilityData);
         }
 
-        // 2. Polymorphic Entity Update
+        // 2. Particle System Update
+        this.particles.update(dt, context);
+        this.effects.update(dt, context);
+
+        // 3. Polymorphic Entity Update
         engineRegistry.updateAll(dt, context);
 
         // 3. Update Ability UI (Optimized: only if abilities exist)
@@ -266,7 +274,7 @@ export class Game {
         }
 
         // 4. Collision Detection
-        CollisionSystem.resolve(engineRegistry);
+        CollisionSystem.resolve(engineRegistry, this.particles);
     }
 
     updateAbilityUI() {
@@ -316,7 +324,8 @@ export class Game {
         this.ctx.fillStyle = '#76c476';
         this.ctx.fillRect(0, LOGICAL_HEIGHT - Config.GROUND_HEIGHT, this.logicalWidth, 5);
 
-        engineRegistry.getByType('particle').forEach(p => p.draw(this.ctx));
+        this.particles.draw(this.ctx);
+        this.effects.draw(this.ctx);
         engineRegistry.getByType('platform').forEach(p => p.draw(this.ctx));
         engineRegistry.getByType('obstacle').forEach(o => o.draw(this.ctx));
         this.player.draw(this.ctx);

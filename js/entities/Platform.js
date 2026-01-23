@@ -34,6 +34,7 @@ export class Platform extends Entity {
     }
 
     draw(ctx) {
+        ctx.save();
         ctx.fillStyle = this.color;
         
         // Draw main platform
@@ -44,6 +45,7 @@ export class Platform extends Entity {
         // Add some shine/detail
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.fillRect(this.x, this.y, this.width, 3);
+        ctx.restore();
     }
 
     get isOffscreen() {

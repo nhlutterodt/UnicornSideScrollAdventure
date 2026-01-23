@@ -21,8 +21,10 @@ export class Cloud extends Entity {
     }
 
     draw(ctx) {
+        ctx.save();
         ctx.font = `${this.size * 60}px serif`;
         ctx.fillText('☁️', this.x, this.y);
+        ctx.restore();
     }
 
     get isOffscreen() {

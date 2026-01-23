@@ -55,4 +55,50 @@ export class PhysicsUtils {
         if (entity.vx) entity.x += entity.vx * dt;
         if (entity.vy) entity.y += entity.vy * dt;
     }
+
+    /**
+     * Checks if a point is inside an AABB.
+     * @param {number} x 
+     * @param {number} y 
+     * @param {Object} aabb - {x, y, width, height}
+     * @returns {boolean}
+     */
+    static testPointVsAABB(x, y, aabb) {
+        return x >= aabb.x &&
+               x <= aabb.x + aabb.width &&
+               y >= aabb.y &&
+               y <= aabb.y + aabb.height;
+    }
+
+    /**
+     * Checks if a line segment intersects an AABB.
+     * Uses a simplified Cohen-Sutherland or Liang-Barsky-ish logic for fast rejection.
+     * @param {number} x1 
+     * @param {number} y1 
+     * @param {number} x2 
+     * @param {number} y2 
+     * @param {Object} aabb 
+     * @returns {boolean}
+     */
+    static testSegmentVsAABB(x1, y1, x2, y2, aabb) {
+        // Simple AABB for the segment itself as a quick rejection
+        const minX = Math.min(x1, x2);
+        const maxX = Math.max(x1, x2);
+        const minY = Math.min(y1, y2);
+        const maxY = Math.max(y1, y2);
+
+        if (maxX < aabb.x || minX > aabb.x + aabb.width ||
+            maxY < aabb.y || minY > aabb.y + aabb.height) {
+            return false;
+        }
+
+        // If either endpoint is inside, we have a collision
+        if (this.testPointVsAABB(x1, y1, aabb) || this.testPointVsAABB(x2, y2, aabb)) {
+            return true;
+        }
+
+        // More robust segment-AABB intersection could go here, 
+        // but for particles, point checks + segment bounds are usually enough.
+        return true; 
+    }
 }

@@ -60,8 +60,9 @@ export class Entity {
     /**
      * Lifecycle hook for collision events.
      * @param {Entity} other 
+     * @param {ParticleSystem} particles 
      */
-    onCollision(other) {
+    onCollision(other, particles) {
         // Override in subclasses
     }
 
@@ -77,6 +78,7 @@ export class Entity {
      * Cleanup for the entity.
      */
     destroy() {
+        this.isDead = true;
         engineRegistry.unregister(this);
     }
 }

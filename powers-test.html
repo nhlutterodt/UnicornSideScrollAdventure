@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abilities Lab - Unicorn Magic Run</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/abilities.css">
+    <style>
+        body {
+            background: #1a1a2e;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .lab-layout {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .canvas-container {
+            flex: 1;
+            background: #16213e;
+            border: 2px solid #4a4e69;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background: #0f3460;
+        }
+        .powers-panel {
+            width: 300px;
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .ability-inventory {
+            position: static;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+        .btn {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #ff4d6d; }
+        .btn-use {
+            background: #00d2ff;
+            text-align: center;
+            justify-content: center;
+        }
+        .hotkeys {
+            margin-top: auto;
+            font-size: 0.8rem;
+            color: #999;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🦄 Abilities & Powers Lab</h1>
+    
+    <div class="lab-layout">
+        <div class="canvas-container">
+            <canvas id="abilityCanvas" width="800" height="500"></canvas>
+            <!-- UI replication -->
+            <div id="abilityInventory" class="ability-inventory" style="position: absolute; top: 10px; right: 10px;"></div>
+        </div>
+
+        <div class="powers-panel">
+            <h3>Grant Abilities</h3>
+            <div id="spawnButtons"></div>
+            
+            <hr style="width: 100%; border-color: #4a4e69;">
+            
+            <h3>Execution</h3>
+            <button class="btn btn-use" id="useCurrent">USE CURRENT (Space)</button>
+            <button class="btn btn-use" style="background:#444" id="clearAll">CLEAR ALL</button>
+
+            <div class="hotkeys">
+                <strong>Hotkeys:</strong><br>
+                [Space] Use Ability<br>
+                [Q/E] Cycle Abilities<br>
+                [W] Jump<br>
+                [1-9] Grant specific power
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/powers-test-main.js"></script>
+</body>
+</html>

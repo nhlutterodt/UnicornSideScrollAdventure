@@ -32,9 +32,11 @@ export class Obstacle extends Entity {
     }
 
     draw(ctx) {
+        ctx.save();
         ctx.font = '40px serif';
         ctx.textBaseline = 'bottom';
         ctx.fillText(this.type, this.x, this.y + this.height);
+        ctx.restore();
     }
 
     get isOffscreen() {

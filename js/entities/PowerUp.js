@@ -82,9 +82,10 @@ export class PowerUp extends Entity {
         ctx.restore();
     }
 
-    onCollision(other) {
+    onCollision(other, particles) {
         if (other.entityType === 'player') {
             other.addAbility({...this.abilityData});
+            if (particles) particles.play('PICKUP_BURST', { x: this.x + this.width / 2, y: this.y + this.height / 2 });
             this.destroy();
         }
 

@@ -1,6 +1,7 @@
 import { Entity } from '../core/Entity.js';
 import { AssetPipeline } from '../systems/AssetPipeline.js';
 import { CollisionLayers } from '../utils/PhysicsUtils.js';
+import { BeamEffect } from '../systems/EffectSystem.js';
 
 /**
  * PLAYER.js
@@ -72,9 +73,12 @@ export class Player extends Entity {
         }
     }
 
-    onCollision(other) {
+    onCollision(other, particles) {
         if (other.entityType === 'obstacle') {
-            if (this.onGameOver) this.onGameOver();
+            if (this.onGameOver) {
+                if (particles) particles.play('IMPACT_SPARK', { x: this.x + this.width, y: this.y + this.height / 2 });
+                this.onGameOver();
+            }
         }
 
         if (other.entityType === 'platform') {
@@ -90,10 +94,21 @@ export class Player extends Entity {
     // --- Ability System ---
 
     addAbility(abilityData) {
+        // Check for existing ability of the same type to avoid "foolish" duplication
+        const existing = this.abilities.find(a => a.id === abilityData.id);
+        
+        if (existing) {
+            // Refresh time or uses on pickup (Standard game behavior)
+            if (abilityData.duration) existing.remainingTime = abilityData.duration;
+            if (abilityData.uses) existing.remainingUses = (existing.remainingUses || 0) + abilityData.uses;
+            return;
+        }
+
         const ability = {
             ...abilityData,
             remainingTime: abilityData.duration || (abilityData.duration === 0 ? 0 : null),
-            remainingUses: abilityData.uses || (abilityData.uses === 0 ? 0 : null)
+            remainingUses: abilityData.uses || (abilityData.uses === 0 ? 0 : null),
+            cooldownTimer: 0
         };
         
         this.abilities.push(ability);
@@ -108,6 +123,11 @@ export class Player extends Entity {
         for (let i = this.abilities.length - 1; i >= 0; i--) {
             const ability = this.abilities[i];
             
+            // Update cooldowns
+            if (ability.cooldownTimer > 0) {
+                ability.cooldownTimer -= dt;
+            }
+
             // Time-based depletion
             if (ability.remainingTime !== null) {
                 ability.remainingTime -= dt;
@@ -147,14 +167,34 @@ export class Player extends Entity {
         }
     }
 
-    useAbility() {
+    useAbility(effectSystem, context) {
         if (this.currentAbilityIndex === -1) return;
         
         const ability = this.abilities[this.currentAbilityIndex];
         
-        // Execute ability logic (placeholder for actual effects)
-        console.log(`Executing ability: ${ability.name}`);
+        // Guard: Check cooldown before execution
+        if (ability.cooldownTimer > 0) return;
+
+        // Execute ability logic using the EffectSystem
+        if (effectSystem) {
+            if (ability.id.startsWith('lasers')) {
+                const color = ability.effectConfig?.color || ability.color || '#ff0000';
+                effectSystem.trigger('LASER', { color });
+                effectSystem.addContinuousEffect(new BeamEffect(this, color, 0.2));
+            } else if (ability.id === 'roar') {
+                const radius = ability.effectConfig?.radius || 300;
+                effectSystem.trigger('ROAR', { 
+                    x: this.x + this.width / 2, 
+                    y: this.y + this.height / 2,
+                    radius: radius,
+                    registry: context?.registry
+                });
+            }
+        }
         
+        // Mark as used for cooldown tracking
+        ability.cooldownTimer = ability.cooldown || 0;
+
         // Use-based depletion
         if (ability.remainingUses !== null) {
             ability.remainingUses--;

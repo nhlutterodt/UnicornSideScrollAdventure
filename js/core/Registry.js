@@ -102,7 +102,23 @@ export class Registry {
     getByType(type) {
         const results = [];
         for (let entity of this.entities.values()) {
-            if (entity.entityType === type) {
+            if (entity.entityType === type && !entity.isDead) {
+                results.push(entity);
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Returns entities that match a bitmask of collision layers.
+     * Useful for building collision candidate lists.
+     * @param {number} layerMask 
+     * @returns {Array}
+     */
+    getEntitiesByLayers(layerMask) {
+        const results = [];
+        for (let entity of this.entities.values()) {
+            if ((entity.collisionLayer & layerMask) !== 0 && !entity.isDead) {
                 results.push(entity);
             }
         }
