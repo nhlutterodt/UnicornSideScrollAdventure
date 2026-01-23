@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item System Lab</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/lab.css">
+</head>
+<body class="lab-body">
+    <h1 class="lab-title">🎁 Item System Laboratory</h1>
+    
+    <div class="lab-layout">
+        <div class="lab-viewport">
+            <div class="lab-canvas-wrapper">
+                <canvas id="itemCanvas" class="lab-canvas" width="800" height="500"></canvas>
+                <!-- UI Layer Simulation -->
+                <div id="uiOverlay" class="lab-ui-overlay">
+                    <div id="livesStat" class="lab-stat-badge">💖 x1</div>
+                    <div id="physicsStat" class="lab-stat-badge lab-status-normal">⚡ Normal Physics</div>
+                    <div id="invincibilityStat" class="lab-stat-badge lab-status-active is-hidden">⭐ INVINCIBLE</div>
+                </div>
+            </div>
+            
+            <div class="lab-text-muted">
+                <p>Use <b>W</b> to jump and catch items. Watch markers for weighted spawn logic.</p>
+            </div>
+        </div>
+
+        <div class="lab-controls">
+            <h3 class="lab-heading-small">Spawning</h3>
+            <div class="lab-spawn-grid">
+                <button class="lab-btn" id="spawnLife">Spawn Heart</button>
+                <button class="lab-btn" id="spawnStar">Spawn Star</button>
+                <button class="lab-btn" id="spawnFeather">Spawn Feather</button>
+                <button class="lab-btn" id="spawnStone">Spawn Stone</button>
+                <button class="lab-btn" id="spawnLaser">Spawn Laser</button>
+                <button class="lab-btn" id="spawnRoar">Spawn Roar</button>
+            </div>
+            
+            <button class="lab-btn lab-btn-primary lab-btn-full" id="spawnRandom">🎲 Spawn Weighted Random</button>
+            
+            <hr class="lab-separator">
+            
+            <h3 class="lab-heading-small">Utility</h3>
+            <button class="lab-btn lab-btn-full" id="clearItems">Clear All Items</button>
+            <button class="lab-btn lab-btn-full" id="resetPlayer">Reset Player State</button>
+            
+            <a href="index.html" class="lab-btn lab-btn-back lab-btn-full">Back to Menu</a>
+        </div>
+    </div>
+
+    <script type="module" src="js/item-lab-main.js"></script>
+</body>
+</html>

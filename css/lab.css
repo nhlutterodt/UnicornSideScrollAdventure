@@ -42,6 +42,26 @@
     box-shadow: var(--shadow-heavy);
 }
 
+.lab-ui-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.lab-stat-badge {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    width: fit-content;
+}
+
 .lab-canvas {
     display: block;
     background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
