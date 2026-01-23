@@ -1,0 +1,20 @@
+:root {
+    /* Colors */
+    --primary-pink: #ff7eb9;
+    --primary-pink-hover: #ff5eab;
+    --secondary-blue: #a1c4fd;
+    --accent-cyan: #7afcff;
+    
+    /* Gradients */
+    --gold-gradient: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+    --sky-gradient: linear-gradient(to bottom, #a1c4fd 0%, #c2e9fb 100%);
+    
+    /* Effects */
+    --shadow-soft: 0 4px 15px rgba(255, 126, 185, 0.4);
+    --shadow-heavy: 0 20px 50px rgba(0, 0, 0, 0.15);
+    --blur-glass: blur(4px);
+    
+    /* Motion */
+    --transition-fast: 0.2s ease;
+    --transition-mid: 0.3s ease;
+}

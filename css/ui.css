@@ -1,0 +1,72 @@
+.overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.4);
+    -webkit-backdrop-filter: var(--blur-glass);
+    backdrop-filter: var(--blur-glass);
+    z-index: 10;
+    transition: opacity var(--transition-mid);
+}
+
+.hidden {
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ui-text {
+    color: #444;
+    text-align: center;
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.ui-subtext {
+    margin-top: 15px;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.btn {
+    margin-top: 20px;
+    padding: 12px 30px;
+    background: var(--primary-pink);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+    transition: transform var(--transition-fast), background var(--transition-fast);
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+    background: var(--primary-pink-hover);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.studio-link {
+    margin-top: 15px;
+    color: #666;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color var(--transition-short, 0.3s);
+}
+
+.studio-link:hover {
+    color: var(--primary-pink);
+    text-decoration: underline;
+}

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unicorn Customization Studio</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/customize.css">
+</head>
+<body>
+
+    <div class="ambient-bg" id="ambientBg"></div>
+
+    <main class="studio-container" id="studioContainer">
+        <!-- Back Button -->
+        <a href="index.html" class="exit-link">&larr; Exit Studio</a>
+
+        <!-- Preview Section -->
+        <section class="preview-section">
+            <h1 class="preview-title">PREVIEW</h1>
+            
+            <div class="unicorn-preview" id="unicornPreview">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <title>Unicorn Preview</title>
+                    <!-- Tail -->
+                    <path class="uv-mane" d="M40,140 Q10,140 10,110 Q10,80 40,90" fill="none" stroke-width="15" stroke-linecap="round" />
+                    <!-- Body -->
+                    <path class="uv-body" d="M50,120 Q50,160 90,160 L140,160 Q180,160 180,120 Q180,80 140,80 L90,80 Q50,80 50,120" />
+                    <!-- Neck/Head -->
+                    <path class="uv-body" d="M140,90 L160,40 Q170,20 190,40 L180,90 Z" />
+                    <!-- Mane -->
+                    <path class="uv-mane" d="M155,45 Q140,20 120,50 Q110,80 140,90" />
+                    <!-- Horn -->
+                    <path class="uv-horn" d="M170,30 L185,0 L180,35 Z" />
+                    <!-- Eye -->
+                    <circle cx="175" cy="50" r="3" fill="#333333" />
+                    <!-- Legs -->
+                    <rect class="uv-body" x="70" y="155" width="12" height="35" rx="4" />
+                    <rect class="uv-body" x="130" y="155" width="12" height="35" rx="4" />
+                    
+                    <!-- Decorative Sparkles -->
+                    <g fill="white" opacity="0.6">
+                        <circle cx="80" cy="100" r="2" />
+                        <circle cx="120" cy="120" r="1.5" />
+                        <circle cx="100" cy="90" r="1" />
+                    </g>
+                </svg>
+                <!-- Dynamic Accessories Container -->
+                <div class="accessory-overlay" id="accessoryOverlay"></div>
+            </div>
+
+            <div class="platform"></div>
+        </section>
+
+        <!-- Controls Section -->
+        <section class="controls-section">
+            <h2 class="controls-header">Customizer</h2>
+
+            <!-- Body Color -->
+            <div class="control-group">
+                <label class="control-label">Coat Color</label>
+                <div class="color-options" id="bodyColors">
+                    <div class="color-dot active body-white" data-name="white"></div>
+                    <div class="color-dot body-pink" data-name="pink"></div>
+                    <div class="color-dot body-blue" data-name="blue"></div>
+                    <div class="color-dot body-peach" data-name="peach"></div>
+                </div>
+            </div>
+
+            <!-- Mane Color -->
+            <div class="control-group">
+                <label class="control-label">Mane & Tail</label>
+                <div class="color-options" id="maneColors">
+                    <div class="color-dot mane-pink" data-name="pink"></div>
+                    <div class="color-dot active mane-gold" data-name="gold"></div>
+                    <div class="color-dot mane-cyan" data-name="cyan"></div>
+                    <div class="color-dot mane-purple" data-name="purple"></div>
+                </div>
+            </div>
+
+            <!-- Headwear -->
+            <div class="control-group">
+                <label class="control-label">Headwear</label>
+                <div class="accessory-grid">
+                    <div class="acc-item active" data-acc="none">
+                        <span class="acc-icon">🚫</span>
+                        <span class="acc-name">None</span>
+                    </div>
+                    <div class="acc-item" data-acc="crown">
+                        <span class="acc-icon">👑</span>
+                        <span class="acc-name">Royal</span>
+                    </div>
+                    <div class="acc-item" data-acc="glasses">
+                        <span class="acc-icon">🕶️</span>
+                        <span class="acc-name">Cool</span>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Special Effects -->
+             <div class="control-group">
+                <label class="control-label">Trail Effect</label>
+                <div class="accessory-grid">
+                    <div class="acc-item active" data-trail="rainbow">
+                        <span class="acc-icon">🌈</span>
+                        <span class="acc-name">Rainbow</span>
+                    </div>
+                    <div class="acc-item" data-trail="glitter">
+                        <span class="acc-icon">✨</span>
+                        <span class="acc-name">Glitter</span>
+                    </div>
+                    <div class="acc-item" data-trail="aura">
+                        <span class="acc-icon">🔥</span>
+                        <span class="acc-name">Aura</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button type="button" class="btn-magic btn-secondary" id="randomizeBtn">Randomize</button>
+                <button type="button" class="btn-magic" id="saveBtn">Save Outfit</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bootstrap the Customizer Studio -->
+    <script type="module" src="./js/customize-main.js"></script>
+</body>
+</html>
