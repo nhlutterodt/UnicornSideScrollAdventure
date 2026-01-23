@@ -396,6 +396,7 @@ export class Game {
         this.effects.draw(this.ctx);
         engineRegistry.getByType('platform').forEach(p => p.draw(this.ctx));
         engineRegistry.getByType('obstacle').forEach(o => o.draw(this.ctx));
+        engineRegistry.getByType('item').forEach(i => i.draw(this.ctx));
         this.player.draw(this.ctx);
 
         this.drawEnvironment();
