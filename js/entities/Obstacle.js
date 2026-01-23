@@ -5,19 +5,25 @@ import { Entity } from '../core/Entity.js';
  * Hazards the player must jump over.
  */
 export class Obstacle extends Entity {
-    constructor(canvasWidth, canvasHeight, groundHeight) {
+    constructor(x, y) {
         const width = 40;
         const height = 40 + Math.random() * 20;
-        const x = canvasWidth + 100;
-        const y = canvasHeight - groundHeight - height;
         
-        super(x, y, width, height, 'obstacle');
+        super(x, y - height, width, height, 'obstacle');
         this.type = Math.random() > 0.5 ? '💎' : '🌵';
     }
 
-    update(dt, gameSpeed, canvasHeight, groundHeight) {
+    update(dt, context) {
+        const { gameSpeed, logicalHeight, config, onObstaclePassed } = context;
+        const oldX = this.x;
         this.x -= gameSpeed * dt;
-        this.y = canvasHeight - groundHeight - this.height;
+        this.y = logicalHeight - config.GROUND_HEIGHT - this.height;
+
+        // Check if passed player (player is at x=80)
+        if (oldX >= 80 && this.x < 80 && !this.passed) {
+            this.passed = true;
+            if (onObstaclePassed) onObstaclePassed();
+        }
     }
 
     draw(ctx) {

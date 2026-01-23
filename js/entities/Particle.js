@@ -23,14 +23,11 @@ export class Particle extends Entity {
         this.life = 1.0;
     }
 
-    shouldRegister() {
-        return false; // Particles are short-lived and numerous, skip registry
-    }
-
-    update(dt) {
+    update(dt, context) {
         this.x += this.speedX * dt;
         this.y += this.speedY * dt;
         this.life -= 1.2 * dt;
+        this.isDead = this.life <= 0;
     }
 
     draw(ctx) {
@@ -41,9 +38,5 @@ export class Particle extends Entity {
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1;
-    }
-
-    get isDead() {
-        return this.life <= 0;
     }
 }

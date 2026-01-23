@@ -19,6 +19,7 @@ export class Entity {
         this.width = width;
         this.height = height;
         this.entityType = type;
+        this.isDead = false;
         
         if (this.shouldRegister()) {
             engineRegistry.register(this, this.entityType);
@@ -36,8 +37,9 @@ export class Entity {
     /**
      * Update logic to be implemented by child classes.
      * @param {number} dt - Delta time
+     * @param {Object} context - Game context (speed, config, dimensions, etc.)
      */
-    update(dt) {
+    update(dt, context) {
         // Override in subclasses
     }
 

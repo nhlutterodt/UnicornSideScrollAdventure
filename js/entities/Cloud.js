@@ -5,9 +5,7 @@ import { Entity } from '../core/Entity.js';
  * Background elements for the game world.
  */
 export class Cloud extends Entity {
-    constructor(canvasWidth, canvasHeight) {
-        const x = canvasWidth + Math.random() * 200;
-        const y = Math.random() * (canvasHeight - 150);
+    constructor(x, y) {
         const size = Math.random() * 0.5 + 0.5;
         const width = size * 60; // Approximate width based on font size
         const height = size * 60; // Approximate height
@@ -18,7 +16,7 @@ export class Cloud extends Entity {
         this.size = size;
     }
 
-    update(dt) {
+    update(dt, context) {
         this.x -= this.speed * dt;
     }
 

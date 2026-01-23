@@ -45,6 +45,19 @@ export class Ghost extends Entity {
 -   **`css/game.css`**: Canvas and container styling.
 -   **`css/ui.css`**: UI overlays (Start Screen, Game Over).
 
+## Standards Audit (Mandatory)
+
+We maintain a zero-tolerance policy for:
+1.  **Inline CSS**: Do not use `style="..."` in HTML or `.style` in JS.
+2.  **Inline JS**: No `onclick="..."` or `<script>` tags without `src`.
+3.  **Raw Storage**: No direct `localStorage` calls.
+
+Before submitting code, you MUST run the auditor:
+```bash
+npm test
+```
+Or run the VS Code task: `Audit: Quality Standards`.
+
 ## Best Practices
 
 -   **Performance**: Avoid heavy computations in the `draw()` loop.

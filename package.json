@@ -1,0 +1,12 @@
+{
+  "name": "unicorn-magic-run",
+  "version": "1.0.0",
+  "description": "Unicorn Side Scroll Adventure - Standards Compliant",
+  "main": "index.html",
+  "scripts": {
+    "test": "node scripts/standard-checker.js",
+    "lint": "node scripts/standard-checker.js"
+  },
+  "author": "GitHub Copilot",
+  "license": "MIT"
+}

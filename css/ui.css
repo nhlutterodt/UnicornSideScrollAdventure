@@ -70,3 +70,21 @@
     color: var(--primary-pink);
     text-decoration: underline;
 }
+
+.high-score-label {
+    margin-top: 1rem;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.final-high-score {
+    font-size: 0.8em;
+}
+
+/* Success/State Classes */
+.btn-saved {
+    background: #ffd700 !important; /* Gold */
+    color: #4A148C !important;
+    transform: scale(1.05);
+}
+

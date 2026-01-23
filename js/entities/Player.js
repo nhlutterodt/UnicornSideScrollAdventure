@@ -17,17 +17,52 @@ export class Player extends Entity {
         this.appearance = AssetPipeline.resolveUnicornColors(this.outfit);
     }
 
-    update(dt, config, canvasHeight) {
+    update(dt, context) {
+        const { config, logicalHeight, platforms } = context;
+        
+        const oldY = this.y;
+        
         if (!this.isGrounded) {
             this.vy += config.GRAVITY * dt;
             this.rotation = Math.min(Math.PI / 8, this.vy * 0.002);
         } else {
             this.rotation = 0;
+            // Check if we walked off a platform
+            if (this.y < logicalHeight - config.GROUND_HEIGHT - this.height) {
+                let stillOnPlatform = false;
+                if (platforms) {
+                    for (const p of platforms) {
+                        if (this.x < p.x + p.width && this.x + this.width > p.x && Math.abs(this.y + this.height - p.y) < 2) {
+                            stillOnPlatform = true;
+                            break;
+                        }
+                    }
+                }
+                if (!stillOnPlatform) {
+                    this.isGrounded = false;
+                }
+            }
         }
 
         this.y += this.vy * dt;
 
-        const groundY = canvasHeight - config.GROUND_HEIGHT - this.height;
+        // Collision with platforms (only when falling)
+        if (this.vy >= 0 && platforms) {
+            for (const p of platforms) {
+                if (this.x < p.x + p.width && 
+                    this.x + this.width > p.x && 
+                    oldY + this.height <= p.y + 1 && // Was above
+                    this.y + this.height >= p.y) { // Is now below or on
+                    
+                    this.y = p.y - this.height;
+                    this.vy = 0;
+                    this.isGrounded = true;
+                    break;
+                }
+            }
+        }
+
+        const groundY = logicalHeight - config.GROUND_HEIGHT - this.height;
         if (this.y >= groundY) {
             this.y = groundY;
             this.vy = 0;

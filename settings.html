@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Settings - Unicorn Magic Run</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/settings.css">
+</head>
+<body>
+
+    <div class="ambient-bg" id="ambientBg"></div>
+
+    <main class="settings-container">
+        <a href="index.html" class="exit-link">&larr; Back to Menu</a>
+
+        <header class="settings-header">
+            <h1 class="settings-title">SETTINGS</h1>
+        </header>
+
+        <div class="settings-nav">
+            <button class="nav-btn active" data-tab="general">General</button>
+            <button class="nav-btn" data-tab="audio">Audio</button>
+            <button class="nav-btn" data-tab="graphics">Graphics</button>
+        </div>
+
+        <section class="settings-content">
+            <!-- General Settings -->
+            <div id="general" class="tab-content active">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label for="difficulty" class="setting-label">Difficulty</label>
+                        <span class="setting-description">How challenging the adventure is</span>
+                    </div>
+                    <div class="setting-control">
+                        <select id="difficulty" class="select-input" title="Game Difficulty">
+                            <option value="easy">Easy</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label for="autoRestart" class="setting-label">Auto-Restart</label>
+                        <span class="setting-description">Instantly restart after magic fades</span>
+                    </div>
+                    <div class="setting-control">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="autoRestart" aria-label="Enable Auto-Restart">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audio Settings -->
+            <div id="audio" class="tab-content">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label for="musicVolume" class="setting-label">Music Volume</label>
+                        <span class="setting-description">Adjust background music level</span>
+                    </div>
+                    <div class="setting-control">
+                        <div class="slider-wrapper">
+                            <span id="musicVal" class="val-display">70%</span>
+                            <input type="range" id="musicVolume" min="0" max="100" value="70" aria-label="Music Volume">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label for="sfxVolume" class="setting-label">SFX Volume</label>
+                        <span class="setting-description">Adjust sound effects level</span>
+                    </div>
+                    <div class="setting-control">
+                        <div class="slider-wrapper">
+                            <span id="sfxVal" class="val-display">80%</span>
+                            <input type="range" id="sfxVolume" min="0" max="100" value="80" aria-label="SFX Volume">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphics Settings -->
+            <div id="graphics" class="tab-content">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label for="screenShake" class="setting-label">Screen Shake</label>
+                        <span class="setting-description">Enable visual impact effects</span>
+                    </div>
+                    <div class="setting-control">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="screenShake" checked aria-label="Enable Screen Shake">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label for="particleQuality" class="setting-label">Particles</label>
+                        <span class="setting-description">High quality particle effects</span>
+                    </div>
+                    <div class="setting-control">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="particleQuality" checked aria-label="High Quality Particles">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label for="showFps" class="setting-label">Show FPS</label>
+                        <span class="setting-description">Display performance statistics</span>
+                    </div>
+                    <div class="setting-control">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="showFps" aria-label="Show FPS Counter">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-actions">
+                <button type="button" class="btn btn-secondary" id="restoreDefaults">Restore Defaults</button>
+                <div class="danger-zone">
+                    <button type="button" class="btn btn-danger" id="resetData">Reset Game Data</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="js/settings-main.js"></script>
+</body>
+</html>

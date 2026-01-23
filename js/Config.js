@@ -21,6 +21,16 @@ export const Config = {
     SPAWN_INTERVAL_MIN: 1.0,   // Seconds
     SPAWN_INTERVAL_START: 2.0, // Seconds
 
+    // Platforms
+    PLATFORM_PLACEMENT_MODE: 'probabilistic', // 'deterministic' or 'probabilistic'
+    PLATFORM_PROBABILITY: 0.3,               // Chance to spawn when timer hits
+    PLATFORM_SPEED_RATIO: 1.0,               // Relative to game speed
+    PLATFORM_MIN_WIDTH: 100,
+    PLATFORM_MAX_WIDTH: 300,
+    PLATFORM_HEIGHT: 20,
+    PLATFORM_VERTICAL_RANGE: [200, 450],     // Range for Y position (from top)
+    PLATFORM_GRAVITY: false,                 // Toggle if platforms should fall!
+
     // Visuals
     COLORS: ['#ff7eb9', '#7afcff', '#ffffff', '#ffd700'],
 

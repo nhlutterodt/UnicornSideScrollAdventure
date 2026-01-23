@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Customization Studio</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/level-customize.css">
+</head>
+<body>
+
+    <div class="ambient-bg" id="ambientBg"></div>
+
+    <main class="studio-container" id="studioContainer">
+        <!-- Back Button -->
+        <a href="index.html" class="exit-link">&larr; Exit Studio</a>
+
+        <!-- Preview Section -->
+        <section class="preview-section">
+            <h1 class="preview-title">LEVEL PREVIEW</h1>
+            
+            <div class="level-preview" id="levelPreview">
+                <!-- SVG Preview window for the level -->
+                <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" class="level-svg">
+                    <defs>
+                        <!-- Gradients for backgrounds -->
+                        <linearGradient id="bg-day" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#87CEEB" stop-opacity="1" />
+                            <stop offset="100%" stop-color="#E0F7FA" stop-opacity="1" />
+                        </linearGradient>
+                        <linearGradient id="bg-night" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#0d1137" stop-opacity="1" />
+                            <stop offset="100%" stop-color="#2a2a72" stop-opacity="1" />
+                        </linearGradient>
+                        <linearGradient id="bg-sunset" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ff512f" stop-opacity="1" />
+                            <stop offset="100%" stop-color="#dd2476" stop-opacity="1" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Background Layer -->
+                    <rect id="previewBg" x="0" y="0" width="400" height="300" fill="url(#bg-day)" />
+
+                    <!-- Distant Elements (Mountains/Clouds) -->
+                    <g id="previewDistant" opacity="0.6"></g>
+
+                    <!-- Ground/Platform Layer -->
+                    <g id="previewGround" transform="translate(0, 220)">
+                        <!-- Platforms will be drawn here -->
+                        <path d="M0,0 L400,0 L400,80 L0,80 Z" fill="#4CAF50" />
+                    </g>
+
+                    <!-- Obstacles Layer -->
+                    <g id="previewObstacles" transform="translate(100, 180)">
+                        <!-- Obstacles will be placed here -->
+                    </g>
+
+                    <!-- Collectibles Layer -->
+                    <g id="previewCollectibles" transform="translate(200, 150)">
+                        <!-- Collectibles will range here -->
+                        <circle cx="20" cy="20" r="15" fill="gold" />
+                    </g>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Controls Section -->
+        <section class="controls-section">
+            <h2 class="controls-header">Level Designer</h2>
+
+            <!-- Background Style -->
+            <div class="control-group">
+                <label class="control-label">Atmosphere</label>
+                <div class="accessory-grid">
+                    <div class="acc-item active" data-bg="day">
+                        <span class="acc-icon">☀️</span>
+                        <span class="acc-name">Day</span>
+                    </div>
+                    <div class="acc-item" data-bg="night">
+                        <span class="acc-icon">🌙</span>
+                        <span class="acc-name">Night</span>
+                    </div>
+                    <div class="acc-item" data-bg="sunset">
+                        <span class="acc-icon">🌆</span>
+                        <span class="acc-name">Sunset</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Style -->
+            <div class="control-group">
+                <label class="control-label">Terrain</label>
+                <div class="accessory-grid">
+                    <div class="acc-item active" data-terrain="grass">
+                        <span class="acc-icon">🌱</span>
+                        <span class="acc-name">Grass</span>
+                    </div>
+                    <div class="acc-item" data-terrain="stone">
+                        <span class="acc-icon">🪨</span>
+                        <span class="acc-name">Stone</span>
+                    </div>
+                    <div class="acc-item" data-terrain="candy">
+                        <span class="acc-icon">🍬</span>
+                        <span class="acc-name">Candy</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Obstacle Style -->
+            <div class="control-group">
+                <label class="control-label">Obstacles</label>
+                <div class="accessory-grid">
+                    <div class="acc-item active" data-obstacle="rock">
+                        <span class="acc-icon">⛰️</span>
+                        <span class="acc-name">Rocks</span>
+                    </div>
+                    <div class="acc-item" data-obstacle="crystal">
+                        <span class="acc-icon">💎</span>
+                        <span class="acc-name">Crystals</span>
+                    </div>
+                    <div class="acc-item" data-obstacle="spike">
+                        <span class="acc-icon">⚠️</span>
+                        <span class="acc-name">Spikes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collectible Style -->
+            <div class="control-group">
+                <label class="control-label">Collectibles</label>
+                <div class="accessory-grid">
+                    <div class="acc-item active" data-collectible="star">
+                        <span class="acc-icon">⭐</span>
+                        <span class="acc-name">Stars</span>
+                    </div>
+                    <div class="acc-item" data-collectible="gem">
+                        <span class="acc-icon">🔷</span>
+                        <span class="acc-name">Gems</span>
+                    </div>
+                    <div class="acc-item" data-collectible="heart">
+                        <span class="acc-icon">❤️</span>
+                        <span class="acc-name">Hearts</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Surface Type -->
+            <div class="control-group">
+                <label class="control-label">Surface Physics</label>
+                <div class="accessory-grid">
+                    <div class="acc-item active" data-surface="normal">
+                        <span class="acc-icon">👟</span>
+                        <span class="acc-name">Normal</span>
+                    </div>
+                    <div class="acc-item" data-surface="slippery">
+                        <span class="acc-icon">🧊</span>
+                        <span class="acc-name">Slippery</span>
+                    </div>
+                    <div class="acc-item" data-surface="bouncy">
+                        <span class="acc-icon">🎾</span>
+                        <span class="acc-name">Bouncy</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environment Effects -->
+            <div class="control-group">
+                <label class="control-label">Environment FX</label>
+                <div class="accessory-grid">
+                    <div class="acc-item active" data-effect="none">
+                        <span class="acc-icon">🚫</span>
+                        <span class="acc-name">None</span>
+                    </div>
+                    <div class="acc-item" data-effect="sparkles">
+                        <span class="acc-icon">✨</span>
+                        <span class="acc-name">Sparkles</span>
+                    </div>
+                    <div class="acc-item" data-effect="mist">
+                        <span class="acc-icon">🌫️</span>
+                        <span class="acc-name">Neon Mist</span>
+                    </div>
+                    <div class="acc-item" data-effect="rain">
+                        <span class="acc-icon">🌈</span>
+                        <span class="acc-name">Magic Rain</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- World Decorations -->
+            <div class="control-group">
+                <label class="control-label">World Flora</label>
+                <div class="accessory-grid">
+                    <div class="acc-item active" data-flora="none">
+                        <span class="acc-icon">🏜️</span>
+                        <span class="acc-name">None</span>
+                    </div>
+                    <div class="acc-item" data-flora="flowers">
+                        <span class="acc-icon">🌸</span>
+                        <span class="acc-name">Flowers</span>
+                    </div>
+                    <div class="acc-item" data-flora="mushrooms">
+                        <span class="acc-icon">🍄</span>
+                        <span class="acc-name">Mushrooms</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Celestial Wonders -->
+            <div class="control-group">
+                <label class="control-label">Sky Wonders</label>
+                <div class="accessory-grid">
+                    <div class="acc-item active" data-sky="clouds">
+                        <span class="acc-icon">☁️</span>
+                        <span class="acc-name">Clouds</span>
+                    </div>
+                    <div class="acc-item" data-sky="stars">
+                        <span class="acc-icon">🌠</span>
+                        <span class="acc-name">Stars</span>
+                    </div>
+                    <div class="acc-item" data-sky="dragons">
+                        <span class="acc-icon">🐉</span>
+                        <span class="acc-name">Dragons</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Pace -->
+            <div class="control-group">
+                <label class="control-label">Game Pace</label>
+                <div class="accessory-grid">
+                    <div class="acc-item" data-pace="zen">
+                        <span class="acc-icon">🧘</span>
+                        <span class="acc-name">Zen</span>
+                    </div>
+                    <div class="acc-item active" data-pace="normal">
+                        <span class="acc-icon">🏃</span>
+                        <span class="acc-name">Normal</span>
+                    </div>
+                    <div class="acc-item" data-pace="turbo">
+                        <span class="acc-icon">⚡</span>
+                        <span class="acc-name">Turbo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button type="button" class="btn-magic btn-secondary" id="randomizeBtn">Randomize</button>
+                <button type="button" class="btn-magic" id="saveBtn">Save Level</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bootstrap the Level Customizer Studio -->
+    <script type="module" src="./js/level-customize.js"></script>
+</body>
+</html>

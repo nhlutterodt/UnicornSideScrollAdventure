@@ -9,6 +9,7 @@ import { Storage } from './systems/Storage.js';
 import { Player } from './entities/Player.js';
 import { Obstacle } from './entities/Obstacle.js';
 import { Cloud } from './entities/Cloud.js';
+import { Platform } from './entities/Platform.js';
 import { Particle } from './entities/Particle.js';
 
 import { Config } from './Config.js';
@@ -79,6 +80,7 @@ export class Game {
 
         // Time accumulators for spawning
         this.obstacleTimer = 0;
+        this.platformTimer = 0;
         this.cloudTimer = 0;
         this.particleTimer = 0;
         this.currentSpawnInterval = Config.SPAWN_INTERVAL_START;
@@ -95,20 +97,15 @@ export class Game {
         });
         this.player = new Player(outfit);
 
-        this.obstacles = [];
-        this.clouds = [];
-        this.particles = [];
-
         if (this.scoreElement) this.scoreElement.textContent = `Score: 0`;
 
         // Initial environment
-        // Use logicalWidth if available, else canvas width (though resize is called early)
         const spawnWidth = this.logicalWidth || 800;
 
         for (let i = 0; i < 5; i++) {
-            const c = new Cloud(spawnWidth, LOGICAL_HEIGHT);
-            c.x = Math.random() * spawnWidth;
-            this.clouds.push(c);
+            const x = Math.random() * spawnWidth;
+            const y = Math.random() * (LOGICAL_HEIGHT - 150);
+            new Cloud(x, y);
         }
     }
 
@@ -163,17 +160,29 @@ export class Game {
 
     spawnParticles(x, y, color, count) {
         for (let i = 0; i < count; i++) {
-            this.particles.push(new Particle(x, y, color, this.gameSpeed));
+            new Particle(x, y, color, this.gameSpeed);
         }
     }
 
     update(dt) {
         if (this.state.current !== 'PLAYING') return;
 
-        // Pass LOGICAL_HEIGHT to player for ground collision
-        this.player.update(dt, Config, LOGICAL_HEIGHT);
+        const context = {
+            config: Config,
+            logicalHeight: LOGICAL_HEIGHT,
+            gameSpeed: this.gameSpeed,
+            platforms: engineRegistry.getByType('platform'),
+            onObstaclePassed: () => {
+                this.score++;
+                if (this.scoreElement) this.scoreElement.textContent = `Score: ${this.score}`;
+                if (this.score % 10 === 0) {
+                    this.gameSpeed = Math.min(this.gameSpeed + Config.SPEED_INCREMENT, Config.MAX_GAME_SPEED);
+                    this.currentSpawnInterval = Math.max(Config.SPAWN_INTERVAL_MIN, this.currentSpawnInterval - 0.1);
+                }
+            }
+        };
 
-        // Magic Trail (Time based now: roughly every 0.05s)
+        // 1. Spawning Systems
         this.particleTimer += dt;
         if (this.particleTimer > 0.05) {
             this.particleTimer = 0;
@@ -182,60 +191,46 @@ export class Game {
             this.spawnParticles(this.player.x, this.player.y + 25, color, 1);
         }
 
-        // Spawning Obstacles
         this.obstacleTimer += dt;
         if (this.obstacleTimer > this.currentSpawnInterval) {
             this.obstacleTimer = 0;
-            // Spawn at logicalWidth so it appears just off the right edge of the logical view
-            this.obstacles.push(new Obstacle(this.logicalWidth, LOGICAL_HEIGHT, Config.GROUND_HEIGHT));
+            new Obstacle(this.logicalWidth + 100, LOGICAL_HEIGHT - Config.GROUND_HEIGHT);
         }
 
-        // Spawning Clouds
+        this.platformTimer += dt;
+        if (this.platformTimer > this.currentSpawnInterval * 1.5) {
+            this.platformTimer = 0;
+            
+            let shouldSpawn = false;
+            if (Config.PLATFORM_PLACEMENT_MODE === 'deterministic') {
+                shouldSpawn = true;
+            } else {
+                shouldSpawn = Math.random() < Config.PLATFORM_PROBABILITY;
+            }
+
+            if (shouldSpawn) {
+                const width = Config.PLATFORM_MIN_WIDTH + Math.random() * (Config.PLATFORM_MAX_WIDTH - Config.PLATFORM_MIN_WIDTH);
+                const y = Config.PLATFORM_VERTICAL_RANGE[0] + Math.random() * (Config.PLATFORM_VERTICAL_RANGE[1] - Config.PLATFORM_VERTICAL_RANGE[0]);
+                new Platform(this.logicalWidth + 100, y, width, Config.PLATFORM_HEIGHT);
+            }
+        }
+
         this.cloudTimer += dt;
-        if (this.cloudTimer > 2.5) { // Fixed interval for clouds
+        if (this.cloudTimer > 2.5) {
             this.cloudTimer = 0;
-            this.clouds.push(new Cloud(this.logicalWidth, LOGICAL_HEIGHT));
+            new Cloud(this.logicalWidth + 100, Math.random() * (LOGICAL_HEIGHT - 150));
         }
 
-        // Update Obstacles & Collision
-        for (let i = this.obstacles.length - 1; i >= 0; i--) {
-            const o = this.obstacles[i];
-            o.update(dt, this.gameSpeed, LOGICAL_HEIGHT, Config.GROUND_HEIGHT);
+        // 2. Polymorphic Entity Update
+        engineRegistry.updateAll(dt, context);
 
-            // Collision using Utility
-            // Padding of 10 creates a forgiving hit box
+        // 3. Specialized Systems (Collisions)
+        const obstacles = engineRegistry.getByType('obstacle');
+        for (const o of obstacles) {
             if (PhysicsUtils.checkCollision(this.player, o, 10)) {
                 this.gameOver();
                 return;
             }
-
-            if (o.isOffscreen) {
-                o.destroy();
-                this.obstacles.splice(i, 1);
-                this.score++;
-                if (this.scoreElement) this.scoreElement.textContent = `Score: ${this.score}`;
-
-                // Increase speed and difficulty
-                if (this.score % 10 === 0) {
-                    this.gameSpeed = Math.min(this.gameSpeed + Config.SPEED_INCREMENT, Config.MAX_GAME_SPEED);
-                    this.currentSpawnInterval = Math.max(Config.SPAWN_INTERVAL_MIN, this.currentSpawnInterval - 0.1);
-                }
-            }
-        }
-
-        // Update Clouds
-        for (let i = this.clouds.length - 1; i >= 0; i--) {
-            this.clouds[i].update(dt);
-            if (this.clouds[i].isOffscreen) {
-                this.clouds[i].destroy();
-                this.clouds.splice(i, 1);
-            }
-        }
-
-        // Update Particles
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            this.particles[i].update(dt);
-            if (this.particles[i].isDead) this.particles.splice(i, 1);
         }
     }
 
@@ -243,25 +238,22 @@ export class Game {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.ctx.save();
-        // IMPORTANT: Apply the scale so that 1 logical unit = scaleRatio physical pixels
         this.ctx.scale(this.scaleRatio, this.scaleRatio);
 
-        // Clouds
-        this.clouds.forEach(c => c.draw(this.ctx));
+        // Ordered Drawing via Entity Groups
+        engineRegistry.getByType('cloud').forEach(c => c.draw(this.ctx));
 
         // Ground
         this.ctx.fillStyle = '#8ce68c';
-        // Draw ground at LOGICAL_HEIGHT
         this.ctx.fillRect(0, LOGICAL_HEIGHT - Config.GROUND_HEIGHT, this.logicalWidth, Config.GROUND_HEIGHT);
         this.ctx.fillStyle = '#76c476';
         this.ctx.fillRect(0, LOGICAL_HEIGHT - Config.GROUND_HEIGHT, this.logicalWidth, 5);
 
-        // Assets
-        this.particles.forEach(p => p.draw(this.ctx));
-        this.obstacles.forEach(o => o.draw(this.ctx));
+        engineRegistry.getByType('particle').forEach(p => p.draw(this.ctx));
+        engineRegistry.getByType('platform').forEach(p => p.draw(this.ctx));
+        engineRegistry.getByType('obstacle').forEach(o => o.draw(this.ctx));
         this.player.draw(this.ctx);
 
-        // Dynamic Environment Details
         this.drawEnvironment();
 
         this.ctx.restore();

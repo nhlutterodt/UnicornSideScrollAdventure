@@ -65,6 +65,49 @@ export class Registry {
     get(id) {
         return this.entities.get(id);
     }
+
+    /**
+     * Runs update on all registered entities and prunes destroyed ones.
+     * @param {number} dt 
+     * @param {Object} context 
+     */
+    updateAll(dt, context) {
+        for (let [id, entity] of this.entities) {
+            entity.update(dt, context);
+            
+            // Auto-pruning if entity is offscreen or explicitly destroyed
+            if (entity.isOffscreen || entity.isDead) {
+                this.entities.delete(id);
+                // Call optional lifecycle hook
+                if (entity.onPruned) entity.onPruned();
+            }
+        }
+    }
+
+    /**
+     * Draws all entities in registration order (Map preserves insertion order).
+     * @param {CanvasRenderingContext2D} ctx 
+     */
+    drawAll(ctx) {
+        for (let entity of this.entities.values()) {
+            entity.draw(ctx);
+        }
+    }
+
+    /**
+     * Returns entities filtered by type.
+     * @param {string} type 
+     * @returns {Array}
+     */
+    getByType(type) {
+        const results = [];
+        for (let entity of this.entities.values()) {
+            if (entity.entityType === type) {
+                results.push(entity);
+            }
+        }
+        return results;
+    }
 }
 
 // Export singleton instance
