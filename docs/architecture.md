@@ -18,7 +18,14 @@ The game uses a class-based inheritance model for game objects, centered around 
 -   **Cloud (`Cloud` class)**: Extends `Entity`. Background elements for parallax-like effect.
 -   **Particle (`Particle` class)**: Extends `Entity`. Short-lived visual effects. Note: Particles typically bypass the central registry to optimize performance for high-volume spawning.
 
-### 3. Registry System
+### 3. Systems and Managers
+The game logic is distributed across specialized systems to maintain decoupling.
+-   **Collision System (`CollisionSystem.js`)**: Resolves interactions between entities using layers and masks.
+-   **Ability Manager (`AbilityManager.js`)**: Centralized bridge for item effects. It translates raw item data into target state changes (lives, timers, modifiers).
+-   **Effect System (`EffectSystem.js`)**: Coordinates auditory and visual feedback (Particles + Audio).
+-   **Particle System (`ParticleSystem.js`)**: High-performance rendering for ephemeral visual effects.
+
+### 4. Registry System
 The `Registry` (`js/core/Registry.js`) provides centralized tracking for active entities.
 -   **Registration**: Entities automatically register themselves via the `Entity` constructor.
 -   **Identification**: Every registered entity receives a unique `id` (e.g., `obstacle_5`).

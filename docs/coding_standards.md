@@ -77,8 +77,13 @@ We use modern ES6+ syntax.
 #### Entity Inheritance
 To maintain standardization and interoperability, all game objects must extend the base `Entity` class.
 -   Always call `super(x, y, width, height, type)` in the constructor.
--   Use `this.destroy()` for self-removal (this handles the `Registry` unlinking).
--   Override `update(dt)` and `draw(ctx)` but maintain the signature.
+-   Use `this.destroy()` for self-removal.
+-   **Anti-Pattern Alert**: Do not implement complex logic (like item parsing or effect resolution) inside the Entity. Use a **System Manager** instead.
+
+#### The Manager Pattern (Strict Decoupling)
+Entities should be pure state containers where possible. Complex logic that bridges multiple entities or configurations MUST be moved to a static System class.
+-   *Example*: `Item.js` does NOT know how to apply a power-up. It calls `AbilityManager.apply()`.
+-   *Benefit*: Prevents `Player.js` from becoming a "God Object" or a monolithic switch-case nightmare.
 
 #### Memory Management (Critical)
 Allocating memory (creating new objects/arrays) inside the game loop causes the Garbage Collector (GC) to pause execution, leading to "stutters" or dropped frames.

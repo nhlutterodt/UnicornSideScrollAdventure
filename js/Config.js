@@ -13,8 +13,62 @@ export const Config = {
     // Environment
     GROUND_HEIGHT: 60,
 
+    // Item System
+    ITEM_TYPES: {
+        ABILITY: 'ability',
+        LIFE: 'life',
+        PHYSICS: 'physics',
+        INVINCIBILITY: 'invincibility'
+    },
+    ITEM_SPAWN_INTERVAL: 8.0, // Every 8 seconds on average
+    ITEMS: [
+        {
+            id: 'extra_life',
+            type: 'life',
+            name: 'Sparkle Heart',
+            icon: '💖',
+            color: '#ff3366',
+            value: 1
+        },
+        {
+            id: 'invincibility_star',
+            type: 'invincibility',
+            name: 'Magic Star',
+            icon: '⭐',
+            color: '#fffb00',
+            duration: 5
+        },
+        {
+            id: 'gravity_feather',
+            type: 'physics',
+            name: 'Light Feather',
+            icon: '🪶',
+            color: '#7afcff',
+            duration: 8,
+            modifier: { gravityMultiplier: 0.5 }
+        },
+        {
+            id: 'heavy_stone',
+            type: 'physics',
+            name: 'Heavy Stone',
+            icon: '🪨',
+            color: '#808080',
+            duration: 8,
+            modifier: { gravityMultiplier: 1.5, jumpMultiplier: 0.8 }
+        },
+        {
+            id: 'ability_lasers',
+            type: 'ability',
+            abilityId: 'lasers'
+        },
+        {
+            id: 'ability_roar',
+            type: 'ability',
+            abilityId: 'roar'
+        }
+    ],
+
     // Power Ups
-    POWERUP_SPAWN_INTERVAL: 8.0, // Every 8 seconds on average
     ABILITIES: [
         {
             id: 'lasers',

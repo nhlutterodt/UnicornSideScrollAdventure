@@ -9,6 +9,7 @@ To avoid repeating past mistakes, the following failures have been documented:
 -   **2026-01-23: Ignored Contextual Errors**: Failed to resolve 15+ accessibility (a11y) and CSS compatibility errors provided in the environment context while claiming the task was "polished".
 -   **2026-01-23: Assumption of Completion**: Declared a feature "production-ready" without verifying WCAG standards for form inputs (missing `label` associations and `aria-label`).
 -   **2026-01-23: Inconsistent Vendor Prefixing**: Applied `-webkit-backdrop-filter` in new files but failed to audit and fix existing project files (e.g., `level-customize.css`), leading to broken UI on Safari/iOS.
+-   **2026-01-23: Monolithic Logic Failure**: Centralized item/ability logic directly into `Player.js` via a massive switch statement, violating the "Decoupled Entity Construction" standard and the Manager Pattern. Found only thanks to user intervention.
 
 ---
 
@@ -29,6 +30,7 @@ The following checks **MUST** be performed before claiming any task is complete.
 - [ ] **Standard Transitions**: Use `--transition-fast`, `--transition-mid`, or `--transition-slow` to maintain motion consistency.
 
 ### 2.3. JavaScript Robustness
+- [ ] **Logic Decoupling**: Do entities (Player, Obstacle) contain complex business logic? If so, move it to a System Manager (e.g., `AbilityManager.js`).
 - [ ] **Null Safety**: Always use null checks or optional chaining (`?.`) when accessing DOM elements that might be missing from specific pages (e.g., `if (el) el.addEventListener(...)`).
 - [ ] **Storage Keys**: Use the `Storage.js` system for all persistence. Never use raw `localStorage.setItem`.
 - [ ] **Default Values**: Define a `DEFAULT_SETTINGS` (or similar) constant to avoid "undefined" states in logic.

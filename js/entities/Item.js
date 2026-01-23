@@ -1,29 +1,31 @@
 import { Entity } from '../core/Entity.js';
 import { CollisionLayers, PhysicsUtils } from '../utils/PhysicsUtils.js';
+import { AbilityManager } from '../systems/AbilityManager.js';
 
 /**
- * POWER_UP.js
- * Item entity that grants abilities to the player.
+ * ITEM.js
+ * Generic item entity that can grant various effects to the player.
+ * Replaces and extends the PowerUp concept.
  */
-export class PowerUp extends Entity {
+export class Item extends Entity {
     /**
      * @param {number} x 
      * @param {number} y 
-     * @param {Object} abilityData - Data for the ability this power-up grants
+     * @param {Object} itemData - Data from Config.ITEMS
      */
-    constructor(x, y, abilityData) {
-        super(x, y, 30, 30, 'powerup');
-        this.abilityData = abilityData;
+    constructor(x, y, itemData) {
+        super(x, y, 30, 30, 'item');
+        this.itemData = itemData;
         this.vy = 0;
         this.vx = 0;
         this.isGrounded = false;
         
         // Physics
-        this.collisionLayer = CollisionLayers.POWERUP;
+        this.collisionLayer = CollisionLayers.ITEM;
         this.collisionMask = CollisionLayers.PLAYER | CollisionLayers.PLATFORM;
         
         // Animation
-        this.bobOffset = 0;
+        this.bobOffset = Math.random() * Math.PI * 2;
         this.bobSpeed = 3;
     }
 
@@ -48,7 +50,7 @@ export class PowerUp extends Entity {
             this.isGrounded = true;
         }
 
-        // Bobbing animation if on ground or stable
+        // Bobbing animation
         this.bobOffset += this.bobSpeed * dt;
         
         if (this.isOffscreen) {
@@ -65,9 +67,9 @@ export class PowerUp extends Entity {
         // Pulsing glow
         const pulse = (Math.sin(this.bobOffset) + 1) / 2;
         ctx.shadowBlur = 10 + pulse * 10;
-        ctx.shadowColor = this.abilityData.color || '#fff';
+        ctx.shadowColor = this.itemData.color || '#fff';
         
-        // Draw icon background
+        // Draw background
         ctx.fillStyle = '#fff';
         ctx.beginPath();
         ctx.arc(this.x + this.width / 2, visualY + this.height / 2, this.width / 2, 0, Math.PI * 2);
@@ -77,14 +79,23 @@ export class PowerUp extends Entity {
         ctx.font = '20px serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this.abilityData.icon || '✨', this.x + this.width / 2, visualY + this.height / 2);
+        
+        // Resolve icon - if it's an ability type, it might need to look up ability icon
+        let icon = this.itemData.icon || '✨';
+        if (this.itemData.type === 'ability' && !this.itemData.icon) {
+            // This is a bit coupled, but standard for this project's structure
+            // In a larger project, a Registry of Icons might be better
+            // We'll leave it as is or handle it in Game.js / LevelUtils.js before spawning
+        }
+
+        ctx.fillText(icon, this.x + this.width / 2, visualY + this.height / 2);
         
         ctx.restore();
     }
 
     onCollision(other, particles) {
         if (other.entityType === 'player') {
-            other.addAbility({...this.abilityData});
+            AbilityManager.apply(other, this.itemData, { particles });
             if (particles) particles.play('PICKUP_BURST', { x: this.x + this.width / 2, y: this.y + this.height / 2 });
             this.destroy();
         }

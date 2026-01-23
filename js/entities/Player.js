@@ -1,4 +1,5 @@
 import { Entity } from '../core/Entity.js';
+import { Config } from '../Config.js';
 import { AssetPipeline } from '../systems/AssetPipeline.js';
 import { CollisionLayers } from '../utils/PhysicsUtils.js';
 import { BeamEffect } from '../systems/EffectSystem.js';
@@ -16,7 +17,7 @@ export class Player extends Entity {
 
         // Collision Setup
         this.collisionLayer = CollisionLayers.PLAYER;
-        this.collisionMask = CollisionLayers.OBSTACLE | CollisionLayers.PLATFORM | CollisionLayers.POWERUP;
+        this.collisionMask = CollisionLayers.OBSTACLE | CollisionLayers.PLATFORM | CollisionLayers.ITEM;
         this.collisionPadding = 10;
 
         // Visual properties from asset pipeline
@@ -28,6 +29,14 @@ export class Player extends Entity {
         // Power-up System
         this.abilities = [];
         this.currentAbilityIndex = -1;
+
+        // Health & Stats
+        this.lives = 1;
+        this.invincibleTimer = 0;
+        
+        // Physics Modifiers
+        this.physicsMod = { gravityMultiplier: 1, jumpMultiplier: 1 };
+        this.physicsModTimer = 0;
     }
 
     update(dt, context) {
@@ -35,11 +44,24 @@ export class Player extends Entity {
         
         // Update Abilities (Time-based constraints)
         this.updateAbilities(dt);
+
+        // Update Item Timers
+        if (this.invincibleTimer > 0) {
+            this.invincibleTimer -= dt;
+        }
+
+        if (this.physicsModTimer > 0) {
+            this.physicsModTimer -= dt;
+            if (this.physicsModTimer <= 0) {
+                this.physicsMod = { gravityMultiplier: 1, jumpMultiplier: 1 };
+            }
+        }
         
         const oldY = this.y;
         
         if (!this.isGrounded) {
-            this.vy += config.GRAVITY * dt;
+            const gravity = config.GRAVITY * this.physicsMod.gravityMultiplier;
+            this.vy += gravity * dt;
             this.rotation = Math.min(Math.PI / 8, this.vy * 0.002);
         } else {
             this.rotation = 0;
@@ -75,14 +97,24 @@ export class Player extends Entity {
 
     onCollision(other, particles) {
         if (other.entityType === 'obstacle') {
-            if (this.onGameOver) {
+            if (this.invincibleTimer > 0) return;
+
+            this.lives--;
+            if (this.lives <= 0) {
+                if (this.onGameOver) {
+                    if (particles) particles.play('IMPACT_SPARK', { x: this.x + this.width, y: this.y + this.height / 2 });
+                    this.onGameOver();
+                }
+            } else {
+                // Flash or some feedback for losing a life but staying alive
                 if (particles) particles.play('IMPACT_SPARK', { x: this.x + this.width, y: this.y + this.height / 2 });
-                this.onGameOver();
+                this.invincibleTimer = 1.5; // Short grace period
+                other.destroy(); // Remove the obstacle we hit
             }
         }
 
         if (other.entityType === 'platform') {
-            // Semi-solid platform logic (only block if falling)
+            // Semi-solid platform logic
             if (this.vy >= 0 && (this.y + this.height - other.y) < 20) {
                 this.y = other.y - this.height;
                 this.vy = 0;
@@ -92,6 +124,11 @@ export class Player extends Entity {
     }
 
     // --- Ability System ---
+
+    applyPhysicsModifier(modifier, duration) {
+        this.physicsMod = { ...modifier };
+        this.physicsModTimer = duration;
+    }
 
     addAbility(abilityData) {
         // Check for existing ability of the same type to avoid "foolish" duplication
@@ -211,7 +248,7 @@ export class Player extends Entity {
 
     jump(config, onJump) {
         if (this.isGrounded) {
-            this.vy = config.JUMP_FORCE;
+            this.vy = config.JUMP_FORCE * this.physicsMod.jumpMultiplier;
             this.isGrounded = false;
             // Pass color info for particles
             const particleColor = this.appearance.trail.colors[0];
@@ -279,6 +316,15 @@ export class Player extends Entity {
         if (this.appearance.accessory) {
             ctx.font = '20px serif';
             ctx.fillText(this.appearance.accessory, 15, -40);
+        }
+
+        // Draw Invincibility Glow
+        if (this.invincibleTimer > 0) {
+            ctx.strokeStyle = `hsla(${Date.now() % 360}, 100%, 50%, 0.5)`;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, 35, 0, Math.PI * 2);
+            ctx.stroke();
         }
 
         ctx.restore();

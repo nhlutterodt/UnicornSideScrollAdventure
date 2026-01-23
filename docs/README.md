@@ -21,6 +21,7 @@ Welcome to **Unicorn Magic Run**, a magical side-scrolling adventure game!
 -   **[Coding Standards](coding_standards.md)**: Guidelines for HTML, CSS, and JS.
 -   **[AI Quality Protocol](ai_quality_protocol.md)**: Deterministic checklist for AI agents to prevent regressions and quality failures.
 -   **[Architecture](architecture.md)**: Core engine design and state management.
+-   **[Item System Architecture](item_system_architecture.md)**: Details on the decoupled Item and Ability system (Manager Pattern).
 
 
 To play the game locally, simply open `index.html` in your web browser. No compilation or server is required for the basic version, though using a local server (like Live Server in VS Code) is recommended for best performance.

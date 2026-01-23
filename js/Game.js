@@ -10,10 +10,11 @@ import { Player } from './entities/Player.js';
 import { Obstacle } from './entities/Obstacle.js';
 import { Cloud } from './entities/Cloud.js';
 import { Platform } from './entities/Platform.js';
-import { PowerUp } from './entities/PowerUp.js';
+import { Item } from './entities/Item.js';
 
 import { Config } from './Config.js';
 import { PhysicsUtils } from './utils/PhysicsUtils.js';
+import { LevelUtils } from './utils/LevelUtils.js';
 import { CollisionSystem } from './systems/CollisionSystem.js';
 import { ParticleSystem } from './systems/ParticleSystem.js';
 import { EffectSystem } from './systems/EffectSystem.js';
@@ -35,6 +36,7 @@ export class Game {
         this.canvas = Dom.get('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.scoreElement = Dom.get('scoreBoard');
+        this.livesElement = Dom.get('livesDisplay');
         this.finalScoreElement = Dom.get('finalScore');
         this.startHighScoreElement = Dom.get('startHighScore');
         this.gameOverHighScoreElement = Dom.get('gameOverHighScore');
@@ -115,7 +117,7 @@ export class Game {
         this.platformTimer = 0;
         this.cloudTimer = 0;
         this.particleTimer = 0;
-        this.powerUpTimer = 0;
+        this.itemTimer = 0;
         this.currentSpawnInterval = Config.SPAWN_INTERVAL_START;
 
         // Entities
@@ -132,6 +134,7 @@ export class Game {
         this.player.onGameOver = () => this.gameOver();
 
         if (this.scoreElement) this.scoreElement.textContent = `Score: 0`;
+        if (this.livesElement) this.livesElement.textContent = `💖 x${this.player.lives}`;
 
         // Initial environment
         const spawnWidth = this.logicalWidth || 800;
@@ -251,12 +254,12 @@ export class Game {
             new Cloud(this.logicalWidth + 100, Math.random() * (LOGICAL_HEIGHT - 150));
         }
 
-        this.powerUpTimer += dt;
-        if (this.powerUpTimer > Config.POWERUP_SPAWN_INTERVAL) {
-            this.powerUpTimer = 0;
-            const abilityData = Config.ABILITIES[Math.floor(Math.random() * Config.ABILITIES.length)];
-            const y = 100 + Math.random() * (LOGICAL_HEIGHT - 300);
-            new PowerUp(this.logicalWidth + 100, y, abilityData);
+        this.itemTimer += dt;
+        if (this.itemTimer > Config.ITEM_SPAWN_INTERVAL) {
+            this.itemTimer = 0;
+            const x = this.logicalWidth + 100;
+            const y = LevelUtils.getRandomSpawnY(LOGICAL_HEIGHT, Config.GROUND_HEIGHT);
+            LevelUtils.spawnRandomItem(x, y);
         }
 
         // 2. Particle System Update
@@ -266,6 +269,12 @@ export class Game {
         // 3. Polymorphic Entity Update
         engineRegistry.updateAll(dt, context);
 
+        // Update Stats UI
+        if (this.livesElement) {
+            this.livesElement.textContent = `💖 x${this.player.lives}`;
+        }
+
+        // 
         // 3. Update Ability UI (Optimized: only if abilities exist)
         if (this.player.abilities.length > 0) {
             this.updateAbilityUI();
