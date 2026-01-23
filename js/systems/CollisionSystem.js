@@ -9,8 +9,9 @@ export class CollisionSystem {
      * Resolves collisions between all registered entities based on their layers/masks.
      * @param {Registry} registry 
      * @param {ParticleSystem} particles
+     * @param {Object} context
      */
-    static resolve(registry, particles) {
+    static resolve(registry, particles, context = {}) {
         const entities = Array.from(registry.entities.values());
         
         // Quad-tree or spatial grid could be added here later for performance if needed.
@@ -32,8 +33,8 @@ export class CollisionSystem {
                     const padding = Math.max(a.collisionPadding || 0, b.collisionPadding || 0);
                     
                     if (PhysicsUtils.checkCollision(a, b, padding)) {
-                        a.onCollision(b, particles);
-                        b.onCollision(a, particles);
+                        if (a.onCollision) a.onCollision(b, particles, context);
+                        if (b.onCollision) b.onCollision(a, particles, context);
                     }
                 }
             }

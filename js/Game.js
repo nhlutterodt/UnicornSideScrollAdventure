@@ -19,6 +19,11 @@ import { CollisionSystem } from './systems/CollisionSystem.js';
 import { ParticleSystem } from './systems/ParticleSystem.js';
 import { EffectSystem } from './systems/EffectSystem.js';
 
+import { logger } from './utils/Logger.js';
+import { eventManager } from './systems/EventManager.js';
+import { AbilityManager } from './systems/AbilityManager.js';
+import { LevelSystem } from './systems/LevelSystem.js';
+
 /**
  * GAME.js
  * The main coordination hub for Unicorn Magic Run.
@@ -31,6 +36,8 @@ const LOGICAL_HEIGHT = 600;
 
 export class Game {
     constructor() {
+        logger.info('Game', 'Initializing...');
+
         // UI Components
         this.container = Dom.get('gameContainer');
         this.canvas = Dom.get('gameCanvas');
@@ -47,9 +54,11 @@ export class Game {
         this.input = new InputManager(this.canvas);
         this.loop = new GameLoop(this.update.bind(this), this.draw.bind(this));
         
-        // Effects System (Visual + Audio)
+        // Modules
         this.particles = new ParticleSystem();
         this.effects = new EffectSystem(this.particles);
+        this.abilities = new AbilityManager(this);
+        this.level = new LevelSystem();
 
         // Persistent State
         this.highScore = Storage.load('highScore', 0);
@@ -62,7 +71,45 @@ export class Game {
         // Game Logic State
         this.resetInternalState();
 
+        this.setupEvents();
         this.init();
+    }
+
+    setupEvents() {
+        // Event-driven UI updates
+        eventManager.on('LEVEL_UP', ({ level }) => {
+            logger.info('Game', `Systemic Level Up: ${level}`);
+            // Show level up toast or effect
+        });
+
+        eventManager.on('STAGE_CHANGED', (stage) => {
+            this.applyStageTheme(stage);
+        });
+
+        eventManager.on('ABILITY_APPLIED', () => {
+            this.updateAbilityUI();
+        });
+
+        eventManager.on('LIFE_CHANGED', () => {
+            this.updateStatsUI();
+        });
+    }
+
+    applyStageTheme(stage) {
+        if (!stage || !stage.theme) return;
+
+        // Apply theme to document for UI consistency
+        document.documentElement.style.setProperty('--primary-color', stage.theme.primary);
+        document.documentElement.style.setProperty('--bg-color', stage.theme.background);
+        
+        // You could also trigger a "World Transition" particle effect here
+        this.particles.play('PICKUP_BURST', { 
+            x: this.logicalWidth / 2, 
+            y: LOGICAL_HEIGHT / 2, 
+            color: stage.theme.primary 
+        });
+
+        logger.info('Game', `Applied Stage Theme: ${stage.name}`);
     }
 
     init() {
@@ -112,13 +159,15 @@ export class Game {
         this.score = 0;
         this.gameSpeed = Config.INITIAL_GAME_SPEED;
 
+        // Level System reset
+        if (this.level) this.level.reset();
+
         // Time accumulators for spawning
         this.obstacleTimer = 0;
         this.platformTimer = 0;
         this.cloudTimer = 0;
         this.particleTimer = 0;
         this.itemTimer = 0;
-        this.currentSpawnInterval = Config.SPAWN_INTERVAL_START;
 
         // Entities
         engineRegistry.clear();
@@ -133,8 +182,7 @@ export class Game {
         this.player = new Player(outfit);
         this.player.onGameOver = () => this.gameOver();
 
-        if (this.scoreElement) this.scoreElement.textContent = `Score: 0`;
-        if (this.livesElement) this.livesElement.textContent = `💖 x${this.player.lives}`;
+        this.updateStatsUI();
 
         // Initial environment
         const spawnWidth = this.logicalWidth || 800;
@@ -163,6 +211,13 @@ export class Game {
 
         if (this.finalScoreElement) {
             this.finalScoreElement.textContent = `Final Score: ${this.score}`;
+        }
+    }
+
+    updateStatsUI() {
+        if (this.scoreElement) this.scoreElement.textContent = `Score: ${this.score}`;
+        if (this.livesElement && this.player) {
+            this.livesElement.textContent = `💖 x${this.player.lives}`;
         }
     }
 
@@ -198,24 +253,28 @@ export class Game {
     update(dt) {
         if (this.state.current !== 'PLAYING') return;
 
+        // 1. Update Core Systems
+        this.level.update(dt);
+        this.abilities.update(dt);
+        
+        // Sync Game Speed from Level System
+        this.gameSpeed = this.level.gameSpeed;
+
         const context = {
             config: Config,
             logicalHeight: LOGICAL_HEIGHT,
             gameSpeed: this.gameSpeed,
+            worldModifiers: this.level.worldModifiers, // Pass world modifiers (gravity, etc)
             platforms: engineRegistry.getByType('platform'),
             registry: engineRegistry,
             particles: this.particles,
             onObstaclePassed: () => {
                 this.score++;
-                if (this.scoreElement) this.scoreElement.textContent = `Score: ${this.score}`;
-                if (this.score % 10 === 0) {
-                    this.gameSpeed = Math.min(this.gameSpeed + Config.SPEED_INCREMENT, Config.MAX_GAME_SPEED);
-                    this.currentSpawnInterval = Math.max(Config.SPAWN_INTERVAL_MIN, this.currentSpawnInterval - 0.1);
-                }
+                this.updateStatsUI();
             }
         };
 
-        // 1. Spawning Systems
+        // 2. Spawning Systems (Modified to use LevelSystem intervals)
         this.particleTimer += dt;
         if (this.particleTimer > 0.05) {
             this.particleTimer = 0;
@@ -225,13 +284,13 @@ export class Game {
         }
 
         this.obstacleTimer += dt;
-        if (this.obstacleTimer > this.currentSpawnInterval) {
+        if (this.obstacleTimer > this.level.spawnInterval) {
             this.obstacleTimer = 0;
             new Obstacle(this.logicalWidth + 100, LOGICAL_HEIGHT - Config.GROUND_HEIGHT);
         }
 
         this.platformTimer += dt;
-        if (this.platformTimer > this.currentSpawnInterval * 1.5) {
+        if (this.platformTimer > this.level.spawnInterval * 1.5) {
             this.platformTimer = 0;
             
             let shouldSpawn = false;
@@ -262,28 +321,21 @@ export class Game {
             LevelUtils.spawnRandomItem(x, y);
         }
 
-        // 2. Particle System Update
+        // 3. Particle & Effect Update
         this.particles.update(dt, context);
         this.effects.update(dt, context);
 
-        // 3. Polymorphic Entity Update
+        // 4. Polymorphic Entity Update
         engineRegistry.updateAll(dt, context);
 
-        // Update Stats UI
-        if (this.livesElement) {
-            this.livesElement.textContent = `💖 x${this.player.lives}`;
-        }
-
-        // 
-        // 3. Update Ability UI (Optimized: only if abilities exist)
+        // 5. Ability UI Check (Only if needed, now supported by events too)
         if (this.player.abilities.length > 0) {
+            // We still update it if time-based values change
             this.updateAbilityUI();
-        } else if (this.abilityInventoryElement && this.abilityInventoryElement.children.length > 0) {
-            this.abilityInventoryElement.innerHTML = '';
         }
 
-        // 4. Collision Detection
-        CollisionSystem.resolve(engineRegistry, this.particles);
+        // 6. Collision Detection
+        CollisionSystem.resolve(engineRegistry, this.particles, context);
     }
 
     updateAbilityUI() {
@@ -321,16 +373,23 @@ export class Game {
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Background Theme
+        if (this.level.currentStage) {
+            this.ctx.fillStyle = this.level.currentStage.theme.background;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
         this.ctx.save();
         this.ctx.scale(this.scaleRatio, this.scaleRatio);
 
         // Ordered Drawing via Entity Groups
         engineRegistry.getByType('cloud').forEach(c => c.draw(this.ctx));
 
-        // Ground
-        this.ctx.fillStyle = '#8ce68c';
+        // Ground Theme
+        const theme = this.level.currentStage?.theme || { primary: '#8ce68c', secondary: '#76c476' };
+        this.ctx.fillStyle = theme.primary;
         this.ctx.fillRect(0, LOGICAL_HEIGHT - Config.GROUND_HEIGHT, this.logicalWidth, Config.GROUND_HEIGHT);
-        this.ctx.fillStyle = '#76c476';
+        this.ctx.fillStyle = theme.secondary;
         this.ctx.fillRect(0, LOGICAL_HEIGHT - Config.GROUND_HEIGHT, this.logicalWidth, 5);
 
         this.particles.draw(this.ctx);
@@ -350,12 +409,15 @@ export class Game {
 
         const time = performance.now() / 1000;
         const speed = this.gameSpeed;
+        const stage = this.level.currentStage;
+        const elements = stage?.theme.elements || ['🌸'];
 
         // Loop across logical width
         // Ensure we draw enough flowers to cover the screen
         for (let i = 0; i < this.logicalWidth; i += 100) {
             let offset = ((time * speed) + i) % (this.logicalWidth + 100);
-            this.ctx.fillText('🌸', this.logicalWidth - offset, LOGICAL_HEIGHT - 20);
+            const icon = elements[Math.floor((i / 100) % elements.length)];
+            this.ctx.fillText(icon, this.logicalWidth - offset, LOGICAL_HEIGHT - 20);
         }
     }
 }

@@ -1,6 +1,6 @@
 import { Entity } from '../core/Entity.js';
 import { CollisionLayers, PhysicsUtils } from '../utils/PhysicsUtils.js';
-import { AbilityManager } from '../systems/AbilityManager.js';
+import { eventManager } from '../systems/EventManager.js';
 
 /**
  * ITEM.js
@@ -30,14 +30,15 @@ export class Item extends Entity {
     }
 
     update(dt, context) {
-        const { gameSpeed, config, logicalHeight } = context;
+        const { gameSpeed, config, logicalHeight, worldModifiers } = context;
         
         // Horizontal movement (matches world)
         this.vx = -gameSpeed;
         
         // Gravity
         if (!this.isGrounded) {
-            this.vy += config.GRAVITY * dt;
+            const worldGravityMod = worldModifiers?.gravityMultiplier || 1.0;
+            this.vy += config.GRAVITY * worldGravityMod * dt;
         }
 
         PhysicsUtils.integrate(this, dt);
@@ -93,9 +94,9 @@ export class Item extends Entity {
         ctx.restore();
     }
 
-    onCollision(other, particles) {
+    onCollision(other, particles, context) {
         if (other.entityType === 'player') {
-            AbilityManager.apply(other, this.itemData, { particles });
+            eventManager.emit('ITEM_PICKED_UP', { player: other, itemData: this.itemData, context: { particles } });
             if (particles) particles.play('PICKUP_BURST', { x: this.x + this.width / 2, y: this.y + this.height / 2 });
             this.destroy();
         }

@@ -37,13 +37,30 @@ const VIOLATIONS = {
         pattern: /localStorage\.(setItem|getItem|removeItem|clear)/,
         message: 'Raw localStorage usage found. Use the Storage.js system for persistence.',
         files: ['.js']
+    },
+    CONSOLE_LOG: {
+        pattern: /console\.(log|info|debug)(?!\.\w+)/,
+        message: 'Direct console.log/info/debug found. Use logger.info() or logger.debug() from Logger.js.',
+        files: ['.js']
+    },
+    ONCOLLISION_NO_CONTEXT: {
+        pattern: /onCollision\s*\(\s*\w+\s*,\s*\w+\s*\)\s*{/,
+        message: 'onCollision signature missing context parameter. Should be: onCollision(other, particles, context)',
+        files: ['.js']
+    },
+    MISSING_ERROR_HANDLER: {
+        pattern: /catch\s*\(\s*\w+\s*\)\s*{\s*$/,
+        message: 'Empty catch block found. Use ErrorHandler.handle() to log errors properly.',
+        files: ['.js']
     }
 };
 
 const IGNORE_FILES = [
     'standard-checker.js',
     'Storage.js', // Allowed to use localStorage
-    'StorageManager.js' // Allowed to use localStorage
+    'StorageManager.js', // Allowed to use localStorage
+    'Logger.js', // Allowed to use console
+    'ErrorHandler.js' // Allowed to use console
 ];
 
 const IGNORE_DIRS = [

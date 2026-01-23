@@ -10,6 +10,7 @@ export class GameLoop {
         this.isRunning = false;
         this.requestId = null;
         this.lastTime = 0;
+        this.timeScale = 1.0;
 
         this.tick = this.tick.bind(this);
     }
@@ -29,13 +30,17 @@ export class GameLoop {
         }
     }
 
+    setTimeScale(scale) {
+        this.timeScale = scale;
+    }
+
     tick(currentTime) {
         if (!this.isRunning) return;
 
         // Calculate Delta Time in Seconds
         const dtMs = currentTime - this.lastTime;
         // Cap dt at 0.1s (10 FPS) to prevent huge jumps if tab is inactive
-        const dt = Math.min(dtMs / 1000, 0.1);
+        const dt = Math.min(dtMs / 1000, 0.1) * this.timeScale;
         this.lastTime = currentTime;
 
         this.update(dt);

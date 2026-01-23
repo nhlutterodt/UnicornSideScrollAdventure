@@ -3,7 +3,7 @@ import { Config } from '../Config.js';
 import { AssetPipeline } from '../systems/AssetPipeline.js';
 import { CollisionLayers } from '../utils/PhysicsUtils.js';
 import { BeamEffect } from '../systems/EffectSystem.js';
-import { AbilityManager } from '../systems/AbilityManager.js';
+import { eventManager } from '../systems/EventManager.js';
 
 /**
  * PLAYER.js
@@ -61,7 +61,13 @@ export class Player extends Entity {
         const oldY = this.y;
         
         if (!this.isGrounded) {
-            const gravity = config.GRAVITY * this.physicsMod.gravityMultiplier;
+            const worldGravityMod = context.worldModifiers?.gravityMultiplier || 1.0;
+            const frictionMod = context.worldModifiers?.friction || 1.0;
+            
+            // If friction is low, gravity feels lighter (floaty)
+            const floatyEffect = frictionMod < 1 ? frictionMod : 1.0;
+            
+            const gravity = config.GRAVITY * this.physicsMod.gravityMultiplier * worldGravityMod * floatyEffect;
             this.vy += gravity * dt;
             this.rotation = Math.min(Math.PI / 8, this.vy * 0.002);
         } else {
@@ -90,13 +96,21 @@ export class Player extends Entity {
         // Ground check (centralized)
         const currentGroundY = logicalHeight - config.GROUND_HEIGHT - this.height;
         if (this.y >= currentGroundY) {
-            this.y = currentGroundY;
-            this.vy = 0;
-            this.isGrounded = true;
+            const bounciness = context.worldModifiers?.bounciness || 0;
+            
+            if (bounciness > 0.1 && Math.abs(this.vy) > 100) {
+                this.y = currentGroundY - 2;
+                this.vy = -this.vy * bounciness;
+                this.isGrounded = false;
+            } else {
+                this.y = currentGroundY;
+                this.vy = 0;
+                this.isGrounded = true;
+            }
         }
     }
 
-    onCollision(other, particles) {
+    onCollision(other, particles, context) {
         if (other.entityType === 'obstacle') {
             if (this.invincibleTimer > 0) return;
 
@@ -117,14 +131,22 @@ export class Player extends Entity {
         if (other.entityType === 'platform') {
             // Semi-solid platform logic
             if (this.vy >= 0 && (this.y + this.height - other.y) < 20) {
-                this.y = other.y - this.height;
-                this.vy = 0;
-                this.isGrounded = true;
+                const bounciness = context?.worldModifiers?.bounciness || 0;
+                
+                if (bounciness > 0.1 && Math.abs(this.vy) > 100) {
+                    this.y = other.y - this.height - 2;
+                    this.vy = -this.vy * bounciness;
+                    this.isGrounded = false;
+                } else {
+                    this.y = other.y - this.height;
+                    this.vy = 0;
+                    this.isGrounded = true;
+                }
             }
         }
 
         if (other.entityType === 'item') {
-            AbilityManager.apply(this, other.itemData, { particles });
+            eventManager.emit('ITEM_PICKED_UP', { player: this, itemData: other.itemData, context: { particles } });
             if (particles) particles.play('PICKUP_BURST', { x: this.x + this.width / 2, y: this.y + this.height / 2 });
             other.destroy();
         }
