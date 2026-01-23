@@ -14,6 +14,7 @@ import { Particle } from './entities/Particle.js';
 
 import { Config } from './Config.js';
 import { PhysicsUtils } from './utils/PhysicsUtils.js';
+import { CollisionSystem } from './systems/CollisionSystem.js';
 
 /**
  * GAME.js
@@ -96,6 +97,7 @@ export class Game {
             trail: 'rainbow'
         });
         this.player = new Player(outfit);
+        this.player.onGameOver = () => this.gameOver();
 
         if (this.scoreElement) this.scoreElement.textContent = `Score: 0`;
 
@@ -224,14 +226,8 @@ export class Game {
         // 2. Polymorphic Entity Update
         engineRegistry.updateAll(dt, context);
 
-        // 3. Specialized Systems (Collisions)
-        const obstacles = engineRegistry.getByType('obstacle');
-        for (const o of obstacles) {
-            if (PhysicsUtils.checkCollision(this.player, o, 10)) {
-                this.gameOver();
-                return;
-            }
-        }
+        // 3. Centralized Collision Resolution
+        CollisionSystem.resolve(engineRegistry);
     }
 
     draw() {

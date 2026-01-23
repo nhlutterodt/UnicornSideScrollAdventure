@@ -1,4 +1,5 @@
 import { engineRegistry } from './Registry.js';
+import { CollisionLayers } from '../utils/PhysicsUtils.js';
 
 /**
  * ENTITY.js
@@ -20,6 +21,11 @@ export class Entity {
         this.height = height;
         this.entityType = type;
         this.isDead = false;
+
+        // Collision Setup
+        this.collisionLayer = CollisionLayers.NONE;
+        this.collisionMask = CollisionLayers.NONE;
+        this.collisionPadding = 0;
         
         if (this.shouldRegister()) {
             engineRegistry.register(this, this.entityType);
@@ -48,6 +54,14 @@ export class Entity {
      * @param {CanvasRenderingContext2D} ctx 
      */
     draw(ctx) {
+        // Override in subclasses
+    }
+
+    /**
+     * Lifecycle hook for collision events.
+     * @param {Entity} other 
+     */
+    onCollision(other) {
         // Override in subclasses
     }
 

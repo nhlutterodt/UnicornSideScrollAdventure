@@ -1,5 +1,6 @@
 import { Entity } from '../core/Entity.js';
 import { AssetPipeline } from '../systems/AssetPipeline.js';
+import { CollisionLayers } from '../utils/PhysicsUtils.js';
 
 /**
  * PLAYER.js
@@ -12,9 +13,16 @@ export class Player extends Entity {
         this.isGrounded = false;
         this.rotation = 0;
 
+        // Collision Setup
+        this.collisionLayer = CollisionLayers.PLAYER;
+        this.collisionMask = CollisionLayers.OBSTACLE | CollisionLayers.PLATFORM;
+        this.collisionPadding = 10;
+
         // Visual properties from asset pipeline
         this.outfit = outfit || { body: 'pink', mane: 'gold', accessory: 'none', trail: 'rainbow' };
         this.appearance = AssetPipeline.resolveUnicornColors(this.outfit);
+        
+        this.onGameOver = null; // Callback for Game class
     }
 
     update(dt, context) {
@@ -27,12 +35,14 @@ export class Player extends Entity {
             this.rotation = Math.min(Math.PI / 8, this.vy * 0.002);
         } else {
             this.rotation = 0;
-            // Check if we walked off a platform
-            if (this.y < logicalHeight - config.GROUND_HEIGHT - this.height) {
+            // Check if we walked off a platform or ground
+            const groundY = logicalHeight - config.GROUND_HEIGHT - this.height;
+            
+            if (this.y < groundY - 5) { // If above ground
                 let stillOnPlatform = false;
                 if (platforms) {
                     for (const p of platforms) {
-                        if (this.x < p.x + p.width && this.x + this.width > p.x && Math.abs(this.y + this.height - p.y) < 2) {
+                        if (this.x < p.x + p.width && this.x + this.width > p.x && Math.abs(this.y + this.height - p.y) < 5) {
                             stillOnPlatform = true;
                             break;
                         }
@@ -46,27 +56,27 @@ export class Player extends Entity {
 
         this.y += this.vy * dt;
 
-        // Collision with platforms (only when falling)
-        if (this.vy >= 0 && platforms) {
-            for (const p of platforms) {
-                if (this.x < p.x + p.width && 
-                    this.x + this.width > p.x && 
-                    oldY + this.height <= p.y + 1 && // Was above
-                    this.y + this.height >= p.y) { // Is now below or on
-                    
-                    this.y = p.y - this.height;
-                    this.vy = 0;
-                    this.isGrounded = true;
-                    break;
-                }
-            }
-        }
-
-        const groundY = logicalHeight - config.GROUND_HEIGHT - this.height;
-        if (this.y >= groundY) {
-            this.y = groundY;
+        // Ground check (centralized)
+        const currentGroundY = logicalHeight - config.GROUND_HEIGHT - this.height;
+        if (this.y >= currentGroundY) {
+            this.y = currentGroundY;
             this.vy = 0;
             this.isGrounded = true;
+        }
+    }
+
+    onCollision(other) {
+        if (other.entityType === 'obstacle') {
+            if (this.onGameOver) this.onGameOver();
+        }
+
+        if (other.entityType === 'platform') {
+            // Semi-solid platform logic (only block if falling)
+            if (this.vy >= 0 && (this.y + this.height - other.y) < 20) {
+                this.y = other.y - this.height;
+                this.vy = 0;
+                this.isGrounded = true;
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 import { Entity } from '../core/Entity.js';
-import { PhysicsUtils } from '../utils/PhysicsUtils.js';
+import { PhysicsUtils, CollisionLayers } from '../utils/PhysicsUtils.js';
 
 /**
  * PLATFORM.js
@@ -11,6 +11,10 @@ export class Platform extends Entity {
         this.vx = 0;
         this.vy = 0;
         this.color = '#7afcff';
+
+        // Collision Setup
+        this.collisionLayer = CollisionLayers.PLATFORM;
+        this.collisionMask = CollisionLayers.PLAYER;
     }
 
     update(dt, context) {

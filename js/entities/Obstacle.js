@@ -1,4 +1,5 @@
 import { Entity } from '../core/Entity.js';
+import { CollisionLayers } from '../utils/PhysicsUtils.js';
 
 /**
  * OBSTACLE.js
@@ -11,6 +12,10 @@ export class Obstacle extends Entity {
         
         super(x, y - height, width, height, 'obstacle');
         this.type = Math.random() > 0.5 ? '💎' : '🌵';
+
+        // Collision Setup
+        this.collisionLayer = CollisionLayers.OBSTACLE;
+        this.collisionMask = CollisionLayers.PLAYER;
     }
 
     update(dt, context) {
