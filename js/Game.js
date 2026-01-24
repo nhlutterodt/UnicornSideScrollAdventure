@@ -6,7 +6,6 @@ import { InputManager } from './systems/InputManager.js';
 
 import { Storage } from './systems/Storage.js';
 
-import { Player } from './entities/Player.js';
 import { Obstacle } from './entities/Obstacle.js';
 import { Cloud } from './entities/Cloud.js';
 import { Platform } from './entities/Platform.js';
@@ -23,6 +22,9 @@ import { logger } from './utils/Logger.js';
 import { eventManager } from './systems/EventManager.js';
 import { AbilityManager } from './systems/AbilityManager.js';
 import { LevelSystem } from './systems/LevelSystem.js';
+import { ScoreManager } from './systems/ScoreManager.js';
+import { ViewportManager } from './systems/ViewportManager.js';
+import { PlayerFactory } from './factories/PlayerFactory.js';
 
 /**
  * GAME.js
@@ -59,14 +61,10 @@ export class Game {
         this.effects = new EffectSystem(this.particles);
         this.abilities = new AbilityManager(this);
         this.level = new LevelSystem();
-
-        // Persistent State
-        this.highScore = Storage.load('highScore', 0);
+        this.scoreManager = new ScoreManager();
+        this.viewport = new ViewportManager(this.canvas, this.container, LOGICAL_HEIGHT);
+        this.playerFactory = new PlayerFactory();
         this.updateHighScoreUI();
-
-        // Screen Dimensions (Logical)
-        this.logicalWidth = 800; // Default startup, updated in resize
-        this.scaleRatio = 1;
 
         // Game Logic State
         this.resetInternalState();
@@ -90,6 +88,10 @@ export class Game {
             this.updateAbilityUI();
         });
 
+        eventManager.on('VIEWPORT_RESIZED', (data) => {
+            this.onViewportResize(data);
+        });
+
         eventManager.on('LIFE_CHANGED', () => {
             this.updateStatsUI();
         });
@@ -104,7 +106,7 @@ export class Game {
         
         // You could also trigger a "World Transition" particle effect here
         this.particles.play('PICKUP_BURST', { 
-            x: this.logicalWidth / 2, 
+            x: this.viewport.logicalWidth / 2, 
             y: LOGICAL_HEIGHT / 2, 
             color: stage.theme.primary 
         });
@@ -156,7 +158,7 @@ export class Game {
     }
 
     resetInternalState() {
-        this.score = 0;
+        this.scoreManager.reset();
         this.gameSpeed = Config.INITIAL_GAME_SPEED;
 
         // Level System reset
@@ -172,20 +174,13 @@ export class Game {
         // Entities
         engineRegistry.clear();
 
-        // Load Customization
-        const outfit = Storage.load('current_outfit', {
-            body: 'pink',
-            mane: 'gold',
-            accessory: 'none',
-            trail: 'rainbow'
-        });
-        this.player = new Player(outfit);
-        this.player.onGameOver = () => this.gameOver();
+        // Create Player via Factory
+        this.player = this.playerFactory.create(() => this.gameOver());
 
         this.updateStatsUI();
 
         // Initial environment
-        const spawnWidth = this.logicalWidth || 800;
+        const spawnWidth = this.viewport.logicalWidth || 800;
 
         for (let i = 0; i < 5; i++) {
             const x = Math.random() * spawnWidth;
@@ -202,48 +197,31 @@ export class Game {
     gameOver() {
         this.state.setState('GAMEOVER');
 
-        // Check and Save High Score
-        if (this.score > this.highScore) {
-            this.highScore = this.score;
-            Storage.save('highScore', this.highScore);
+        // Finalize score and check for high score
+        const scoreData = this.scoreManager.finalize();
+        if (scoreData.isHighScore) {
             this.updateHighScoreUI();
         }
 
         if (this.finalScoreElement) {
-            this.finalScoreElement.textContent = `Final Score: ${this.score}`;
+            this.finalScoreElement.textContent = `Final Score: ${this.scoreManager.getScore()}`;
         }
     }
 
     updateStatsUI() {
-        if (this.scoreElement) this.scoreElement.textContent = `Score: ${this.score}`;
+        if (this.scoreElement) this.scoreElement.textContent = `Score: ${this.scoreManager.getScore()}`;
         if (this.livesElement && this.player) {
             this.livesElement.textContent = `💖 x${this.player.lives}`;
         }
     }
 
     updateHighScoreUI() {
-        const text = `High Score: ${this.highScore}`;
+        const text = `High Score: ${this.scoreManager.getHighScore()}`;
         if (this.startHighScoreElement) this.startHighScoreElement.textContent = text;
         if (this.gameOverHighScoreElement) this.gameOverHighScoreElement.textContent = text;
     }
 
-    resize() {
-        if (!this.container) return;
-
-        // 1. Get Physical Size
-        const physicalWidth = this.container.clientWidth;
-        const physicalHeight = this.container.clientHeight;
-
-        // 2. Update Canvas Resolution to match Physical Size (for crisp text/vectors)
-        this.canvas.width = physicalWidth;
-        this.canvas.height = physicalHeight;
-
-        // 3. Calculate Scale Ratio to fit LOGICAL_HEIGHT into physicalHeight
-        this.scaleRatio = physicalHeight / LOGICAL_HEIGHT;
-
-        // 4. Determine Logical Width based on the new aspect ratio
-        this.logicalWidth = physicalWidth / this.scaleRatio;
-
+    onViewportResize(data) {
         // Adjust player position if resizing while idle to keep them on ground
         if (this.state.current !== 'PLAYING' && this.player) {
             this.player.y = LOGICAL_HEIGHT - Config.GROUND_HEIGHT - this.player.height;
@@ -269,7 +247,7 @@ export class Game {
             registry: engineRegistry,
             particles: this.particles,
             onObstaclePassed: () => {
-                this.score++;
+                this.scoreManager.addPoints(1);
                 this.updateStatsUI();
             }
         };
@@ -286,7 +264,7 @@ export class Game {
         this.obstacleTimer += dt;
         if (this.obstacleTimer > this.level.spawnInterval) {
             this.obstacleTimer = 0;
-            new Obstacle(this.logicalWidth + 100, LOGICAL_HEIGHT - Config.GROUND_HEIGHT);
+            new Obstacle(this.viewport.logicalWidth + 100, LOGICAL_HEIGHT - Config.GROUND_HEIGHT);
         }
 
         this.platformTimer += dt;
@@ -303,20 +281,20 @@ export class Game {
             if (shouldSpawn) {
                 const width = Config.PLATFORM_MIN_WIDTH + Math.random() * (Config.PLATFORM_MAX_WIDTH - Config.PLATFORM_MIN_WIDTH);
                 const y = Config.PLATFORM_VERTICAL_RANGE[0] + Math.random() * (Config.PLATFORM_VERTICAL_RANGE[1] - Config.PLATFORM_VERTICAL_RANGE[0]);
-                new Platform(this.logicalWidth + 100, y, width, Config.PLATFORM_HEIGHT);
+                new Platform(this.viewport.logicalWidth + 100, y, width, Config.PLATFORM_HEIGHT);
             }
         }
 
         this.cloudTimer += dt;
         if (this.cloudTimer > 2.5) {
             this.cloudTimer = 0;
-            new Cloud(this.logicalWidth + 100, Math.random() * (LOGICAL_HEIGHT - 150));
+            new Cloud(this.viewport.logicalWidth + 100, Math.random() * (LOGICAL_HEIGHT - 150));
         }
 
         this.itemTimer += dt;
         if (this.itemTimer > Config.ITEM_SPAWN_INTERVAL) {
             this.itemTimer = 0;
-            const x = this.logicalWidth + 100;
+            const x = this.viewport.logicalWidth + 100;
             const y = LevelUtils.getRandomSpawnY(LOGICAL_HEIGHT, Config.GROUND_HEIGHT);
             LevelUtils.spawnRandomItem(x, y);
         }
@@ -380,7 +358,7 @@ export class Game {
         }
 
         this.ctx.save();
-        this.ctx.scale(this.scaleRatio, this.scaleRatio);
+        this.ctx.scale(this.viewport.scaleRatio, this.viewport.scaleRatio);
 
         // Ordered Drawing via Entity Groups
         engineRegistry.getByType('cloud').forEach(c => c.draw(this.ctx));
@@ -388,9 +366,9 @@ export class Game {
         // Ground Theme
         const theme = this.level.currentStage?.theme || { primary: '#8ce68c', secondary: '#76c476' };
         this.ctx.fillStyle = theme.primary;
-        this.ctx.fillRect(0, LOGICAL_HEIGHT - Config.GROUND_HEIGHT, this.logicalWidth, Config.GROUND_HEIGHT);
+        this.ctx.fillRect(0, LOGICAL_HEIGHT - Config.GROUND_HEIGHT, this.viewport.logicalWidth, Config.GROUND_HEIGHT);
         this.ctx.fillStyle = theme.secondary;
-        this.ctx.fillRect(0, LOGICAL_HEIGHT - Config.GROUND_HEIGHT, this.logicalWidth, 5);
+        this.ctx.fillRect(0, LOGICAL_HEIGHT - Config.GROUND_HEIGHT, this.viewport.logicalWidth, 5);
 
         this.particles.draw(this.ctx);
         this.effects.draw(this.ctx);
@@ -415,10 +393,10 @@ export class Game {
 
         // Loop across logical width
         // Ensure we draw enough flowers to cover the screen
-        for (let i = 0; i < this.logicalWidth; i += 100) {
-            let offset = ((time * speed) + i) % (this.logicalWidth + 100);
+        for (let i = 0; i < this.viewport.logicalWidth; i += 100) {
+            let offset = ((time * speed) + i) % (this.viewport.logicalWidth + 100);
             const icon = elements[Math.floor((i / 100) % elements.length)];
-            this.ctx.fillText(icon, this.logicalWidth - offset, LOGICAL_HEIGHT - 20);
+            this.ctx.fillText(icon, this.viewport.logicalWidth - offset, LOGICAL_HEIGHT - 20);
         }
     }
 }
