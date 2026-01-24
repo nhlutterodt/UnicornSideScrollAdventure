@@ -60,7 +60,11 @@ export class ScoreManager {
         const milestones = [10, 25, 50, 100, 250, 500, 1000];
         for (const milestone of milestones) {
             if (oldScore < milestone && this.score >= milestone) {
-                logger.game(VerbosityLevel.LOW, 'ScoreManager', `🎖️ Milestone: ${milestone} points!`);\n                break;\n            }\n        }\n    }
+                logger.game(VerbosityLevel.LOW, 'ScoreManager', `🎖️ Milestone: ${milestone} points!`);
+                break;
+            }
+        }
+    }
 
     /**
      * Reset score to zero (for new game)

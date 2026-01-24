@@ -102,18 +102,40 @@ const music = new Howl({
 4.  **Strict Compliance**: If a coding standard is violated, the task is NOT complete. Correct the standard first.
 5.  **The "Pre-Response" Verification**: Before responding to the user, perform a final `get_errors` call on all files modified or mentioned.
 
-## 4. Aggressive Verification Tool
-A custom script `scripts/standard-checker.js` has been implemented to scan for:
--   Inline styles in HTML.
--   Inline event handlers (onclick, etc.).
--   Inline script or style tags.
--   Direct `.style` assignment in JS (excluding `setProperty`).
--   Raw `localStorage` usage.
--   `console.log()` statements (use Logger.js instead).
+## 4. Aggressive Verification Tools
 
-**Note:** The checker may produce false positives for catch blocks that contain `ErrorHandler.handle()` calls. Manual verification recommended.
+Multiple custom scripts ensure code quality:
 
-**Failure to pass this script constitutes a failure of the agent task.**
+### 4.1 Standard Checker (`scripts/standard-checker.js`)
+Scans for:
+-   Inline styles in HTML
+-   Inline event handlers (onclick, etc.)
+-   Inline script or style tags
+-   Direct `.style` assignment in JS (excluding `setProperty`)
+-   Raw `localStorage` usage
+-   `console.log()` statements (use Logger.js instead)
+
+### 4.2 Import/Export Checker (`scripts/import-export-checker.js`)
+Validates:
+-   Named imports match exported names (case-sensitive)
+-   Default imports reference default exports
+-   Handles `async` function exports
+
+### 4.3 Identifier Usage Checker (`scripts/identifier-usage-checker.js`)
+Validates:
+-   All identifier usages match imported names (case-sensitive)
+-   Catches `logger.error()` when Logger only exports `debug`, `info`, `warn`
+
+### 4.4 Escape Sequence Checker (`scripts/escape-sequence-checker.js`)
+Detects literal escape sequences that cause syntax errors:
+-   `;\n` should be `;` followed by actual newline
+-   `}\n` should be `}` followed by actual newline
+-   `break;\n` and similar statements
+-   Literal `\t`, `\r` outside of strings
+
+**Note:** Standard checker may produce false positives for catch blocks. Use `} catch (err)` on one line, then `{` on the next line to avoid this.
+
+**Failure to pass ALL scripts constitutes a failure of the agent task.**
 
 ## 5. Mandatory Verification Checklist (Response Template)
 

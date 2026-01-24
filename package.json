@@ -4,10 +4,11 @@
   "description": "Unicorn Side Scroll Adventure - Standards Compliant",
   "main": "index.html",
   "scripts": {
-    "test": "node scripts/standard-checker.js && node scripts/import-export-checker.js && node scripts/identifier-usage-checker.js",
+    "test": "node scripts/standard-checker.js && node scripts/import-export-checker.js && node scripts/identifier-usage-checker.js && node scripts/escape-sequence-checker.js",
     "test:standards": "node scripts/standard-checker.js",
     "test:imports": "node scripts/import-export-checker.js",
     "test:identifiers": "node scripts/identifier-usage-checker.js",
+    "test:escape": "node scripts/escape-sequence-checker.js",
     "test:console": "node scripts/console-checker.js",
     "lint": "node scripts/standard-checker.js"
   },
