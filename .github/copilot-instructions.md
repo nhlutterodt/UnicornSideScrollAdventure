@@ -324,6 +324,24 @@ js/
 ✅ Logger abstraction (central logging with levels)
 ✅ Standard-checker.js enforcement (catches 90% of common mistakes)
 
+## Specialized Prompt Library
+
+For deep dives into specific workflows, see [.github/prompts/](prompts/):
+
+**Core Guides**:
+- [performance.md](prompts/performance.md) - Memory management, GC optimization, profiling
+- [entity-template.md](prompts/entity-template.md) - Complete entity boilerplate
+- [game-balance.md](prompts/game-balance.md) - Physics tuning, spawn rates, difficulty curves
+- [visual-effects.md](prompts/visual-effects.md) - Particle recipes and animation patterns
+- [debugging.md](prompts/debugging.md) - Visual debugging, console commands, profiling
+- [events.md](prompts/events.md) - EventManager patterns and cross-system communication
+- [troubleshooting.md](prompts/troubleshooting.md) - Common pitfalls and quick fixes
+
+**Task Templates**:
+- [create-entity.md](prompts/tasks/create-entity.md) - Step-by-step entity creation checklist
+- [add-stage.md](prompts/tasks/add-stage.md) - Complete stage/level addition guide
+- [debug-collision.md](prompts/tasks/debug-collision.md) - Collision debugging workflow
+
 ## Documentation References
 - [docs/architecture.md](docs/architecture.md) - High-level system design
 - [docs/coding_standards.md](docs/coding_standards.md) - Style guide and patterns
