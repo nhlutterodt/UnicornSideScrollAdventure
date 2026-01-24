@@ -1,7 +1,8 @@
 import { Storage } from './systems/Storage.js';
+import { Logger } from './utils/Logger.js';
 
 export function initLevelStudio() {
-    console.log('Level Studio Initialized');
+    Logger.log('LevelStudio', 'Level Studio Initialized');
 
     // -- State --
     const state = {

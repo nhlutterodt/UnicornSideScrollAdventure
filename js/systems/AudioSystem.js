@@ -1,5 +1,7 @@
 'use strict';
 
+import { Logger } from '../utils/Logger.js';
+
 /**
  * AUDIO_SYSTEM.js
  * Handles synthesis and playback of game audio effects.
@@ -103,9 +105,9 @@ export class AudioSystem {
             this.masterGain = this.ctx.createGain();
             this.masterGain.connect(this.ctx.destination);
             this.isInitialized = true;
-            console.log('AudioSystem: Context initialized.');
+            Logger.log('AudioSystem', 'Context initialized.');
         } catch (e) {
-            console.warn('AudioSystem: Web Audio API not supported.', e);
+            Logger.warn('AudioSystem', 'Web Audio API not supported.', e);
         }
     }
 

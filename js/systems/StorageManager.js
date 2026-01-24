@@ -1,3 +1,7 @@
+'use strict';
+
+import { Logger } from '../utils/Logger.js';
+
 /**
  * STORAGE_MANAGER.js
  * Robust wrapper for LocalStorage with namespacing and versioning.
@@ -22,7 +26,7 @@ export class StorageManager {
             const data = JSON.stringify(value);
             localStorage.setItem(`${this.ns}_${key}`, data);
         } catch (e) {
-            console.error('StorageManager: Failed to save data.', e);
+            Logger.error('StorageManager', 'Failed to save data.', e);
         }
     }
 
@@ -36,7 +40,7 @@ export class StorageManager {
             const data = localStorage.getItem(`${this.ns}_${key}`);
             return data ? JSON.parse(data) : defaultValue;
         } catch (e) {
-            console.warn(`StorageManager: Failed to parse data for ${key}. Using default.`, e);
+            Logger.warn('StorageManager', `Failed to parse data for ${key}. Using default.`, e);
             return defaultValue;
         }
     }

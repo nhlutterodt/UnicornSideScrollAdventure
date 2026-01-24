@@ -1,3 +1,5 @@
+import { Logger } from './Logger.js';
+
 /**
  * DOM.js
  * Safety utilities for DOM manipulation.
@@ -12,7 +14,7 @@ export const Dom = {
     get(id, silent = false) {
         const el = document.getElementById(id);
         if (!el && !silent) {
-            console.warn(`DOM: Element #${id} not found in document.`);
+            Logger.warn('DOM', `Element #${id} not found in document.`);
         }
         return el;
     },

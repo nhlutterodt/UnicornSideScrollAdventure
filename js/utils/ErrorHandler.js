@@ -19,7 +19,7 @@ export class ErrorHandler {
 
         if (fatal) {
             // Future: Trigger Game Over or Error Overlay
-            console.error(`FATAL ERROR in ${module}: ${message}`);
+            logger.error('ERROR_HANDLER', `FATAL ERROR in ${module}: ${message}`);
         }
     }
 }
