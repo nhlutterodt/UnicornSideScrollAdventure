@@ -57,16 +57,19 @@ const VIOLATIONS = {
 
 const IGNORE_FILES = [
     'standard-checker.js',
-    'Storage.js', // Allowed to use localStorage
-    'StorageManager.js', // Allowed to use localStorage
-    'Logger.js', // Allowed to use console
-    'ErrorHandler.js' // Allowed to use console
+    'console-checker.js',      // Diagnostic tool, needs console output
+    'init-diagnostics.js',     // Browser diagnostic tool, needs console output
+    'Storage.js',              // Allowed to use localStorage
+    'StorageManager.js',       // Allowed to use localStorage
+    'Logger.js',               // Allowed to use console
+    'ErrorHandler.js'          // Allowed to use console
 ];
 
 const IGNORE_DIRS = [
     'node_modules',
     '.git',
-    'docs'
+    'docs',
+    'libs'
 ];
 
 let errorCount = 0;

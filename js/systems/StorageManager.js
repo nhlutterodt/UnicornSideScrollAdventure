@@ -1,6 +1,6 @@
 'use strict';
 
-import { Logger } from '../utils/Logger.js';
+import { logger } from '../utils/Logger.js';
 
 /**
  * STORAGE_MANAGER.js
@@ -26,7 +26,7 @@ export class StorageManager {
             const data = JSON.stringify(value);
             localStorage.setItem(`${this.ns}_${key}`, data);
         } catch (e) {
-            Logger.error('StorageManager', 'Failed to save data.', e);
+            logger.error('StorageManager', 'Failed to save data.', e);
         }
     }
 
@@ -40,7 +40,7 @@ export class StorageManager {
             const data = localStorage.getItem(`${this.ns}_${key}`);
             return data ? JSON.parse(data) : defaultValue;
         } catch (e) {
-            Logger.warn('StorageManager', `Failed to parse data for ${key}. Using default.`, e);
+            logger.warn('StorageManager', `Failed to parse data for ${key}. Using default.`, e);
             return defaultValue;
         }
     }

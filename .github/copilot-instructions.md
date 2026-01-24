@@ -5,6 +5,33 @@ This is a vanilla JavaScript HTML5 Canvas game using a data-driven, Entity-Compo
 
 ## Critical Architecture Patterns
 
+### 0. Initialization & Load Order (CRITICAL FOR GAME START)
+**MUST READ**: [.github/initialization-guidelines.md](.github/initialization-guidelines.md) before modifying Game.js or main.js.
+
+**CRITICAL**: HTML pages load ONLY their main module:
+- `index.html` → `main.js`
+- `customize.html` → `customize-main.js`
+- `settings.html` → `settings-main.js`
+
+**NEVER add separate `<script>` tags for libraries**. For UMD libraries (like Howler.js), create ESM wrappers that dynamically load via script injection (see `js/libs/howler-wrapper.js` as reference pattern).
+
+All initialization follows strict order:
+1. **Async Config Loading** - `await Config.loadExternalConfig()` BEFORE `new Game()`
+2. **DOM Ready** - Initialize ONLY in `DOMContentLoaded` event
+3. **Validation** - Check all DOM elements exist with clear error messages
+4. **Event Binding** - Register handlers AFTER elements validated
+5. **Loop Start** - Game loop runs continuously, but logic gated by state
+
+**Common Issue**: "Start button doesn't work" → Check button exists before binding:
+```javascript
+const buttons = Dom.all('.js-start-btn');
+if (buttons.length === 0) {
+    logger.warn('Game', 'No start buttons found');
+}
+```
+
+**Debug Tool**: `scripts/init-diagnostics.js` - Copy to browser console to diagnose initialization issues.
+
 ### 1. Entity-Registry Pattern (Core Foundation)
 All game objects MUST extend `Entity` from [js/core/Entity.js](js/core/Entity.js):
 - Entities auto-register with the singleton `engineRegistry` (from [js/core/Registry.js](js/core/Registry.js))
@@ -28,6 +55,47 @@ Business logic lives in **static System classes**, NOT in entities. See [docs/co
 
 **Example**: [js/systems/AbilityManager.js](js/systems/AbilityManager.js) handles all item effects instead of cluttering `Player.js` with switch statements.
 - Entities emit events via `EventManager`
+
+### 2.5. Audio Integration with Howler.js
+The project uses [Howler.js v2.2.3](js/libs/howler.min.js) hosted locally for offline gameplay.
+
+**Critical Rules**:
+- **NEVER use `html5: true`** for short sound effects or procedurally generated audio
+- `html5: true` is ONLY for large files (>5MB) or streaming audio (live streams, long music tracks)
+- Short sounds (<5 seconds) should use **Web Audio API** (Howler's default)
+- Base64 data URLs work perfectly with Web Audio API
+- HTML5 Audio has a limited pool (default: 10 elements) that exhausts quickly
+
+**Correct Pattern**:
+```javascript
+// ✅ CORRECT - Short sound, let Howler use Web Audio API
+const sound = new Howl({
+    src: ['sound.mp3'],  // or base64 data URL
+    volume: 0.5
+});
+
+// ❌ WRONG - html5: true causes "HTML5 Audio pool exhausted" errors
+const sound = new Howl({
+    src: ['short-effect.mp3'],
+    html5: true  // Don't use this for short sounds!
+});
+
+// ✅ CORRECT - Large file or streaming
+const music = new Howl({
+    src: ['long-soundtrack.mp3'],
+    html5: true,  // OK for large files
+    loop: true
+});
+```
+
+**Audio Generation Pipeline** (for procedural sounds):
+1. Web Audio API `OfflineAudioContext` generates waveforms
+2. Convert `AudioBuffer` to WAV format (PCM 16-bit)
+3. Encode WAV `ArrayBuffer` to base64
+4. Create data URL: `data:audio/wav;base64,{base64}`
+5. Load into Howl with Web Audio API (default)
+
+See [audio-test.html](audio-test.html) and [js/audio-test-main.js](js/audio-test-main.js) for reference implementation.
 - Systems subscribe to events and apply state changes
 - **Anti-pattern**: Adding item application logic directly to `Player.js` creates a "God Object"
 

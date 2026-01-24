@@ -322,7 +322,8 @@ export const Config = {
             
             logger.info('Config', `Loaded ${this.STAGES.length} stages, ${this.ITEMS.length} items, ${this.ABILITIES.length} abilities`);
             
-        } catch (error) {
+        } catch (error)
+        {
             ErrorHandler.handle('Config', 'Failed to load external config', true);
             throw error;
         }
@@ -358,7 +359,8 @@ export const Config = {
             logger.debug('Config', `Loaded ${content.length} items for ${key}`);
             return content;
             
-        } catch (error) {
+        } catch (error)
+        {
             logger.warn('Config', `Failed to load ${key}: ${error.message}. Using fallback.`);
             ErrorHandler.handle('Config', `${key} load failure: ${error.message}`, false);
             return this.FALLBACK[key];

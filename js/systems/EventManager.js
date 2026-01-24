@@ -48,7 +48,8 @@ class EventManager {
         this.listeners.get(eventName).forEach(callback => {
             try {
                 callback(data);
-            } catch (error) {
+            } catch (error)
+            {
                 ErrorHandler.handle('EventManager', `Error in listener for ${eventName}: ${error.message}`);
             }
         });

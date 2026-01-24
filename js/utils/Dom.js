@@ -1,4 +1,4 @@
-import { Logger } from './Logger.js';
+import { logger } from './Logger.js';
 
 /**
  * DOM.js
@@ -14,7 +14,7 @@ export const Dom = {
     get(id, silent = false) {
         const el = document.getElementById(id);
         if (!el && !silent) {
-            Logger.warn('DOM', `Element #${id} not found in document.`);
+            logger.warn('DOM', `Element #${id} not found in document.`);
         }
         return el;
     },

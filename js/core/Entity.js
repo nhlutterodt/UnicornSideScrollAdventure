@@ -61,8 +61,9 @@ export class Entity {
      * Lifecycle hook for collision events.
      * @param {Entity} other 
      * @param {ParticleSystem} particles 
+     * @param {Object} context 
      */
-    onCollision(other, particles) {
+    onCollision(other, particles, context) {
         // Override in subclasses
     }
 

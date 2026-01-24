@@ -1,7 +1,7 @@
 import { ParticleSystem } from './systems/ParticleSystem.js';
 import { Config } from './Config.js';
 import { engineRegistry } from './core/Registry.js';
-import { Logger } from './utils/Logger.js';
+import { logger } from './utils/Logger.js';
 
 /**
  * PARTICLE-TEST-MAIN.js
@@ -47,7 +47,7 @@ class ParticleLab {
         // Start the lab loop
         requestAnimationFrame(this.loop.bind(this));
         
-        Logger.log('ParticleLab', 'Particle Lab Initialized. Max Capacity:', Config.PARTICLE_SYSTEM.MAX_PARTICLES);
+        logger.info('ParticleLab', 'Particle Lab Initialized. Max Capacity:', Config.PARTICLE_SYSTEM.MAX_PARTICLES);
     }
 
     triggerEffect(effectId) {

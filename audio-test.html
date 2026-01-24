@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio System Test - Howler.js</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/lab.css">
+</head>
+<body>
+    <div class="audio-test-container">
+        <h1>🎵 Howler.js Audio Test</h1>
+        <p>Test the audio system with placeholder sounds</p>
+        
+        <div>
+            <button class="test-button" id="test-jump">🦄 Jump Sound</button>
+            <button class="test-button" id="test-pickup">⭐ Pickup Sound</button>
+            <button class="test-button" id="test-collision">💥 Collision Sound</button>
+            <button class="test-button" id="test-music">▶ Play Music</button>
+        </div>
+        
+        <div class="volume-control">
+            <label for="volume-slider">🔊 Master Volume: <span id="volume-value">50%</span></label>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5">
+        </div>
+        
+        <div class="status" id="status">
+            Status: Ready
+        </div>
+        
+        <p class="note-text">
+            <strong>Testing:</strong> Jump (high beep), Pickup (chime), Collision (rumble), Music (chord progression)<br>
+            All sounds are procedurally generated. Replace with real audio files for production.
+        </p>
+    </div>
+
+    <!-- Howler.js (local) -->
+    <script src="js/libs/howler.min.js"></script>
+    
+    <!-- Audio System Test -->
+    <script type="module" src="js/audio-test-main.js"></script>
+</body>
+</html>

@@ -5,7 +5,7 @@ const path = require('path');
 
 /**
  * Console Checker
- * Finds all instances of console.log/warn/error/etc. instead of Logger usage.
+ * Finds all instances of direct console usage (log/warn/error/etc.) instead of Logger.
  */
 
 const CONSOLE_PATTERN = /console\.(log|warn|error|info|debug|trace)/g;
@@ -44,26 +44,26 @@ function findConsoleUsage(dir, results = []) {
 }
 
 function main() {
-    console.log('=== Console Usage Checker ===\n');
-    console.log('Scanning for console.log/warn/error usage instead of Logger...\n');
+    process.stdout.write('=== Console Usage Checker ===\n\n');
+    process.stdout.write('Scanning for direct console usage instead of Logger...\n\n');
 
     const jsDir = path.join(process.cwd(), 'js');
     const results = findConsoleUsage(jsDir);
 
     if (results.length === 0) {
-        console.log('✓ No console usage found! All files use Logger correctly.\n');
+        process.stdout.write('✓ No console usage found! All files use Logger correctly.\n\n');
         process.exit(0);
     }
 
-    console.log(`Found ${results.length} console usage violation(s):\n`);
+    process.stdout.write(`Found ${results.length} console usage violation(s):\n\n`);
 
     results.forEach(result => {
-        console.log(`  ${result.file}:${result.line}`);
-        console.log(`    ${result.code}`);
-        console.log('');
+        process.stdout.write(`  ${result.file}:${result.line}\n`);
+        process.stdout.write(`    ${result.code}\n`);
+        process.stdout.write('\n');
     });
 
-    console.log(`Total violations: ${results.length}\n`);
+    process.stdout.write(`Total violations: ${results.length}\n\n`);
     process.exit(1);
 }
 

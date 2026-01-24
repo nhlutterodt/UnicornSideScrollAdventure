@@ -224,3 +224,80 @@
     border-left-color: var(--secondary-blue);
     color: #afdfff;
 }
+
+/* Audio Test Container */
+.audio-test-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.test-button.playing {
+    background: var(--accent-gold);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.volume-control {
+    margin: 30px auto;
+    max-width: 400px;
+}
+
+.volume-control label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.volume-control input[type="range"] {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+}
+
+.volume-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-pink);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.volume-control input[type="range"]::-webkit-slider-thumb:hover {
+    background: var(--secondary-blue);
+    transform: scale(1.2);
+}
+
+.volume-control input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--primary-pink);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+}
+
+.volume-control input[type="range"]::-moz-range-thumb:hover {
+    background: var(--secondary-blue);
+    transform: scale(1.2);
+}
+
+.note-text {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #888;
+}

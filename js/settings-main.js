@@ -1,6 +1,6 @@
 import { AmbientEffects } from './systems/AmbientEffects.js';
 import { Storage } from './systems/Storage.js';
-import { Logger } from './utils/Logger.js';
+import { logger } from './utils/Logger.js';
 
 /**
  * SETTINGS-MAIN.js
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sfxVal) sfxVal.textContent = `${newSettings.sfxVolume}%`;
         
         Storage.save('game_settings', newSettings);
-        Logger.log('Settings', 'Settings saved:', newSettings);
+        logger.info('Settings', 'Settings saved:', newSettings);
     };
 
     [musicSlider, sfxSlider].forEach(el => {

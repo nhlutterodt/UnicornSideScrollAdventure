@@ -1,146 +1,251 @@
 'use strict';
 
-import { Logger } from '../utils/Logger.js';
+import { logger } from '../utils/Logger.js';
+import { Storage } from './Storage.js';
+import { eventManager } from './EventManager.js';
+import { getHowl, getHowler, initHowler } from '../libs/howler-wrapper.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 /**
  * AUDIO_SYSTEM.js
- * Handles synthesis and playback of game audio effects.
- * Modular and non-blocking, following the project's system standards.
+ * Handles audio playback using Howler.js for cross-browser compatibility.
+ * Supports volume persistence, muting, and event-driven sound effects.
+ * 
+ * CRITICAL: Never use html5: true for short sounds (<5 seconds).
+ * Only use html5: true for large files (>5MB) or streaming audio.
+ * See docs/audio_integration_guide.md for details.
  */
 export class AudioSystem {
     constructor() {
-        this.ctx = null;
-        this.masterGain = null;
-        this.isInitialized = false;
+        this.sounds = {};
+        this.initialized = false;
+        this.unlocked = false;
+        this.Howl = null;
+        this.Howler = null;
         
-        // Map of synth definitions
-        this.synthDefinitions = {
-            LASER: (ctx, gain, color) => {
-                const osc = ctx.createOscillator();
-                const mod = ctx.createOscillator();
-                const modGain = ctx.createGain();
-                
-                // Frequency based on color (just for fun)
-                let freq = 800;
-                if (color === '#ff0000') freq = 400;
-                if (color === '#00ff00') freq = 1200;
-                
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(freq, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.2);
-                
-                mod.frequency.setValueAtTime(50, ctx.currentTime);
-                modGain.gain.setValueAtTime(100, ctx.currentTime);
-                
-                mod.connect(modGain);
-                modGain.connect(osc.frequency);
-                
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-                
-                osc.connect(gain);
-                osc.start();
-                mod.start();
-                osc.stop(ctx.currentTime + 0.2);
-            },
-            ROAR: (ctx, gain) => {
-                const osc = ctx.createOscillator();
-                const noise = ctx.createBufferSource();
-                const bufferSize = ctx.sampleRate * 0.5;
-                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
-                
-                noise.buffer = buffer;
-                
-                const filter = ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(1000, ctx.currentTime);
-                filter.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.5);
-                
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.5);
-                
-                gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
-                
-                noise.connect(filter);
-                filter.connect(gain);
-                osc.connect(gain);
-                
-                noise.start();
-                osc.start();
-                noise.stop(ctx.currentTime + 0.5);
-                osc.stop(ctx.currentTime + 0.5);
-            },
-            PICKUP: (ctx, gain) => {
-                const osc = ctx.createOscillator();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(440, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
-                
-                gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-                
-                osc.connect(gain);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.2);
-            }
-        };
+        // Will be set after init()
+        this.savedVolume = Storage.load('audio.volume', 0.7);
+        this.savedMuted = Storage.load('audio.muted', false);
     }
 
     /**
-     * Lazy initialization of AudioContext to satisfy browser autoplay policies.
+     * Initialize audio system - loads Howler.js and applies saved settings
+     * Must be called before registering or playing sounds
+     * @returns {Promise<void>}
      */
-    init() {
-        if (this.isInitialized) return;
+    async init() {
+        if (this.initialized) return;
         
         try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioContext();
-            this.masterGain = this.ctx.createGain();
-            this.masterGain.connect(this.ctx.destination);
-            this.isInitialized = true;
-            Logger.log('AudioSystem', 'Context initialized.');
-        } catch (e) {
-            Logger.warn('AudioSystem', 'Web Audio API not supported.', e);
+            // Load Howler.js dynamically
+            await initHowler();
+            this.Howl = await getHowl();
+            this.Howler = await getHowler();
+            
+            // Apply saved settings
+            this.Howler.volume(this.savedVolume);
+            this.Howler.mute(this.savedMuted);
+            
+            this.initialized = true;
+            logger.info('AudioSystem', `Initialized with volume=${this.savedVolume}, muted=${this.savedMuted}`);
+        } catch (err)
+        {
+            ErrorHandler.handle(err, 'AudioSystem.init', 'Failed to initialize Howler.js');
         }
     }
 
     /**
-     * Play a sound effect by ID.
-     * @param {string} soundId 
-     * @param {Object} params - optional params like color
+     * Register a sound effect for later playback
+     * @param {string} name - Sound identifier (e.g., 'jump', 'pickup')
+     * @param {string|Array} src - File path(s) or data URL
+     * @param {Object} options - Howler options
+     * @param {number} options.volume - Sound volume (0.0 to 1.0)
+     * @param {boolean} options.loop - Whether to loop
+     * @param {number} options.rate - Playback rate (0.5 to 4.0)
      */
-    play(soundId, params = {}) {
-        if (!this.isInitialized) this.init();
-        if (!this.ctx) return;
-
-        // Resume context if suspended (common in browsers)
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
+    registerSound(name, src, options = {}) {
+        if (!this.initialized || !this.Howl) {
+            logger.warn('AudioSystem', 'Cannot register sound - not initialized. Call init() first.');
+            return;
         }
-
-        const synth = this.synthDefinitions[soundId];
-        if (synth) {
-            const effectGain = this.ctx.createGain();
-            effectGain.connect(this.masterGain);
-            synth(this.ctx, effectGain, params.color);
+        
+        if (this.sounds[name]) {
+            logger.warn('AudioSystem', `Sound '${name}' already registered, skipping`);
+            return;
         }
+        
+        this.sounds[name] = new this.Howl({
+            src: Array.isArray(src) ? src : [src],
+            volume: options.volume !== undefined ? options.volume : 1.0,
+            loop: options.loop || false,
+            rate: options.rate || 1.0,
+            onload: () => {
+                logger.debug('AudioSystem', `'${name}' loaded successfully`);
+            },
+            onloaderror: (id, err) => {
+                logger.warn('AudioSystem', `'${name}' failed to load:`, err);
+            },
+            onplayerror: (id, err) => {
+                logger.warn('AudioSystem', `'${name}' failed to play:`, err);
+                // Try to unlock audio on mobile
+                if (!this.unlocked) {
+                    const sound = this.sounds[name];
+                    sound.once('unlock', () => {
+                        logger.info('AudioSystem', 'Audio unlocked via user interaction');
+                        this.unlocked = true;
+                        sound.play();
+                    });
+                }
+            }
+        });
+        
+        logger.debug('AudioSystem', `Registered sound: ${name}`);
     }
 
     /**
-     * Mandatory cleanup for system disposal.
+     * Play a sound effect
+     * @param {string} name - Sound identifier
+     * @param {Object} options - Playback options
+     * @param {number} options.volume - Volume override (0.0 to 1.0)
+     * @param {number} options.rate - Playback rate override (0.5 to 4.0)
+     * @returns {number|null} Sound ID for controlling specific instance, or null if failed
+     */
+    play(name, options = {}) {
+        const sound = this.sounds[name];
+        if (!sound) {
+            logger.warn('AudioSystem', `Cannot play '${name}' - not registered`);
+            return null;
+        }
+        
+        const id = sound.play();
+        
+        // Apply per-instance overrides
+        if (options.volume !== undefined) {
+            sound.volume(options.volume, id);
+        }
+        if (options.rate !== undefined) {
+            sound.rate(options.rate, id);
+        }
+        
+        logger.debug('AudioSystem', `Playing '${name}' (id=${id})`);
+        return id;
+    }
+
+    /**
+     * Stop a sound or all instances of it
+     * @param {string} name - Sound identifier
+     * @param {number} id - Optional sound ID to stop specific instance
+     */
+    stop(name, id = null) {
+        const sound = this.sounds[name];
+        if (!sound) {
+            logger.warn('AudioSystem', `Cannot stop '${name}' - not registered`);
+            return;
+        }
+        
+        sound.stop(id);
+        logger.debug('AudioSystem', `Stopped '${name}'${id ? ` (id=${id})` : ' (all instances)'}`);
+    }
+
+    /**
+     * Pause a sound
+     * @param {string} name - Sound identifier
+     * @param {number} id - Optional sound ID to pause specific instance
+     */
+    pause(name, id = null) {
+        const sound = this.sounds[name];
+        if (!sound) return;
+        
+        sound.pause(id);
+        logger.debug('AudioSystem', `Paused '${name}'`);
+    }
+
+    /**
+     * Check if a sound is currently playing
+     * @param {string} name - Sound identifier
+     * @param {number} id - Optional sound ID to check specific instance
+     * @returns {boolean}
+     */
+    isPlaying(name, id = null) {
+        const sound = this.sounds[name];
+        if (!sound) return false;
+        
+        return sound.playing(id);
+    }
+
+    /**
+     * Set global volume for all sounds
+     * @param {number} volume - Volume from 0.0 to 1.0
+     */
+    setVolume(volume) {
+        if (!this.initialized || !this.Howler) return;
+        
+        const clampedVolume = Math.max(0, Math.min(1, volume));
+        this.Howler.volume(clampedVolume);
+        Storage.save('audio.volume', clampedVolume);
+        eventManager.emit('AUDIO_VOLUME_CHANGED', { volume: clampedVolume });
+        logger.info('AudioSystem', `Volume set to ${(clampedVolume * 100).toFixed(0)}%`);
+    }
+
+    /**
+     * Get current global volume
+     * @returns {number} Volume from 0.0 to 1.0
+     */
+    getVolume() {
+        if (!this.initialized || !this.Howler) return this.savedVolume;
+        return this.Howler.volume();
+    }
+
+    /**
+     * Mute or unmute all audio
+     * @param {boolean} muted - True to mute, false to unmute
+     */
+    setMuted(muted) {
+        if (!this.initialized || !this.Howler) return;
+        
+        this.Howler.mute(muted);
+        Storage.save('audio.muted', muted);
+        eventManager.emit('AUDIO_MUTED_CHANGED', { muted });
+        logger.info('AudioSystem', `Audio ${muted ? 'muted' : 'unmuted'}`);
+    }
+
+    /**
+     * Get current mute state
+     * @returns {boolean}
+     */
+    isMuted() {
+        return Storage.load('audio.muted', false);
+    }
+
+    /**
+     * Unload a specific sound to free memory
+     * @param {string} name - Sound identifier
+     */
+    unloadSound(name) {
+        const sound = this.sounds[name];
+        if (!sound) return;
+        
+        sound.unload();
+        delete this.sounds[name];
+        logger.debug('AudioSystem', `Unloaded sound: ${name}`);
+    }
+
+    /**
+     * Cleanup - unload all sounds and reset state
      */
     dispose() {
-        if (this.ctx) {
-            this.ctx.close();
-            this.ctx = null;
-            this.isInitialized = false;
-        }
+        // Unload all sounds
+        Object.keys(this.sounds).forEach(name => {
+            this.sounds[name].unload();
+        });
+        
+        this.sounds = {};
+        this.initialized = false;
+        this.unlocked = false;
+        
+        logger.info('AudioSystem', 'Disposed');
     }
 }
+
+// Export singleton instance
+export const audioSystem = new AudioSystem();

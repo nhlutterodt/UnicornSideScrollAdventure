@@ -10,6 +10,8 @@ To avoid repeating past mistakes, the following failures have been documented:
 -   **2026-01-23: Assumption of Completion**: Declared a feature "production-ready" without verifying WCAG standards for form inputs (missing `label` associations and `aria-label`).
 -   **2026-01-23: Inconsistent Vendor Prefixing**: Applied `-webkit-backdrop-filter` in new files but failed to audit and fix existing project files (e.g., `level-customize.css`), leading to broken UI on Safari/iOS.
 -   **2026-01-23: Monolithic Logic Failure**: Centralized item/ability logic directly into `Player.js` via a massive switch statement, violating the "Decoupled Entity Construction" standard and the Manager Pattern. Found only thanks to user intervention.
+-   **2026-01-23: Howler.js Misuse**: Added `html5: true` flag to all sound effects without reading documentation. This forced HTML5 Audio elements (limited pool of 10) instead of Web Audio API, causing "HTML5 Audio pool exhausted" errors. `html5: true` should ONLY be used for large files (>5MB) or streaming audio, never for short sound effects or procedural audio. Web Audio API (Howler's default) handles base64 data URLs and short sounds without pool limitations.
+-   **2026-01-23: Multiple Script Tags**: Added separate `<script src="js/libs/howler.min.js"></script>` tag to index.html during AudioSystem refactor, violating single entry point architecture. HTML pages should load ONLY their main module (e.g., main.js). For UMD libraries, create ESM wrappers with dynamic loading (see howler-wrapper.js). NEVER add multiple script tags to HTML.
 
 ---
 
@@ -30,12 +32,58 @@ The following checks **MUST** be performed before claiming any task is complete.
 - [ ] **Standard Transitions**: Use `--transition-fast`, `--transition-mid`, or `--transition-slow` to maintain motion consistency.
 
 ### 2.3. JavaScript Robustness
+- [ ] **Single Entry Point**: HTML pages load ONLY their main module (main.js, customize-main.js, etc.). NEVER add separate `<script>` tags for libraries - create ESM wrappers instead (see howler-wrapper.js).
 - [ ] **Logic Decoupling**: Do entities (Player, Obstacle) contain complex business logic? If so, move it to a System Manager (e.g., `AbilityManager.js`).
 - [ ] **Null Safety**: Always use null checks or optional chaining (`?.`) when accessing DOM elements that might be missing from specific pages (e.g., `if (el) el.addEventListener(...)`).
 - [ ] **Storage Keys**: Use the `Storage.js` system for all persistence. Never use raw `localStorage.setItem`.
 - [ ] **Default Values**: Define a `DEFAULT_SETTINGS` (or similar) constant to avoid "undefined" states in logic.
 - [ ] **No Console Logging**: Never use `console.log()`, `console.warn()`, etc. Use `Logger.js` system instead.
 - [ ] **External Configuration**: Content data (stages, items, abilities) should be in external JSON files, not hard-coded arrays. See [config_json_schemas.md](config_json_schemas.md).
+- [ ] **Howler.js Audio**: Never use `html5: true` for short sounds (<5 seconds) or procedural audio. Only use for large files (>5MB) or streaming. See section 2.3.1 below.
+
+### 2.3.1. Howler.js Audio Integration (CRITICAL)
+**Problem**: The `html5: true` flag in Howler.js forces HTML5 Audio elements, which have a limited pool (default: 10). Using it for short sounds causes "HTML5 Audio pool exhausted" errors and silent playback failures.
+
+**Solution**: Let Howler use Web Audio API (default) for all short sounds and procedural audio.
+
+**Checklist**:
+- [ ] **Short Sounds**: Howl instances for effects <5 seconds do NOT have `html5: true`
+- [ ] **Data URLs**: Base64 data URLs work with Web Audio API (no `html5: true` needed)
+- [ ] **Large Files**: Streaming or large files (>5MB) CAN use `html5: true`
+- [ ] **Pool Warnings**: No "HTML5 Audio pool exhausted" warnings in console
+- [ ] **Error Handlers**: All Howl instances have `onloaderror` callbacks for debugging
+
+**Example - WRONG**:
+```javascript
+// ❌ Causes pool exhaustion for short sounds
+const jump = new Howl({ src: ['jump.mp3'], html5: true });  // BAD!
+const pickup = new Howl({ src: ['pickup.mp3'], html5: true });  // BAD!
+```
+
+**Example - CORRECT**:
+```javascript
+// ✅ Uses Web Audio API (default, no pool limit)
+const jump = new Howl({ 
+    src: ['jump.mp3'], 
+    volume: 0.5,
+    onloaderror: (id, err) => logger.warn('Audio', 'Failed to load jump:', err)
+});
+
+const pickup = new Howl({ 
+    src: ['pickup.mp3'], 
+    volume: 0.7,
+    onloaderror: (id, err) => logger.warn('Audio', 'Failed to load pickup:', err)
+});
+
+// ✅ Large file streaming - html5: true is OK
+const music = new Howl({
+    src: ['soundtrack.mp3'],
+    html5: true,  // OK for large/streaming
+    loop: true
+});
+```
+
+**Reference Implementation**: [audio-test-main.js](../js/audio-test-main.js) demonstrates correct usage with procedural audio generation.
 
 ### 2.4. Configuration & Data Management
 - [ ] **JSON Structure**: All config JSON files must include `version` and `lastModified` metadata.

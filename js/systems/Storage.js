@@ -1,7 +1,7 @@
 'use strict';
 
 import { Config } from '../Config.js';
-import { Logger } from '../utils/Logger.js';
+import { logger } from '../utils/Logger.js';
 
 /**
  * STORAGE.js
@@ -13,7 +13,7 @@ class StorageSystem {
         this.prefix = 'unicorn_magic_run_v1_';
         this.isSupported = this._checkSupport();
         if (!this.isSupported) {
-            Logger.warn('StorageSystem: LocalStorage is not supported or disabled.');
+            logger.warn('StorageSystem: LocalStorage is not supported or disabled.');
         }
     }
 
@@ -63,7 +63,7 @@ class StorageSystem {
             localStorage.setItem(storageKey, serialized);
             return true;
         } catch (e) {
-            Logger.error('StorageSystem: Save failed.', e);
+            logger.error('StorageSystem: Save failed.', e);
             return false;
         }
     }
@@ -94,7 +94,7 @@ class StorageSystem {
             // Fallback for raw data if migration happened or strictness varies
             return defaultValue;
         } catch (e) {
-            Logger.error('StorageSystem: Load failed.', e);
+            logger.error('StorageSystem: Load failed.', e);
             return defaultValue;
         }
     }
