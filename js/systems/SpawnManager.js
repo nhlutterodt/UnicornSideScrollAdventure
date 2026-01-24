@@ -5,7 +5,7 @@ import { Platform } from '../entities/Platform.js';
 import { Cloud } from '../entities/Cloud.js';
 import { Config } from '../Config.js';
 import { LevelUtils } from '../utils/LevelUtils.js';
-import { logger } from '../utils/Logger.js';
+import { logger, VerbosityLevel } from '../utils/Logger.js';
 
 /**
  * SpawnManager - Centralized entity spawning coordination
@@ -117,6 +117,10 @@ export class SpawnManager {
             new Obstacle(spawnX, groundY);
             
             logger.debug('SpawnManager', `Spawned obstacle at x=${spawnX}`);
+            logger.game(VerbosityLevel.HIGH, 'SpawnManager', '🌵 Obstacle spawned', {
+                x: Math.round(spawnX),
+                interval: level.spawnInterval.toFixed(2)
+            });
         }
     }
 

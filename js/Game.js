@@ -9,7 +9,7 @@ import { CollisionSystem } from './systems/CollisionSystem.js';
 import { ParticleSystem } from './systems/ParticleSystem.js';
 import { EffectSystem } from './systems/EffectSystem.js';
 
-import { logger } from './utils/Logger.js';
+import { logger, VerbosityLevel } from './utils/Logger.js';
 import { eventManager } from './systems/EventManager.js';
 import { AbilityManager } from './systems/AbilityManager.js';
 import { LevelSystem } from './systems/LevelSystem.js';
@@ -22,6 +22,7 @@ import { RenderSystem } from './systems/RenderSystem.js';
 import { GameInputHandler } from './systems/GameInputHandler.js';
 import { ThemeManager } from './systems/ThemeManager.js';
 import { EnvironmentInitializer } from './utils/EnvironmentInitializer.js';
+import { LogOverlay } from './systems/LogOverlay.js';
 
 /**
  * GAME.js
@@ -78,6 +79,9 @@ export class Game {
 
         // Game Logic State
         this.resetInternalState();
+
+            // Initialize log overlay (after all systems ready)
+            this.logOverlay = new LogOverlay();
 
             this.setupEvents();
             this.init();
@@ -164,6 +168,7 @@ export class Game {
 
     start() {
         logger.info('Game', 'Starting new game...');
+        logger.game(VerbosityLevel.LOW, 'Game', '🎮 NEW GAME STARTED');
         
         // Reset all game state and create fresh player
         this.resetInternalState();
@@ -172,12 +177,27 @@ export class Game {
         this.state.setState('PLAYING');
         
         logger.info('Game', `Game started. State: ${this.state.current}`);
+        logger.game(VerbosityLevel.MEDIUM, 'Game', 'Entered PLAYING state', { 
+            level: this.level.currentLevel,
+            lives: this.player.lives
+        });
     }
 
     gameOver() {
+        logger.game(VerbosityLevel.LOW, 'Game', '💀 GAME OVER', {
+            finalScore: this.scoreManager.getScore(),
+            finalLevel: this.level.currentLevel,
+            lives: this.player.lives
+        });
+        
         this.state.setState('GAMEOVER');
         const scoreData = this.scoreManager.finalize();
-        if (scoreData.isHighScore) this.updateHighScoreUI();
+        
+        if (scoreData.isHighScore) {
+            logger.game(VerbosityLevel.LOW, 'Game', '🏆 NEW HIGH SCORE!', { score: scoreData.score });
+            this.updateHighScoreUI();
+        }
+        
         this.ui.updateFinalScore(scoreData.score);
     }
 

@@ -4,6 +4,7 @@ import { AssetPipeline } from '../systems/AssetPipeline.js';
 import { CollisionLayers } from '../utils/PhysicsUtils.js';
 import { BeamEffect } from '../systems/EffectSystem.js';
 import { eventManager } from '../systems/EventManager.js';
+import { logger, VerbosityLevel } from '../utils/Logger.js';
 
 /**
  * PLAYER.js
@@ -112,16 +113,26 @@ export class Player extends Entity {
 
     onCollision(other, particles, context) {
         if (other.entityType === 'obstacle') {
-            if (this.invincibleTimer > 0) return;
+            if (this.invincibleTimer > 0) {
+                logger.game(VerbosityLevel.HIGH, 'Player', '🛡️ Invincible - obstacle ignored');
+                return;
+            }
 
             this.lives--;
+            logger.game(VerbosityLevel.MEDIUM, 'Player', '💔 HIT OBSTACLE', {
+                livesRemaining: this.lives,
+                position: { x: Math.round(this.x), y: Math.round(this.y) }
+            });
+            
             if (this.lives <= 0) {
+                logger.game(VerbosityLevel.LOW, 'Player', '☠️ DEATH - No lives remaining');
                 if (this.onGameOver) {
                     if (particles) particles.play('IMPACT_SPARK', { x: this.x + this.width, y: this.y + this.height / 2 });
                     this.onGameOver();
                 }
             } else {
                 // Flash or some feedback for losing a life but staying alive
+                logger.game(VerbosityLevel.MEDIUM, 'Player', '💚 Invincibility granted (1.5s)');
                 if (particles) particles.play('IMPACT_SPARK', { x: this.x + this.width, y: this.y + this.height / 2 });
                 this.invincibleTimer = 1.5; // Short grace period
                 other.destroy(); // Remove the obstacle we hit
@@ -133,10 +144,13 @@ export class Player extends Entity {
             if (this.vy >= 0 && (this.y + this.height - other.y) < 20) {
                 const bounciness = context?.worldModifiers?.bounciness || 0;
                 
+                logger.game(VerbosityLevel.HIGH, 'Player', '🟢 Landed on platform', { bounciness });
+                
                 if (bounciness > 0.1 && Math.abs(this.vy) > 100) {
                     this.y = other.y - this.height - 2;
                     this.vy = -this.vy * bounciness;
                     this.isGrounded = false;
+                    logger.game(VerbosityLevel.HIGH, 'Player', '🔁 Platform bounce', { newVy: Math.round(this.vy) });
                 } else {
                     this.y = other.y - this.height;
                     this.vy = 0;
@@ -146,6 +160,10 @@ export class Player extends Entity {
         }
 
         if (other.entityType === 'item') {
+            logger.game(VerbosityLevel.MEDIUM, 'Player', '✨ ITEM PICKUP', {
+                itemType: other.itemData?.type || 'unknown',
+                itemId: other.itemData?.id || 'unknown'
+            });
             eventManager.emit('ITEM_PICKED_UP', { player: this, itemData: other.itemData, context: { particles } });
             if (particles) particles.play('PICKUP_BURST', { x: this.x + this.width / 2, y: this.y + this.height / 2 });
             other.destroy();
@@ -279,6 +297,13 @@ export class Player extends Entity {
         if (this.isGrounded) {
             this.vy = config.JUMP_FORCE * this.physicsMod.jumpMultiplier;
             this.isGrounded = false;
+            
+            logger.game(VerbosityLevel.MEDIUM, 'Player', '⬆️ JUMP', {
+                jumpForce: config.JUMP_FORCE,
+                multiplier: this.physicsMod.jumpMultiplier,
+                position: { x: Math.round(this.x), y: Math.round(this.y) }
+            });
+            
             // Pass color info for particles
             const particleColor = this.appearance.trail.colors[0];
             if (onJump) onJump(this.x + 10, this.y + this.height, particleColor);

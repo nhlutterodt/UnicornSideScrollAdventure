@@ -3,7 +3,7 @@
  * Decoupled system for managing progression, difficulty, and environmental changes.
  */
 import { Config } from '../Config.js';
-import { logger } from '../utils/Logger.js';
+import { logger, VerbosityLevel } from '../utils/Logger.js';
 import { eventManager } from './EventManager.js';
 import { Storage } from './Storage.js';
 
@@ -67,6 +67,11 @@ export class LevelSystem {
         this.difficultyMultiplier = Math.min(Config.LEVEL_PROGRESSION.MAX_DIFFICULTY_MULTIPLIER, 1.0 + (this.level - 1) * 0.1);
         
         logger.info('LevelSystem', `Level Up! Now at Level ${this.level}`);
+        logger.game(VerbosityLevel.LOW, 'LevelSystem', `📈 LEVEL UP → ${this.level}`, {
+            difficulty: this.difficultyMultiplier.toFixed(2),
+            gameSpeed: Math.round(this.gameSpeed),
+            spawnInterval: this.spawnInterval.toFixed(2)
+        });
         
         this.updateStage();
 
