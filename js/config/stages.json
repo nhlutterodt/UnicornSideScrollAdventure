@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "lastModified": "2026-01-23",
+  "stages": [
+    {
+      "levelStart": 1,
+      "name": "Morning Meadow",
+      "theme": {
+        "primary": "#8ce68c",
+        "secondary": "#76c476",
+        "background": "skyblue",
+        "elements": ["🌸", "🌼", "🍄"]
+      },
+      "modifiers": {
+        "gravityMultiplier": 1.0,
+        "timeScale": 1.0,
+        "friction": 1.0,
+        "bounciness": 0
+      }
+    },
+    {
+      "levelStart": 5,
+      "name": "Twilight Clouds",
+      "theme": {
+        "primary": "#a29bfe",
+        "secondary": "#6c5ce7",
+        "background": "#2d3436",
+        "elements": ["✨", "⭐", "☁️"]
+      },
+      "modifiers": {
+        "gravityMultiplier": 0.8,
+        "timeScale": 1.1,
+        "friction": 0.5,
+        "bounciness": 0.3
+      }
+    },
+    {
+      "levelStart": 10,
+      "name": "Gravity Void",
+      "theme": {
+        "primary": "#2d3436",
+        "secondary": "#000000",
+        "background": "#0984e3",
+        "elements": ["🌀", "⚛️", "☄️"]
+      },
+      "modifiers": {
+        "gravityMultiplier": 1.4,
+        "timeScale": 0.9,
+        "friction": 1.2,
+        "bounciness": 0
+      }
+    }
+  ]
+}

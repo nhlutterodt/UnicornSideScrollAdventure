@@ -130,6 +130,25 @@ star.style.setProperty('--x-pos', Math.random() * 100 + '%');
 -   Use JSDoc style `/** ... */` for classes and complex functions.
 -   Use inline `//` comments to explain *why* something is done, not *what* is done.
 
+### 4.7. Logging & Error Handling
+-   **Never use console.log()**: Use the `Logger.js` system instead with appropriate levels (debug, info, warn, error).
+-   **Error Handling**: Use `ErrorHandler.handle()` for consistent error logging and reporting.
+-   **Event Communication**: Use `EventManager` for decoupled communication between systems.
+
+### 4.8. Configuration & External Data
+-   **No Hard-Coded Content**: Game content (stages, items, abilities) must be in external JSON files, not hard-coded arrays.
+-   **JSON Structure**: All configuration files must include `version` and `lastModified` metadata for tracking.
+-   **Fallback Safety**: Any system loading external data MUST provide fallback defaults (see Config.js FALLBACK pattern).
+-   **Validation**: External data should be validated after loading (check required fields, data types).
+-   **Documentation**: JSON schemas must be documented (see [config_json_schemas.md](config_json_schemas.md)).
+
+**Configuration File Locations:**
+-   Stages: `js/config/stages.json`
+-   Items: `js/config/items.json`
+-   Abilities: `js/config/abilities.json`
+
+**See also:** [Data-Driven Design Pattern](data_driven_design_pattern.md) for best practices on externalization.
+
 ## 5. File Structure
 -   `css/`: Stylesheets.
 -   `js/`: Modular JavaScript files.

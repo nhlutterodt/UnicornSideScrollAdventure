@@ -1,9 +1,30 @@
+import { logger } from './utils/Logger.js';
+import { eventManager } from './systems/EventManager.js';
+import { ErrorHandler } from './utils/ErrorHandler.js';
+
 /**
  * CONFIG.js
- * Centralized data-driven configuration.
+ * Centralized data-driven configuration with external JSON loading.
  * 
- * Adjust these values to tune gameplay feel.
- * Values are properly scaled for Delta Time (Seconds).
+ * Responsibilities:
+ * - Define primitive constants (GRAVITY, JUMP_FORCE, etc.)
+ * - Load external content from JSON files (STAGES, ITEMS, ABILITIES)
+ * - Validate loaded configuration data
+ * - Provide fallback configuration if external load fails
+ * - Expose unified API to game systems
+ * 
+ * External Dependencies:
+ * - ./utils/Logger.js (for logging)
+ * - ./utils/ErrorHandler.js (for error handling)
+ * - ./systems/EventManager.js (for event emission)
+ * 
+ * External Files:
+ * - ./config/stages.json (stage definitions)
+ * - ./config/items.json (item definitions)
+ * - ./config/abilities.json (ability definitions)
+ * 
+ * @module Config
+ * @see config_externalization_implementation_plan.md
  */
 export const Config = {
     // --- Physics & World ---
@@ -22,8 +43,50 @@ export const Config = {
         MAX_DIFFICULTY_MULTIPLIER: 2.5
     },
 
-    // Define "Stages" with unique environmental configurations
-    STAGES: [
+    // --- External Config Paths ---
+    CONFIG_PATHS: {
+        STAGES: './js/config/stages.json',
+        ITEMS: './js/config/items.json',
+        ABILITIES: './js/config/abilities.json'
+    },
+
+    // --- Fallbacks (minimal safe defaults) ---
+    FALLBACK: {
+        STAGES: [
+            {
+                levelStart: 1,
+                name: 'Safe Mode',
+                theme: {
+                    primary: '#8ce68c',
+                    secondary: '#76c476',
+                    background: 'skyblue',
+                    elements: ['🌸']
+                },
+                modifiers: {
+                    gravityMultiplier: 1.0,
+                    timeScale: 1.0,
+                    friction: 1.0,
+                    bounciness: 0
+                }
+            }
+        ],
+        ITEMS: [
+            {
+                id: 'extra_life',
+                type: 'life',
+                name: 'Heart',
+                icon: '💖',
+                color: '#ff3366',
+                value: 1,
+                weight: 10
+            }
+        ],
+        ABILITIES: []
+    },
+
+    // NOTE: STAGES, ITEMS, ABILITIES now loaded from external JSON
+    // Keeping commented for reference during transition
+    /* STAGES: [
         {
             levelStart: 1,
             name: "Morning Meadow",
@@ -72,7 +135,7 @@ export const Config = {
                 bounciness: 0
             }
         }
-    ],
+    ], */
 
     // --- Abstracted Customization Mapping ---
     // Maps Level Studio terms to actual game modifiers
@@ -102,8 +165,9 @@ export const Config = {
         INVINCIBILITY: 'invincibility',
         WORLD: 'world' // Affects the entire world/time
     },
-    ITEM_SPAWN_INTERVAL: 8.0, 
-    ITEMS: [
+    ITEM_SPAWN_INTERVAL: 8.0,
+    
+    /* ITEMS: [
         {
             id: 'extra_life',
             type: 'life',
@@ -164,10 +228,10 @@ export const Config = {
             abilityId: 'roar',
             weight: 30
         }
-    ],
+    ], */
 
     // --- Power Ups (Abilities) ---
-    ABILITIES: [
+    /* ABILITIES: [
         {
             id: 'lasers',
             name: 'Ruby Eye Lasers',
@@ -195,7 +259,7 @@ export const Config = {
                 color: '#ffa500'
             }
         }
-    ],
+    ], */
 
     // --- Spawning Logic ---
     SPAWN_INTERVAL_MIN: 1.0,   
@@ -228,6 +292,76 @@ export const Config = {
             PICKUP_BURST: { count: 20, life: [0.6, 1.2], size: [3, 8], speed: [80, 200], gravity: -50, tier: 0, color: '#7afcff' },
             ROAR: { count: 30, life: [0.3, 0.6], size: [5, 12], speed: [200, 400], gravity: 0, tier: 0, color: '#ffa500' },
             LASER: { count: 5, life: [0.1, 0.3], size: [2, 4], speed: [50, 100], gravity: 0, tier: 0, color: '#ffffff' }
+        }
+    },
+
+    // --- Loader Methods ---
+    /**
+     * Loads external configuration files with fallback support.
+     * @returns {Promise<void>}
+     */
+    async loadExternalConfig() {
+        logger.info('Config', 'Loading external configuration...');
+        
+        try {
+            const loaded = {
+                STAGES: await this._fetchConfig('STAGES'),
+                ITEMS: await this._fetchConfig('ITEMS'),
+                ABILITIES: await this._fetchConfig('ABILITIES')
+            };
+            
+            // Merge loaded data into Config object
+            Object.assign(this, loaded);
+            
+            // Emit event for systems
+            eventManager.emit('CONFIG_LOADED', {
+                stageCount: this.STAGES.length,
+                itemCount: this.ITEMS.length,
+                abilityCount: this.ABILITIES.length
+            });
+            
+            logger.info('Config', `Loaded ${this.STAGES.length} stages, ${this.ITEMS.length} items, ${this.ABILITIES.length} abilities`);
+            
+        } catch (error) {
+            ErrorHandler.handle('Config', 'Failed to load external config', true);
+            throw error;
+        }
+    },
+
+    /**
+     * Fetches and validates a configuration file.
+     * @param {string} key - The config key (STAGES, ITEMS, ABILITIES)
+     * @returns {Promise<Array>} The loaded configuration array
+     * @private
+     */
+    async _fetchConfig(key) {
+        try {
+            const path = this.CONFIG_PATHS[key];
+            logger.debug('Config', `Fetching ${key} from ${path}`);
+            
+            const response = await fetch(path);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            // Extract array from wrapper object
+            const arrayKey = key.toLowerCase();
+            const content = data[arrayKey] || [];
+            
+            if (content.length === 0) {
+                logger.warn('Config', `${key} is empty, using fallback`);
+                return this.FALLBACK[key];
+            }
+            
+            logger.debug('Config', `Loaded ${content.length} items for ${key}`);
+            return content;
+            
+        } catch (error) {
+            logger.warn('Config', `Failed to load ${key}: ${error.message}. Using fallback.`);
+            ErrorHandler.handle('Config', `${key} load failure: ${error.message}`, false);
+            return this.FALLBACK[key];
         }
     }
 };

@@ -22,6 +22,20 @@ Welcome to **Unicorn Magic Run**, a magical side-scrolling adventure game!
 -   **[AI Quality Protocol](ai_quality_protocol.md)**: Deterministic checklist for AI agents to prevent regressions and quality failures.
 -   **[Architecture](architecture.md)**: Core engine design and state management.
 -   **[Item System Architecture](item_system_architecture.md)**: Details on the decoupled Item and Ability system (Manager Pattern).
+## ⚙️ Configuration & Data Management
 
+-   **[Configuration JSON Schemas](config_json_schemas.md)**: Complete reference for editing stages, items, and abilities.
+-   **[Data-Driven Design Pattern](data_driven_design_pattern.md)**: Best practices for externalizing game content.
+-   **[Config Externalization Lessons Learned](config_externalization_lessons_learned.md)**: Implementation insights and team knowledge.
+
+### Editing Game Content
+
+Game content is now stored in external JSON files for easy editing:
+
+-   **Stages**: `js/config/stages.json` - Level themes, physics, and progression
+-   **Items**: `js/config/items.json` - Collectibles, power-ups, and spawn weights
+-   **Abilities**: `js/config/abilities.json` - Special abilities and their effects
+
+See [config_json_schemas.md](config_json_schemas.md) for detailed schema documentation and examples.
 
 To play the game locally, simply open `index.html` in your web browser. No compilation or server is required for the basic version, though using a local server (like Live Server in VS Code) is recommended for best performance.

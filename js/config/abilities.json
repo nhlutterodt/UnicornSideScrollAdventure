@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "lastModified": "2026-01-23",
+  "abilities": [
+    {
+      "id": "lasers",
+      "name": "Ruby Eye Lasers",
+      "icon": "👁️",
+      "color": "#ff0000",
+      "duration": 60,
+      "uses": null,
+      "cooldown": 0.1,
+      "effectConfig": {
+        "type": "beam",
+        "color": "#ff0000",
+        "thickness": 4
+      }
+    },
+    {
+      "id": "roar",
+      "name": "Sonic Roar",
+      "icon": "🦁",
+      "color": "#ffa500",
+      "duration": 120,
+      "uses": 10,
+      "cooldown": 0.8,
+      "effectConfig": {
+        "radius": 300,
+        "color": "#ffa500"
+      }
+    }
+  ]
+}

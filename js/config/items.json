@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "lastModified": "2026-01-23",
+  "items": [
+    {
+      "id": "extra_life",
+      "type": "life",
+      "name": "Sparkle Heart",
+      "icon": "💖",
+      "color": "#ff3366",
+      "value": 1,
+      "weight": 10
+    },
+    {
+      "id": "invincibility_star",
+      "type": "invincibility",
+      "name": "Magic Star",
+      "icon": "⭐",
+      "color": "#fffb00",
+      "duration": 5,
+      "weight": 5
+    },
+    {
+      "id": "gravity_feather",
+      "type": "physics",
+      "name": "Light Feather",
+      "icon": "🪶",
+      "color": "#7afcff",
+      "duration": 8,
+      "modifier": {
+        "gravityMultiplier": 0.5
+      },
+      "weight": 15
+    },
+    {
+      "id": "heavy_stone",
+      "type": "physics",
+      "name": "Heavy Stone",
+      "icon": "🪨",
+      "color": "#808080",
+      "duration": 8,
+      "modifier": {
+        "gravityMultiplier": 1.5,
+        "jumpMultiplier": 0.8
+      },
+      "weight": 5
+    },
+    {
+      "id": "chronos_clock",
+      "type": "world",
+      "name": "Time Clock",
+      "icon": "⏳",
+      "color": "#a29bfe",
+      "duration": 5,
+      "modifier": {
+        "timeScale": 0.5
+      },
+      "weight": 8
+    },
+    {
+      "id": "ability_lasers",
+      "type": "ability",
+      "abilityId": "lasers",
+      "weight": 30
+    },
+    {
+      "id": "ability_roar",
+      "type": "ability",
+      "abilityId": "roar",
+      "weight": 30
+    }
+  ]
+}
