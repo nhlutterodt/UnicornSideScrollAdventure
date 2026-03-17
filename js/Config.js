@@ -48,7 +48,8 @@ export const Config = {
         STAGES: './js/config/stages.json',
         ITEMS: './js/config/items.json',
         ABILITIES: './js/config/abilities.json',
-        EFFECTS: './js/config/effects.json'
+        EFFECTS: './js/config/effects.json',
+        PATTERNS: './js/config/patterns.json'
     },
 
     // --- Fallbacks (minimal safe defaults) ---
@@ -87,7 +88,8 @@ export const Config = {
             "TRAIL": { "count": 1, "life": [0.5, 0.8], "size": [2, 6], "speed": [20, 50], "gravity": 0, "tier": 0, "color": "#ffffff" },
             "LAND_DUST": { "count": 12, "life": [0.4, 0.7], "size": [2, 5], "speed": [50, 150], "gravity": 200, "tier": 1, "color": "#e0e0e0" },
             "IMPACT_SPARK": { "count": 8, "life": [0.3, 0.6], "size": [1, 3], "speed": [100, 300], "gravity": 400, "tier": 2, "color": "#ffd700" }
-        }
+        },
+        PATTERNS: {} // Fallback empty object
     },
 
     // NOTE: STAGES, ITEMS, ABILITIES now loaded from external JSON
@@ -305,7 +307,8 @@ export const Config = {
                 STAGES: await this._fetchConfig('STAGES'),
                 ITEMS: await this._fetchConfig('ITEMS'),
                 ABILITIES: await this._fetchConfig('ABILITIES'),
-                EFFECTS: await this._fetchConfig('EFFECTS', false) // not an array
+                EFFECTS: await this._fetchConfig('EFFECTS', false),
+                PATTERNS: await this._fetchConfig('PATTERNS', false)
             };
             
             // Merge loaded data into Config object
@@ -340,7 +343,9 @@ export const Config = {
             const path = this.CONFIG_PATHS[key];
             logger.debug('Config', `Fetching ${key} from ${path}`);
             
-            const response = await fetch(path);
+            // Cache buster for active development
+            const url = `${path}?v=${Date.now()}`;
+            const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }

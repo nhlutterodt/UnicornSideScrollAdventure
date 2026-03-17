@@ -1,0 +1,29 @@
+{
+  "patterns": {
+    "staircase": {
+      "durationOffset": 800,
+      "entities": [
+        { "type": "platform", "dx": 0, "dy": -50, "width": 150 },
+        { "type": "platform", "dx": 250, "dy": -120, "width": 150 },
+        { "type": "platform", "dx": 500, "dy": -190, "width": 200 },
+        { "type": "hazard", "dx": 250, "dy": 0 }
+      ]
+    },
+    "tunnel": {
+      "durationOffset": 700,
+      "entities": [
+        { "type": "platform", "dx": 0, "dy": -200, "width": 400 },
+        { "type": "hazard", "dx": 0, "dy": 0 },
+        { "type": "hazard", "dx": 200, "dy": 0 }
+      ]
+    },
+    "leap_of_faith": {
+      "durationOffset": 1000,
+      "entities": [
+        { "type": "hazard", "dx": 0, "dy": 0, "width": 200 },
+        { "type": "platform", "dx": 150, "dy": -100, "width": 100 },
+        { "type": "hazard", "dx": 400, "dy": 0, "width": 200 }
+      ]
+    }
+  }
+}
