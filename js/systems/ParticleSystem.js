@@ -62,7 +62,7 @@ export class ParticleSystem {
      * @param {Object} params - {x, y, color?, vx?, vy?}
      */
     play(effectId, params) {
-        const effect = Config.PARTICLE_SYSTEM.EFFECTS[effectId];
+        const effect = Config.EFFECTS[effectId];
         if (!effect) return;
 
         const count = effect.count || 1;

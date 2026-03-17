@@ -3,11 +3,13 @@
 import { AudioSystem } from './AudioSystem.js';
 import { ParticleSystem } from './ParticleSystem.js';
 import { Config } from '../Config.js';
+import { LaserEntity } from '../entities/LaserEntity.js';
+import { engineRegistry } from '../core/Registry.js';
 
 /**
  * EFFECT_SYSTEM.js
  * High-level coordinator for all game feedback (Audio + Visual).
- * Decouples the "Intent" of an effect from the "Implementation" (Particles/Sound).
+ * Decouples the "Intent" of an effect from the "Implementation" (Particles/Sound/Entities).
  */
 export class EffectSystem {
     /**
@@ -16,13 +18,10 @@ export class EffectSystem {
     constructor(particleSystem) {
         this.particles = particleSystem || new ParticleSystem();
         this.audio = new AudioSystem();
-        
-        // Active "Continuous" effects (like beams)
-        this.activeEffects = [];
     }
 
     /**
-     * Trigger a discrete one-shot effect.
+     * Trigger a discrete one-shot effect or spawn a complex visual entity.
      * @param {string} effectId 
      * @param {Object} params - { x, y, color, vx, vy, etc }
      */
@@ -30,44 +29,18 @@ export class EffectSystem {
         // 1. Play Audio
         this.audio.play(effectId, params);
 
-        // 2. Play Particles (if defined in ParticleSystem config)
-        if (Config.PARTICLE_SYSTEM.EFFECTS[effectId]) {
+        // 2. Play Particles (if defined in Data-Driven effects config)
+        if (Config.EFFECTS && Config.EFFECTS[effectId]) {
             this.particles.play(effectId, params);
         }
         
-        // Special case logic for specific engine-wide effects
-        if (effectId === 'ROAR') {
+        // 3. Spawn Complex Visual Entities if applicable
+        if (effectId === 'LASER') {
+            const laser = new LaserEntity(params.source, params.color, params.duration);
+            // new Entity() naturally registers itself, so we just instantiate it
+        } else if (effectId === 'ROAR') {
             this.handleRoarImpact(params);
         }
-    }
-
-    /**
-     * Add a continuous effect that persists for multiple frames.
-     * @param {Effect} effect 
-     */
-    addContinuousEffect(effect) {
-        this.activeEffects.push(effect);
-    }
-
-    /**
-     * Updates all continuous effects.
-     */
-    update(dt, context) {
-        for (let i = this.activeEffects.length - 1; i >= 0; i--) {
-            const effect = this.activeEffects[i];
-            effect.update(dt, context);
-            
-            if (effect.isFinished) {
-                this.activeEffects.splice(i, 1);
-            }
-        }
-    }
-
-    /**
-     * Renders all continuous effects.
-     */
-    draw(ctx) {
-        this.activeEffects.forEach(effect => effect.draw(ctx));
     }
 
     /**
@@ -103,106 +76,25 @@ export class EffectSystem {
     }
 
     /**
+     * Updates continuous effects (now handled by ECS registry, kept for API compatibility).
+     */
+    update(dt, context) {
+        // No-op: Complex effects are now VisualEntities in the Registry
+    }
+
+    /**
+     * Draws continuous effects (now handled by ECS registry, kept for API compatibility).
+     */
+    draw(ctx) {
+        // No-op: Complex effects are now VisualEntities in the Registry
+    }
+
+    /**
      * Mandatory cleanup.
      */
     dispose() {
         this.audio.dispose();
-        this.activeEffects = [];
     }
 }
 
-/**
- * BASE CONTINUOUS EFFECT
- */
-export class ContinuousEffect {
-    constructor(duration) {
-        this.elapsed = 0;
-        this.duration = duration;
-        this.isFinished = false;
-    }
 
-    update(dt) {
-        this.elapsed += dt;
-        if (this.elapsed >= this.duration) {
-            this.isFinished = true;
-        }
-    }
-
-    draw(ctx) {}
-}
-
-/**
- * BEAM EFFECT (Laser)
- */
-export class BeamEffect extends ContinuousEffect {
-    constructor(source, color, duration = 0.2) {
-        super(duration);
-        this.source = source; // Object with x, y
-        this.color = color;
-        this.targetsHit = new Set();
-    }
-
-    update(dt, context) {
-        super.update(dt);
-        if (this.isFinished) return;
-
-        const { registry, particles } = context;
-        if (!registry) return;
-
-        // Laser Collision Logic
-        // In a side-scroller, eye lasers typically go right.
-        const laserX = this.source.x + this.source.width;
-        const laserY = this.source.y + 15; // Eye height
-        const laserLength = 800;
-        
-        const obstacles = registry.getByType('obstacle');
-        obstacles.forEach(obstacle => {
-            if (this.targetsHit.has(obstacle.id)) return;
-
-            // Simple line-rect intersection (simplified for side-scroller: horizontal beam)
-            if (laserY > obstacle.y && laserY < obstacle.y + obstacle.height &&
-                laserX < obstacle.x + obstacle.width && (laserX + laserLength) > obstacle.x) {
-                
-                this.targetsHit.add(obstacle.id);
-                obstacle.destroy();
-                
-                // Visual feedback on target
-                if (particles) {
-                    particles.play('IMPACT_SPARK', { 
-                        x: obstacle.x, 
-                        y: laserY,
-                        color: this.color
-                    });
-                }
-            }
-        });
-    }
-
-    draw(ctx) {
-        const alpha = 1 - (this.elapsed / this.duration);
-        ctx.save();
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 4;
-        ctx.globalAlpha = alpha;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = this.color;
-
-        const startX = this.source.x + this.source.width - 10;
-        const startY = this.source.y + 15;
-
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(startX + 1000, startY);
-        ctx.stroke();
-
-        // Inner white beam
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(startX + 1000, startY);
-        ctx.stroke();
-
-        ctx.restore();
-    }
-}

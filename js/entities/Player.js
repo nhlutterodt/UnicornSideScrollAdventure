@@ -2,7 +2,6 @@ import { Entity } from '../core/Entity.js';
 import { Config } from '../Config.js';
 import { AssetPipeline } from '../systems/AssetPipeline.js';
 import { CollisionLayers } from '../utils/PhysicsUtils.js';
-import { BeamEffect } from '../systems/EffectSystem.js';
 import { eventManager } from '../systems/EventManager.js';
 import { logger, VerbosityLevel } from '../utils/Logger.js';
 import { SpriteRenderer } from '../core/SpriteRenderer.js';
@@ -285,8 +284,7 @@ export class Player extends Entity {
         if (effectSystem) {
             if (ability.id.startsWith('lasers')) {
                 const color = ability.effectConfig?.color || ability.color || '#ff0000';
-                effectSystem.trigger('LASER', { color });
-                effectSystem.addContinuousEffect(new BeamEffect(this, color, 0.2));
+                effectSystem.trigger('LASER', { source: this, color, duration: 0.2 });
             } else if (ability.id === 'roar') {
                 const radius = ability.effectConfig?.radius || 300;
                 effectSystem.trigger('ROAR', { 

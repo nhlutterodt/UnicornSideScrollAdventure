@@ -47,7 +47,8 @@ export const Config = {
     CONFIG_PATHS: {
         STAGES: './js/config/stages.json',
         ITEMS: './js/config/items.json',
-        ABILITIES: './js/config/abilities.json'
+        ABILITIES: './js/config/abilities.json',
+        EFFECTS: './js/config/effects.json'
     },
 
     // --- Fallbacks (minimal safe defaults) ---
@@ -81,7 +82,12 @@ export const Config = {
                 weight: 10
             }
         ],
-        ABILITIES: []
+        ABILITIES: [],
+        EFFECTS: {
+            "TRAIL": { "count": 1, "life": [0.5, 0.8], "size": [2, 6], "speed": [20, 50], "gravity": 0, "tier": 0, "color": "#ffffff" },
+            "LAND_DUST": { "count": 12, "life": [0.4, 0.7], "size": [2, 5], "speed": [50, 150], "gravity": 200, "tier": 1, "color": "#e0e0e0" },
+            "IMPACT_SPARK": { "count": 8, "life": [0.3, 0.6], "size": [1, 3], "speed": [100, 300], "gravity": 400, "tier": 2, "color": "#ffd700" }
+        }
     },
 
     // NOTE: STAGES, ITEMS, ABILITIES now loaded from external JSON
@@ -283,16 +289,7 @@ export const Config = {
         MAX_PARTICLES: 512,
         TIER2_MAX_ACTIVE: 64,
         TIER2_MAX_CHECKS_PER_FRAME: 256,
-        DESPAWN_MARGIN: 200,
-        
-        EFFECTS: {
-            TRAIL: { count: 1, life: [0.5, 0.8], size: [2, 6], speed: [20, 50], gravity: 0, tier: 0, color: '#ffffff' },
-            LAND_DUST: { count: 12, life: [0.4, 0.7], size: [2, 5], speed: [50, 150], gravity: 200, tier: 1, color: '#e0e0e0' },
-            IMPACT_SPARK: { count: 8, life: [0.3, 0.6], size: [1, 3], speed: [100, 300], gravity: 400, tier: 2, color: '#ffd700' },
-            PICKUP_BURST: { count: 20, life: [0.6, 1.2], size: [3, 8], speed: [80, 200], gravity: -50, tier: 0, color: '#7afcff' },
-            ROAR: { count: 30, life: [0.3, 0.6], size: [5, 12], speed: [200, 400], gravity: 0, tier: 0, color: '#ffa500' },
-            LASER: { count: 5, life: [0.1, 0.3], size: [2, 4], speed: [50, 100], gravity: 0, tier: 0, color: '#ffffff' }
-        }
+        DESPAWN_MARGIN: 200
     },
 
     // --- Loader Methods ---
@@ -307,7 +304,8 @@ export const Config = {
             const loaded = {
                 STAGES: await this._fetchConfig('STAGES'),
                 ITEMS: await this._fetchConfig('ITEMS'),
-                ABILITIES: await this._fetchConfig('ABILITIES')
+                ABILITIES: await this._fetchConfig('ABILITIES'),
+                EFFECTS: await this._fetchConfig('EFFECTS', false) // not an array
             };
             
             // Merge loaded data into Config object
@@ -317,10 +315,11 @@ export const Config = {
             eventManager.emit('CONFIG_LOADED', {
                 stageCount: this.STAGES.length,
                 itemCount: this.ITEMS.length,
-                abilityCount: this.ABILITIES.length
+                abilityCount: this.ABILITIES.length,
+                effectsLoaded: Object.keys(this.EFFECTS).length > 0
             });
             
-            logger.info('Config', `Loaded ${this.STAGES.length} stages, ${this.ITEMS.length} items, ${this.ABILITIES.length} abilities`);
+            logger.info('Config', `Loaded ${this.STAGES.length} stages, ${this.ITEMS.length} items, ${this.ABILITIES.length} abilities, and effects.`);
             
         } catch (error)
         {
@@ -331,11 +330,12 @@ export const Config = {
 
     /**
      * Fetches and validates a configuration file.
-     * @param {string} key - The config key (STAGES, ITEMS, ABILITIES)
-     * @returns {Promise<Array>} The loaded configuration array
+     * @param {string} key - The config key (STAGES, ITEMS, ABILITIES, EFFECTS)
+     * @param {boolean} isArray - Whether the returned data should be an array
+     * @returns {Promise<any>} The loaded configuration
      * @private
      */
-    async _fetchConfig(key) {
+    async _fetchConfig(key, isArray = true) {
         try {
             const path = this.CONFIG_PATHS[key];
             logger.debug('Config', `Fetching ${key} from ${path}`);
@@ -347,16 +347,16 @@ export const Config = {
             
             const data = await response.json();
             
-            // Extract array from wrapper object
-            const arrayKey = key.toLowerCase();
-            const content = data[arrayKey] || [];
+            // Extract from wrapper object
+            const jsonKey = key.toLowerCase();
+            const content = data[jsonKey];
             
-            if (content.length === 0) {
-                logger.warn('Config', `${key} is empty, using fallback`);
+            if (!content || (isArray && content.length === 0) || (!isArray && Object.keys(content).length === 0)) {
+                logger.warn('Config', `${key} is empty or missing, using fallback`);
                 return this.FALLBACK[key];
             }
             
-            logger.debug('Config', `Loaded ${content.length} items for ${key}`);
+            logger.debug('Config', `Loaded data for ${key}`);
             return content;
             
         } catch (error)
