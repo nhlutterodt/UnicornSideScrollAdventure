@@ -5,6 +5,8 @@ import { CollisionLayers } from '../utils/PhysicsUtils.js';
 import { BeamEffect } from '../systems/EffectSystem.js';
 import { eventManager } from '../systems/EventManager.js';
 import { logger, VerbosityLevel } from '../utils/Logger.js';
+import { SpriteRenderer } from '../core/SpriteRenderer.js';
+import { assetManager } from '../systems/AssetManager.js';
 
 /**
  * PLAYER.js
@@ -21,6 +23,8 @@ export class Player extends Entity {
         this.collisionLayer = CollisionLayers.PLAYER;
         this.collisionMask = CollisionLayers.OBSTACLE | CollisionLayers.PLATFORM | CollisionLayers.ITEM;
         this.collisionPadding = 10;
+        
+        this.renderLayer = 2; // Z_LAYERS.ENTITIES
 
         // Visual properties from asset pipeline
         this.outfit = outfit || { body: 'pink', mane: 'gold', accessory: 'none', trail: 'rainbow' };
@@ -39,6 +43,13 @@ export class Player extends Entity {
         // Physics Modifiers
         this.physicsMod = { gravityMultiplier: 1, jumpMultiplier: 1 };
         this.physicsModTimer = 0;
+
+        // Animation System
+        this.sprite = new SpriteRenderer('player_sprite', 50, 50, {
+            idle: { row: 0, frames: 1, speed: 1 },
+            run: { row: 1, frames: 6, speed: 12 },
+            jump: { row: 2, frames: 1, speed: 1 }
+        });
     }
 
     update(dt, context) {
@@ -109,6 +120,17 @@ export class Player extends Entity {
                 this.isGrounded = true;
             }
         }
+
+        // --- Animation State Machine ---
+        if (!this.isGrounded) {
+            this.sprite.setState('jump');
+        } else if (context.gameSpeed > 0) {
+            this.sprite.setState('run');
+        } else {
+            this.sprite.setState('idle');
+        }
+        
+        this.sprite.update(dt);
     }
 
     onCollision(other, particles, context) {
@@ -311,76 +333,103 @@ export class Player extends Entity {
     }
 
     draw(ctx) {
-        ctx.save();
-        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-        ctx.rotate(this.rotation);
+        const image = assetManager.getImage(this.sprite.imageKey);
 
-        // Draw shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.1)';
-        ctx.beginPath();
-        ctx.ellipse(0, 25, 20, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
+        if (image) {
+            // New Sprite Rendering Pipeline
+            // If sprite sheet is loaded, defer rendering to SpriteRenderer
+            ctx.save();
+            
+            // Draw Invincibility Glow
+            if (this.invincibleTimer > 0) {
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                ctx.rotate(this.rotation);
+                ctx.strokeStyle = `hsla(${Date.now() % 360}, 100%, 50%, 0.5)`;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(0, 0, 35, 0, Math.PI * 2);
+                ctx.stroke();
+                // Reset translation for sprite draw
+                ctx.rotate(-this.rotation);
+                ctx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
+            }
 
-        // Draw Body (simplified unicorn shape)
-        ctx.fillStyle = this.appearance.body;
-        
-        // Main Body
-        ctx.beginPath();
-        ctx.roundRect(-20, -15, 35, 25, 10);
-        ctx.fill();
+            this.sprite.draw(ctx, this.x, this.y, this.width, this.height, this.rotation);
+            ctx.restore();
 
-        // Head/Neck
-        ctx.beginPath();
-        ctx.moveTo(5, -10);
-        ctx.lineTo(15, -30);
-        ctx.lineTo(25, -25);
-        ctx.lineTo(15, 0);
-        ctx.closePath();
-        ctx.fill();
+        } else {
+            // Primitive Canvas Drawing Fallback
+            ctx.save();
+            ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+            ctx.rotate(this.rotation);
 
-        // Mane
-        ctx.fillStyle = this.appearance.mane;
-        ctx.beginPath();
-        ctx.arc(8, -25, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(4, -15, 5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Tail
-        ctx.beginPath();
-        ctx.arc(-22, 0, 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Horn
-        ctx.fillStyle = '#ffd700'; // Gold horn
-        ctx.beginPath();
-        ctx.moveTo(18, -30);
-        ctx.lineTo(25, -45);
-        ctx.lineTo(22, -28);
-        ctx.fill();
-
-        // Eye
-        ctx.fillStyle = '#333';
-        ctx.beginPath();
-        ctx.arc(20, -25, 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Accessory
-        if (this.appearance.accessory) {
-            ctx.font = '20px serif';
-            ctx.fillText(this.appearance.accessory, 15, -40);
-        }
-
-        // Draw Invincibility Glow
-        if (this.invincibleTimer > 0) {
-            ctx.strokeStyle = `hsla(${Date.now() % 360}, 100%, 50%, 0.5)`;
-            ctx.lineWidth = 4;
+            // Draw shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
             ctx.beginPath();
-            ctx.arc(0, 0, 35, 0, Math.PI * 2);
-            ctx.stroke();
-        }
+            ctx.ellipse(0, 25, 20, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-        ctx.restore();
+            // Draw Body (simplified unicorn shape)
+            ctx.fillStyle = this.appearance.body;
+            
+            // Main Body
+            ctx.beginPath();
+            ctx.roundRect(-20, -15, 35, 25, 10);
+            ctx.fill();
+
+            // Head/Neck
+            ctx.beginPath();
+            ctx.moveTo(5, -10);
+            ctx.lineTo(15, -30);
+            ctx.lineTo(25, -25);
+            ctx.lineTo(15, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // Mane
+            ctx.fillStyle = this.appearance.mane;
+            ctx.beginPath();
+            ctx.arc(8, -25, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(4, -15, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tail
+            ctx.beginPath();
+            ctx.arc(-22, 0, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Horn
+            ctx.fillStyle = '#ffd700'; // Gold horn
+            ctx.beginPath();
+            ctx.moveTo(18, -30);
+            ctx.lineTo(25, -45);
+            ctx.lineTo(22, -28);
+            ctx.fill();
+
+            // Eye
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(20, -25, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Accessory
+            if (this.appearance.accessory) {
+                ctx.font = '20px serif';
+                ctx.fillText(this.appearance.accessory, 15, -40);
+            }
+
+            // Draw Invincibility Glow
+            if (this.invincibleTimer > 0) {
+                ctx.strokeStyle = `hsla(${Date.now() % 360}, 100%, 50%, 0.5)`;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(0, 0, 35, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
     }
 }

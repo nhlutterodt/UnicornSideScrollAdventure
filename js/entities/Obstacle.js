@@ -16,6 +16,8 @@ export class Obstacle extends Entity {
         // Collision Setup
         this.collisionLayer = CollisionLayers.OBSTACLE;
         this.collisionMask = CollisionLayers.PLAYER;
+        
+        this.renderLayer = 2; // Z_LAYERS.ENTITIES
     }
 
     update(dt, context) {

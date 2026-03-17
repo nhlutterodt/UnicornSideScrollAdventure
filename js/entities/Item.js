@@ -27,6 +27,8 @@ export class Item extends Entity {
         // Animation
         this.bobOffset = Math.random() * Math.PI * 2;
         this.bobSpeed = 3;
+        
+        this.renderLayer = 2; // Z_LAYERS.ENTITIES
     }
 
     update(dt, context) {

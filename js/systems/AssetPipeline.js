@@ -1,6 +1,7 @@
 'use strict';
 
 import { Config } from '../Config.js';
+import { assetManager } from './AssetManager.js';
 
 /**
  * ASSET_PIPELINE.js

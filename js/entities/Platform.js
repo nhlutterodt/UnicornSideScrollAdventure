@@ -15,6 +15,7 @@ export class Platform extends Entity {
         // Collision Setup
         this.collisionLayer = CollisionLayers.PLATFORM;
         this.collisionMask = CollisionLayers.PLAYER;
+        this.renderLayer = 1; // Z_LAYERS.ENVIRONMENT_BACK
     }
 
     update(dt, context) {

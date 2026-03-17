@@ -14,6 +14,7 @@ export class Cloud extends Entity {
         
         this.speed = (Math.random() * 1 + 0.5) * 60; // Scale for time-based (approx 30-90 px/s)
         this.size = size;
+        this.renderLayer = 0; // Z_LAYERS.BACKGROUND
     }
 
     update(dt, context) {
