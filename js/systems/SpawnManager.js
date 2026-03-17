@@ -46,8 +46,6 @@ export class SpawnManager {
         this.itemTimer = 0;
 
         // Constants
-        this.CLOUD_SPAWN_INTERVAL = 2.5;
-        this.PARTICLE_TRAIL_INTERVAL = 0.05;
         this.SPAWN_OFFSET = 100; // Pixels beyond viewport edge
         
         // Pattern logic
@@ -102,7 +100,7 @@ export class SpawnManager {
      */
     spawnParticleTrail(dt, player, particles) {
         this.particleTimer += dt;
-        if (this.particleTimer > this.PARTICLE_TRAIL_INTERVAL) {
+        if (this.particleTimer > Config.PARTICLE_TRAIL_INTERVAL) {
             this.particleTimer = 0;
             
             if (player.appearance && player.appearance.trail) {
@@ -128,8 +126,8 @@ export class SpawnManager {
             const groundY = logicalHeight - Config.GROUND_HEIGHT;
             const stageName = level.currentStage ? level.currentStage.name : '';
             
-            // 25% chance to spawn a structured pattern instead of a generic obstacle
-            if (Config.PATTERNS && Object.keys(Config.PATTERNS).length > 0 && Math.random() < 0.25) {
+            // Chance to spawn a structured pattern instead of a generic obstacle
+            if (Config.PATTERNS && Object.keys(Config.PATTERNS).length > 0 && Math.random() < Config.PATTERN_PROBABILITY) {
                 const patternKeys = Object.keys(Config.PATTERNS);
                 const randomPatternKey = patternKeys[Math.floor(Math.random() * patternKeys.length)];
                 const pattern = Config.PATTERNS[randomPatternKey];
@@ -137,7 +135,7 @@ export class SpawnManager {
                 this.spawnPattern(pattern, spawnX, groundY, stageName);
                 
                 // Set the cooldown (in pixels) so we wait for the pattern to pass before resuming normal spawns
-                this.patternCooldown = pattern.durationOffset || 1000;
+                this.patternCooldown = pattern.durationOffset || Config.PATTERN_COOLDOWN_FALLBACK;
                 
                 logger.game(VerbosityLevel.HIGH, 'SpawnManager', `🧩 Pattern spawned: ${randomPatternKey}`, {
                     x: Math.round(spawnX), offset: this.patternCooldown
@@ -218,16 +216,16 @@ export class SpawnManager {
                 const y = Config.PLATFORM_VERTICAL_RANGE[0] + 
                     Math.random() * (Config.PLATFORM_VERTICAL_RANGE[1] - Config.PLATFORM_VERTICAL_RANGE[0]);
                 
-                // 15% chance for a crumbling platform
+                // Chance for a crumbling platform
                 let platform;
-                if (Math.random() < 0.15) {
+                if (Math.random() < Config.CRUMBLING_PLATFORM_PROBABILITY) {
                     platform = new CrumblingPlatform(spawnX, y, width, Config.PLATFORM_HEIGHT);
                     logger.debug('SpawnManager', `Spawned crumbling platform at x=${spawnX}`);
                 } else {
                     platform = new Platform(spawnX, y, width, Config.PLATFORM_HEIGHT);
                     
-                    // If it's a regular platform, maybe spawn a jump pad on it! (10% chance)
-                    if (Math.random() < 0.10) {
+                    // If it's a regular platform, maybe spawn a jump pad on it!
+                    if (Math.random() < Config.JUMP_PAD_ON_PLATFORM_PROBABILITY) {
                         const jumpPadX = spawnX + (width / 2) - 20; // Center it on the platform
                         new JumpPad(jumpPadX, y);
                         logger.debug('SpawnManager', `Spawned jump pad on platform at x=${jumpPadX}`);
@@ -243,7 +241,7 @@ export class SpawnManager {
      */
     spawnClouds(dt, spawnX, logicalHeight) {
         this.cloudTimer += dt;
-        if (this.cloudTimer > this.CLOUD_SPAWN_INTERVAL) {
+        if (this.cloudTimer > Config.CLOUD_SPAWN_INTERVAL) {
             this.cloudTimer = 0;
             
             const y = Math.random() * (logicalHeight - 150);

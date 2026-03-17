@@ -1,6 +1,7 @@
 'use strict';
 
 import { Platform } from './Platform.js';
+import { Config } from '../Config.js';
 import { logger, VerbosityLevel } from '../utils/Logger.js';
 
 export class CrumblingPlatform extends Platform {
@@ -11,7 +12,7 @@ export class CrumblingPlatform extends Platform {
         // Crumbling state
         this.isCrumbling = false;
         this.crumbleTimer = 0;
-        this.crumbleDelay = 0.4; // Seconds before it falls
+        this.crumbleDelay = Config.CRUMBLING_PLATFORM_DELAY; // Seconds before it falls
         this.shakeOffset = 0;
         
         // Styling override

@@ -64,7 +64,7 @@ export class LevelSystem {
 
     levelUp(newLevel) {
         this.level = newLevel;
-        this.difficultyMultiplier = Math.min(Config.LEVEL_PROGRESSION.MAX_DIFFICULTY_MULTIPLIER, 1.0 + (this.level - 1) * 0.1);
+        this.difficultyMultiplier = Math.min(Config.LEVEL_PROGRESSION.MAX_DIFFICULTY_MULTIPLIER, 1.0 + (this.level - 1) * Config.LEVEL_PROGRESSION.DIFFICULTY_INCREMENT_PER_LEVEL);
         
         logger.info('LevelSystem', `Level Up! Now at Level ${this.level}`);
         logger.game(VerbosityLevel.LOW, 'LevelSystem', `📈 LEVEL UP → ${this.level}`, {
