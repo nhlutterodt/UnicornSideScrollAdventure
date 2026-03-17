@@ -10,8 +10,17 @@
     "test:identifiers": "node scripts/identifier-usage-checker.js",
     "test:escape": "node scripts/escape-sequence-checker.js",
     "test:console": "node scripts/console-checker.js",
-    "lint": "node scripts/standard-checker.js"
+    "lint": "node scripts/standard-checker.js",
+    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:integration": "playwright test --project=integration",
+    "test:regression": "playwright test --project=regression"
   },
+  "type": "module",
   "author": "GitHub Copilot",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.42.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
 }
