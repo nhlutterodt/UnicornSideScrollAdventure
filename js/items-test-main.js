@@ -1,4 +1,5 @@
 import { Player } from './entities/Player.js';
+import { ErrorHandler } from './utils/ErrorHandler.js';
 import { Item } from './entities/Item.js';
 import { Config } from './Config.js';
 import { engineRegistry } from './core/Registry.js';
@@ -205,6 +206,15 @@ class ItemsLab {
         this.effects.draw(this.ctx);
     }
 }
+// Async init to ensure config loads
+async function initLab() {
+    try {
+        await Config.loadExternalConfig();
+        window.lab = new ItemsLab();
+    } catch (err) { // handle error
+        ErrorHandler.handle('ItemsLab', err.message, true);
+    }
+}
 
-// Global instance for debugging
-window.lab = new ItemsLab();
+// Auto-init
+document.addEventListener('DOMContentLoaded', initLab);

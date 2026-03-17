@@ -178,7 +178,7 @@ export class Game {
         
         logger.info('Game', `Game started. State: ${this.state.current}`);
         logger.game(VerbosityLevel.MEDIUM, 'Game', 'Entered PLAYING state', { 
-            level: this.level.currentLevel,
+            level: this.level.level,
             lives: this.player.lives
         });
     }
@@ -186,7 +186,7 @@ export class Game {
     gameOver() {
         logger.game(VerbosityLevel.LOW, 'Game', '💀 GAME OVER', {
             finalScore: this.scoreManager.getScore(),
-            finalLevel: this.level.currentLevel,
+            finalLevel: this.level.level,
             lives: this.player.lives
         });
         
