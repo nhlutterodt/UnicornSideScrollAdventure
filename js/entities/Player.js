@@ -6,6 +6,7 @@ import { eventManager } from '../systems/EventManager.js';
 import { logger, VerbosityLevel } from '../utils/Logger.js';
 import { SpriteRenderer } from '../core/SpriteRenderer.js';
 import { assetManager } from '../systems/AssetManager.js';
+import { InputBuffer } from '../systems/InputBuffer.js';
 
 /**
  * PLAYER.js
@@ -17,6 +18,10 @@ export class Player extends Entity {
         this.vy = 0;
         this.isGrounded = false;
         this.rotation = 0;
+
+        // Input forgiveness (coyote time + jump buffering)
+        this.inputBuffer = new InputBuffer();
+        this._pendingJumpCallback = null;
 
         // Collision Setup
         this.collisionLayer = CollisionLayers.PLAYER;
@@ -53,7 +58,8 @@ export class Player extends Entity {
 
     update(dt, context) {
         const { config, logicalHeight, platforms } = context;
-        
+        const wasGrounded = this.isGrounded;
+
         // Update Abilities (Time-based constraints)
         this.updateAbilities(dt);
 
@@ -118,6 +124,20 @@ export class Player extends Entity {
                 this.vy = 0;
                 this.isGrounded = true;
             }
+        }
+
+        // Coyote time: arm a grace window the instant the player leaves solid ground
+        if (wasGrounded && !this.isGrounded) {
+            this.inputBuffer.buffer('coyote', config.INPUT_TIMING.JUMP_COYOTE_MS / 1000);
+        }
+
+        this.inputBuffer.update(dt);
+
+        // Jump buffering: fire a queued jump the instant we land
+        if (this.isGrounded && this.inputBuffer.isBuffered('jumpRequest')) {
+            this.inputBuffer.consume('jumpRequest');
+            this._executeJump(config, this._pendingJumpCallback);
+            this._pendingJumpCallback = null;
         }
 
         // --- Animation State Machine ---
@@ -336,21 +356,40 @@ export class Player extends Entity {
         return this.abilities[this.currentAbilityIndex];
     }
 
+    /**
+     * Requests a jump. Fires immediately if grounded or still within the coyote
+     * grace window after leaving ground/a platform; otherwise buffers the request
+     * so it fires the instant the player next lands (jump buffering).
+     */
     jump(config, onJump) {
-        if (this.isGrounded) {
-            this.vy = config.JUMP_FORCE * this.physicsMod.jumpMultiplier;
-            this.isGrounded = false;
-            
-            logger.game(VerbosityLevel.MEDIUM, 'Player', '⬆️ JUMP', {
-                jumpForce: config.JUMP_FORCE,
-                multiplier: this.physicsMod.jumpMultiplier,
-                position: { x: Math.round(this.x), y: Math.round(this.y) }
-            });
-            
-            // Pass color info for particles
-            const particleColor = this.appearance.trail.colors[0];
-            if (onJump) onJump(this.x + 10, this.y + this.height, particleColor);
+        const canJumpNow = this.isGrounded || this.inputBuffer.isBuffered('coyote');
+
+        if (canJumpNow) {
+            this.inputBuffer.consume('coyote');
+            this._executeJump(config, onJump);
+        } else {
+            this.inputBuffer.buffer('jumpRequest', config.INPUT_TIMING.JUMP_BUFFER_MS / 1000);
+            this._pendingJumpCallback = onJump;
         }
+    }
+
+    /**
+     * Applies the actual jump impulse. Only called once a jump has been
+     * confirmed valid (grounded, coyote window, or buffered on landing).
+     */
+    _executeJump(config, onJump) {
+        this.vy = config.JUMP_FORCE * this.physicsMod.jumpMultiplier;
+        this.isGrounded = false;
+
+        logger.game(VerbosityLevel.MEDIUM, 'Player', '⬆️ JUMP', {
+            jumpForce: config.JUMP_FORCE,
+            multiplier: this.physicsMod.jumpMultiplier,
+            position: { x: Math.round(this.x), y: Math.round(this.y) }
+        });
+
+        // Pass color info for particles
+        const particleColor = this.appearance.trail.colors[0];
+        if (onJump) onJump(this.x + 10, this.y + this.height, particleColor);
     }
 
     draw(ctx) {

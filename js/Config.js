@@ -34,6 +34,13 @@ export const Config = {
     INITIAL_GAME_SPEED: 350,   
     MAX_GAME_SPEED: 1200,
 
+    // --- Input Forgiveness ---
+    // Consumed by InputBuffer via Player.jump() for coyote time / jump buffering.
+    INPUT_TIMING: {
+        JUMP_COYOTE_MS: 120,
+        JUMP_BUFFER_MS: 120
+    },
+
     // --- Progression & Leveling ---
     // The LevelSystem consumes this to determine stage changes
     LEVEL_PROGRESSION: {
