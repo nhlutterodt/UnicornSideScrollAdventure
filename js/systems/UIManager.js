@@ -42,6 +42,8 @@ export class UIManager {
         this.startHighScoreElement = Dom.get('startHighScore');
         this.gameOverHighScoreElement = Dom.get('gameOverHighScore');
         this.abilityInventoryElement = Dom.get('abilityInventory');
+        this.abilityHintElement = Dom.get('abilityHint');
+        this.abilityTouchControlsElement = Dom.get('abilityTouchControls');
         this.safeStartElement = Dom.get('safeStartCountdown');
 
         // Player reference for ability UI
@@ -50,7 +52,7 @@ export class UIManager {
         // Setup event listeners
         this.setupEventListeners();
 
-        logger.info('UIManager', 'Initialized with 7 DOM elements');
+        logger.info('UIManager', 'Initialized with 9 DOM elements');
     }
 
     /**
@@ -189,6 +191,20 @@ export class UIManager {
             const card = this.createAbilityCard(ability, index);
             this.abilityInventoryElement.appendChild(card);
         });
+
+        this._updateAbilityControlsVisibility();
+    }
+
+    /**
+     * Shows the "E Use | Q/R Cycle" hint and the mobile touch buttons once the
+     * player has at least one ability, so controls are discoverable exactly when
+     * they become relevant instead of being explained up front on the start screen.
+     * @private
+     */
+    _updateAbilityControlsVisibility() {
+        const hasAbility = !!(this.player && this.player.abilities.length > 0);
+        Dom.toggleClass(this.abilityHintElement, 'hidden', !hasAbility);
+        Dom.toggleClass(this.abilityTouchControlsElement, 'hidden', !hasAbility);
     }
 
     /**

@@ -21,6 +21,12 @@
             <div id="livesDisplay" class="lives-display">💖 x1</div>
         </div>
         <div id="abilityInventory" class="ability-inventory" aria-label="Power-up Inventory" role="status" aria-live="polite"></div>
+        <div id="abilityHint" class="ability-hint hidden" aria-hidden="true">E Use &middot; Q/R Cycle</div>
+        <div id="abilityTouchControls" class="ability-touch-controls hidden">
+            <button type="button" id="abilityTouchPrev" class="ability-touch-btn" aria-label="Previous ability">&#9664;</button>
+            <button type="button" id="abilityTouchUse" class="ability-touch-btn ability-touch-use" aria-label="Use ability">Use</button>
+            <button type="button" id="abilityTouchNext" class="ability-touch-btn" aria-label="Next ability">&#9654;</button>
+        </div>
         <div id="safeStartCountdown" class="safe-start-countdown hidden" role="status" aria-live="polite"></div>
 
         <canvas id="gameCanvas" class="game-canvas">
