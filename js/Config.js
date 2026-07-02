@@ -350,9 +350,9 @@ export const Config = {
             },
             jump: {
                 id: 'jump',
-                label: 'Jump',
-                icon: '↑',
-                ariaLabel: 'Jump',
+                label: 'Space',
+                icon: '␣',
+                ariaLabel: 'Jump (Space key)',
                 variant: 'secondary',
                 inputAction: 'jump'
             },

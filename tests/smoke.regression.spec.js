@@ -20,8 +20,26 @@ test.describe('hybrid controls regression', () => {
         // PLAYING pack
         await page.click('[data-action-id="startGame"]');
         await expect(page.locator('#gameContainer')).toHaveAttribute('data-state', 'PLAYING');
-        await expect(page.locator('[data-action-id="jump"]')).toBeVisible();
-        await expect(page.locator('[data-action-id="useAbility"]')).toHaveCount(0);
+        const jumpButton = page.locator('[data-action-id="jump"]');
+        await expect(jumpButton).toBeVisible();
+
+        // Ensure jump can execute immediately (player has landed after start).
+        await page.waitForFunction(() => window.game?.player?.isGrounded === true);
+
+        const beforeJumpY = await page.evaluate(() => window.game.player.y);
+        await jumpButton.click();
+
+        await expect
+            .poll(async () => page.evaluate(() => window.game.player.vy), { timeout: 1000 })
+            .toBeLessThan(0);
+
+        await expect
+            .poll(async () => page.evaluate(() => window.game.player.y), { timeout: 1000 })
+            .toBeLessThan(beforeJumpY);
+
+        const useAbilityButton = page.locator('[data-action-id="useAbility"]');
+        await expect(useAbilityButton).toBeVisible();
+        await expect(useAbilityButton).toBeDisabled();
 
         // GAMEOVER pack
         await page.evaluate(() => window.game.gameOver());

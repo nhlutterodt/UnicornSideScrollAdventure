@@ -127,6 +127,12 @@
     border: 1px solid #ddd;
 }
 
+.game-control-btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 .game-control-icon {
     font-size: 0.9rem;
     line-height: 1;

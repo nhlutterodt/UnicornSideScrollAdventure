@@ -42,8 +42,11 @@ export function resolveControlActions(controlsConfig, state, capabilities, conte
     return pack
         .map((actionId) => controlsConfig.actions[actionId])
         .filter(Boolean)
+        .map((action) => ({
+            ...action,
+            disabled: !!(action.requiresAbility && !hasAbility)
+        }))
         .filter((action) => {
-            if (action.requiresAbility && !hasAbility) return false;
             if (action.touchOnly && !capabilities.touchPrimary) return false;
             if (action.keyboardOnly && !capabilities.keyboardPresent) return false;
             if (action.compactOnly && !capabilities.compactViewport) return false;
@@ -129,6 +132,10 @@ export class HybridControlsBar {
             const button = document.createElement('button');
             button.type = 'button';
             button.className = `game-control-btn ${action.variant === 'primary' ? 'game-control-btn-primary' : 'game-control-btn-secondary'}`;
+            if (action.disabled) {
+                button.classList.add('game-control-btn-disabled');
+                button.disabled = true;
+            }
             button.dataset.actionId = action.id;
             button.setAttribute('aria-label', action.ariaLabel || action.label || action.id);
 
@@ -154,6 +161,7 @@ export class HybridControlsBar {
 
         const button = target.closest('button[data-action-id]');
         if (!button) return;
+        if (button.disabled) return;
 
         const actionId = button.dataset.actionId;
         this._dispatch(actionId);
@@ -162,6 +170,7 @@ export class HybridControlsBar {
     _dispatch(actionId) {
         const action = this.controls.actions[actionId];
         if (!action) return;
+        if (action.requiresAbility && !this.getHasAbility()) return;
 
         if (!this._canDispatch(action)) return;
 

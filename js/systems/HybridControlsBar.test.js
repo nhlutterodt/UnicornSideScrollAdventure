@@ -27,7 +27,9 @@ describe('HybridControls helpers', () => {
 
         const actions = resolveControlActions(Config.CONTROLS, 'PLAYING', capabilities, { hasAbility: false });
 
-        expect(actions.map(action => action.id)).toEqual(['jump']);
+        expect(actions.map(action => action.id)).toEqual(['jump', 'cycleLeft', 'useAbility', 'cycleRight']);
+        expect(actions.find(action => action.id === 'jump').disabled).toBe(false);
+        expect(actions.find(action => action.id === 'useAbility').disabled).toBe(true);
     });
 
     test('resolveControlActions includes full PLAYING pack when ability exists', () => {
@@ -116,7 +118,7 @@ describe('HybridControlsBar', () => {
         controls.dispose();
     });
 
-    test('renders ability controls only when player has ability', () => {
+    test('renders ability controls as disabled when player has no ability', () => {
         const host = document.getElementById('host');
         const state = new FakeState();
 
@@ -135,12 +137,16 @@ describe('HybridControlsBar', () => {
         state.setState('PLAYING');
         controls.sync();
 
-        expect(host.querySelector('button[data-action-id="useAbility"]')).toBeNull();
+        const useAbilityButton = host.querySelector('button[data-action-id="useAbility"]');
+        expect(useAbilityButton).not.toBeNull();
+        expect(useAbilityButton.disabled).toBe(true);
 
         hasAbility = true;
         controls.sync();
 
-        expect(host.querySelector('button[data-action-id="useAbility"]')).not.toBeNull();
+        const enabledUseAbilityButton = host.querySelector('button[data-action-id="useAbility"]');
+        expect(enabledUseAbilityButton).not.toBeNull();
+        expect(enabledUseAbilityButton.disabled).toBe(false);
 
         controls.dispose();
     });
