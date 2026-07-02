@@ -5,16 +5,33 @@ import { Config } from '../Config.js';
 import { logger, VerbosityLevel } from '../utils/Logger.js';
 
 export class CrumblingPlatform extends Platform {
+    static poolable = true;
+
     constructor(x, y, width, height) {
         super(x, y, width, height);
+        this._configureCrumbling();
+    }
+
+    /**
+     * Called by EntityPool when reusing a freed instance instead of `new`-ing one.
+     * Must re-run Platform's `_configure()` too: a fallen platform zeroes out its
+     * own collisionLayer, and a reused instance would otherwise spawn non-solid.
+     */
+    revive(x, y, width, height) {
+        this.reviveBase(x, y, width, height);
+        this._configure();
+        this._configureCrumbling();
+    }
+
+    _configureCrumbling() {
         this.type = 'crumbling_platform';
-        
+
         // Crumbling state
         this.isCrumbling = false;
         this.crumbleTimer = 0;
         this.crumbleDelay = Config.CRUMBLING_PLATFORM_DELAY; // Seconds before it falls
         this.shakeOffset = 0;
-        
+
         // Styling override
         this.baseColor = '#9e9e9e'; // Grey, cracked look
     }

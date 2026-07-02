@@ -72,7 +72,9 @@ const IGNORE_DIRS = [
     'node_modules',
     '.git',
     'docs',
-    'libs'
+    'libs',
+    'test-results',    // Playwright's generated run output (gitignored)
+    'playwright-report' // Playwright's generated HTML report (gitignored, minified 3rd-party JS/inline styles)
 ];
 
 let errorCount = 0;

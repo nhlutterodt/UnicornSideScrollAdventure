@@ -6,8 +6,22 @@ import { PhysicsUtils, CollisionLayers } from '../utils/PhysicsUtils.js';
  * Surface the player can stand on.
  */
 export class Platform extends Entity {
+    static poolable = true;
+
     constructor(x, y, width, height) {
         super(x, y, width, height, 'platform');
+        this._configure();
+    }
+
+    /**
+     * Called by EntityPool when reusing a freed instance instead of `new`-ing one.
+     */
+    revive(x, y, width, height) {
+        this.reviveBase(x, y, width, height);
+        this._configure();
+    }
+
+    _configure() {
         this.vx = 0;
         this.vy = 0;
         this.color = '#7afcff';

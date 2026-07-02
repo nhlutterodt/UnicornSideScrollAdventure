@@ -8,19 +8,32 @@ import { CollisionLayers } from '../utils/PhysicsUtils.js';
  * An entity placed on the ground or on platforms that blasts the player upwards.
  */
 export class JumpPad extends Entity {
+    static poolable = true;
+
     constructor(x, y) {
         // A low, wide rectangle
         super(x, y - 10, 40, 10, 'jump_pad');
-        
+        this._configure();
+    }
+
+    /**
+     * Called by EntityPool when reusing a freed instance instead of `new`-ing one.
+     */
+    revive(x, y) {
+        this.reviveBase(x, y - 10, 40, 10);
+        this._configure();
+    }
+
+    _configure() {
         this.collisionLayer = CollisionLayers.PLATFORM; // Treat as a platform physically initially
         this.collisionMask = CollisionLayers.PLAYER;
         this.renderLayer = 2;
-        
+
         this.animTimer = 0;
         this.isActivated = false;
-        
+
         // The bounciness multiplier applied to the standard jump
-        this.boostMultiplier = 2.5; 
+        this.boostMultiplier = 2.5;
     }
 
     activate() {

@@ -7,6 +7,8 @@ import { VisualEntity } from './VisualEntity.js';
  * A complex continuous beam effect converted to an ECS entity.
  */
 export class LaserEntity extends VisualEntity {
+    static poolable = true;
+
     /**
      * @param {Entity} source - The entity firing the beam
      * @param {string} color - The hex color of the beam
@@ -14,10 +16,22 @@ export class LaserEntity extends VisualEntity {
      */
     constructor(source, color, duration = 0.2) {
         super(source.x + source.width, source.y + 15, 1000, 10, duration);
+        this._configure(source, color);
+    }
+
+    /**
+     * Called by EntityPool when reusing a freed instance instead of `new`-ing one.
+     */
+    revive(source, color, duration = 0.2) {
+        this.reviveVisual(source.x + source.width, source.y + 15, 1000, 10, duration);
+        this._configure(source, color);
+    }
+
+    _configure(source, color) {
         this.source = source;
         this.color = color;
         this.targetsHit = new Set();
-        
+
         // We override entityType for easier filtering if needed
         this.entityType = 'laser_beam';
     }

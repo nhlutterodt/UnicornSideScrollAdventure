@@ -50,6 +50,10 @@ export class ViewportManager {
         this.scaleRatio = 1;
         this.physicalWidth = 0;
         this.physicalHeight = 0;
+        // Device pixel ratio - canvas backing store is rendered at this multiple
+        // of CSS pixels so output stays crisp on HiDPI/mobile screens instead of
+        // being upscaled blurry by the browser.
+        this.dpr = window.devicePixelRatio || 1;
 
         // Bind resize handler
         this.handleResize = this.resize.bind(this);
@@ -72,9 +76,17 @@ export class ViewportManager {
         const physicalWidth = this.container.clientWidth;
         const physicalHeight = this.container.clientHeight;
 
-        // 2. Update Canvas Resolution to match Physical Size (for crisp rendering)
-        this.canvas.width = physicalWidth;
-        this.canvas.height = physicalHeight;
+        // 2. Update Canvas backing-store resolution to physical size * DPR so
+        // rendering stays crisp on HiDPI screens; CSS (width/height: 100%) keeps
+        // the element's displayed size at physicalWidth x physicalHeight.
+        this.canvas.width = physicalWidth * this.dpr;
+        this.canvas.height = physicalHeight * this.dpr;
+
+        // Normalize the drawing context back to CSS-pixel units so all existing
+        // logical/physical math below (and everything RenderSystem draws) is
+        // unaffected by the backing-store resolution bump.
+        const ctx = this.canvas.getContext('2d');
+        if (ctx) ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
         // 3. Calculate Scale Ratio to fit LOGICAL_HEIGHT into physicalHeight
         this.scaleRatio = physicalHeight / this.logicalHeight;

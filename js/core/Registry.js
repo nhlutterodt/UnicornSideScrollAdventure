@@ -1,3 +1,5 @@
+import { entityPool } from './EntityPool.js';
+
 /**
  * REGISTRY.js
  * Centralized entity management and identification system.
@@ -7,7 +9,12 @@ export class Registry {
     constructor() {
         this.entities = new Map();
         this.counters = new Map();
-        
+
+        // Bumped on every register()/unregister()/clear() that actually changes
+        // membership. Consumers (e.g. RenderSystem) cache derived views keyed off
+        // this instead of rebuilding them every frame - see `version`'s usages.
+        this.version = 0;
+
         // Expose to window for debugging purposes as per project tradition
         window.gameEntities = this.entities;
     }
@@ -28,16 +35,25 @@ export class Registry {
         const id = `${type}_${count}`;
         entity.id = id;
         this.entities.set(id, entity);
+        this.version++;
         return id;
     }
 
     /**
-     * Removes an entity from the registry.
-     * @param {Object} entity 
+     * Removes an entity from the registry and, if its class opted into pooling,
+     * hands it back to the EntityPool's free list. This is the single funnel all
+     * removal paths (explicit `entity.destroy()` and `updateAll`'s offscreen/isDead
+     * prune) go through, so `Map.delete`'s return value doubles as a release guard -
+     * an entity already removed this frame can't be released into the pool twice.
+     * @param {Object} entity
      */
     unregister(entity) {
-        if (entity && entity.id) {
-            this.entities.delete(entity.id);
+        if (!entity || !entity.id) return;
+
+        const existed = this.entities.delete(entity.id);
+        if (existed) {
+            this.version++;
+            entityPool.release(entity);
         }
     }
 
@@ -57,6 +73,7 @@ export class Registry {
                 }
             }
         }
+        this.version++;
     }
 
     /**
@@ -72,14 +89,14 @@ export class Registry {
      * @param {Object} context 
      */
     updateAll(dt, context) {
-        for (let [id, entity] of this.entities) {
+        for (let entity of this.entities.values()) {
             entity.update(dt, context);
-            
+
             // Auto-pruning if entity is offscreen or explicitly destroyed
             if (entity.isOffscreen || entity.isDead) {
-                this.entities.delete(id);
                 // Call optional lifecycle hook
                 if (entity.onPruned) entity.onPruned();
+                this.unregister(entity);
             }
         }
     }

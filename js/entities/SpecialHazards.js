@@ -3,11 +3,19 @@
 import { Hazard } from './Hazard.js';
 
 export class LavaGeyser extends Hazard {
+    static poolable = true;
+
     constructor(x, y) {
         super(x, y, 50, 80, 'lava_geyser');
         this.animTimer = 0;
     }
-    
+
+    revive(x, y) {
+        this.reviveBase(x, y, 50, 80);
+        this._configureHazard();
+        this.animTimer = 0;
+    }
+
     update(dt, context) {
         super.update(dt, context);
         this.animTimer += dt * 5;
@@ -37,9 +45,16 @@ export class LavaGeyser extends Hazard {
 }
 
 export class IceSpike extends Hazard {
+    static poolable = true;
+
     constructor(x, y) {
         // Skinny, tall
         super(x, y, 30, 90, 'ice_spike');
+    }
+
+    revive(x, y) {
+        this.reviveBase(x, y, 30, 90);
+        this._configureHazard();
     }
 
     draw(ctx) {
@@ -66,8 +81,15 @@ export class IceSpike extends Hazard {
 }
 
 export class NeonBarrier extends Hazard {
+    static poolable = true;
+
     constructor(x, y) {
         super(x, y, 20, 100, 'neon_barrier');
+    }
+
+    revive(x, y) {
+        this.reviveBase(x, y, 20, 100);
+        this._configureHazard();
     }
 
     draw(ctx) {

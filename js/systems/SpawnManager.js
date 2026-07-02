@@ -9,6 +9,7 @@ import { Cloud } from '../entities/Cloud.js';
 import { Config } from '../Config.js';
 import { LevelUtils } from '../utils/LevelUtils.js';
 import { logger, VerbosityLevel } from '../utils/Logger.js';
+import { entityPool } from '../core/EntityPool.js';
 
 /**
  * SpawnManager - Centralized entity spawning coordination
@@ -165,13 +166,13 @@ export class SpawnManager {
      */
     spawnSingleHazard(x, y, stageName) {
         if (stageName === 'Crystal Caverns') {
-            new IceSpike(x, y);
+            entityPool.acquire(IceSpike, x, y);
         } else if (stageName === 'Inferno Ridge') {
-            new LavaGeyser(x, y);
+            entityPool.acquire(LavaGeyser, x, y);
         } else if (stageName === 'Cyber City') {
-            new NeonBarrier(x, y);
+            entityPool.acquire(NeonBarrier, x, y);
         } else {
-            new Obstacle(x, y);
+            entityPool.acquire(Obstacle, x, y);
         }
     }
 
@@ -189,7 +190,7 @@ export class SpawnManager {
             } else if (ent.type === 'platform') {
                 const width = ent.width || Config.PLATFORM_MIN_WIDTH;
                 const height = ent.height || Config.PLATFORM_HEIGHT;
-                new Platform(x, y, width, height);
+                entityPool.acquire(Platform, x, y, width, height);
             }
         });
     }
@@ -224,15 +225,15 @@ export class SpawnManager {
                 // Chance for a crumbling platform
                 let platform;
                 if (Math.random() < Config.CRUMBLING_PLATFORM_PROBABILITY) {
-                    platform = new CrumblingPlatform(spawnX, y, width, Config.PLATFORM_HEIGHT);
+                    platform = entityPool.acquire(CrumblingPlatform, spawnX, y, width, Config.PLATFORM_HEIGHT);
                     logger.debug('SpawnManager', `Spawned crumbling platform at x=${spawnX}`);
                 } else {
-                    platform = new Platform(spawnX, y, width, Config.PLATFORM_HEIGHT);
-                    
+                    platform = entityPool.acquire(Platform, spawnX, y, width, Config.PLATFORM_HEIGHT);
+
                     // If it's a regular platform, maybe spawn a jump pad on it!
                     if (Math.random() < Config.JUMP_PAD_ON_PLATFORM_PROBABILITY) {
                         const jumpPadX = spawnX + (width / 2) - 20; // Center it on the platform
-                        new JumpPad(jumpPadX, y);
+                        entityPool.acquire(JumpPad, jumpPadX, y);
                         logger.debug('SpawnManager', `Spawned jump pad on platform at x=${jumpPadX}`);
                     }
                 }
@@ -250,7 +251,7 @@ export class SpawnManager {
             this.cloudTimer = 0;
             
             const y = Math.random() * (logicalHeight - 150);
-            new Cloud(spawnX, y);
+            entityPool.acquire(Cloud, spawnX, y);
             
             logger.debug('SpawnManager', `Spawned cloud at x=${spawnX}, y=${y}`);
         }

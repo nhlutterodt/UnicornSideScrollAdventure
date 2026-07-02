@@ -23,14 +23,11 @@ jobs:
     - name: Install NPM Dependencies
       run: npm ci || npm install
 
+    - name: Run Standards/Lint Checks
+      run: npm test
+
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
-
-    - name: Start Game Server (Background)
-      run: python3 -m http.server 8081 &
-      
-    - name: Wait for server to be ready
-      run: sleep 3
 
     - name: Run Unit Tests (Jest)
       run: npm run test:unit

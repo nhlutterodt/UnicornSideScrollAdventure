@@ -43,7 +43,16 @@ export class RenderSystem {
         this.viewport = viewport;
         this.level = level;
         this.logicalHeight = logicalHeight;
-        
+
+        // Persistent, incrementally-maintained draw-order cache. Rebuilt only
+        // when `registry.version` changes (i.e. an entity actually spawned or
+        // despawned since the last render() call), not on every frame - see
+        // `_getRenderOrder()`. Steady-state frames (the overwhelming majority,
+        // since render() runs at 60fps but spawns/despawns happen a few times a
+        // second at most) reuse this same array with zero new allocation.
+        this._renderOrder = [];
+        this._lastRegistryVersion = -1;
+
         logger.info('RenderSystem', 'Initialized');
     }
 
@@ -71,19 +80,8 @@ export class RenderSystem {
             this.ctx.translate(shakeOffset.x, shakeOffset.y);
         }
 
-        // 4. Collect and sort all visible entities by layer
-        const allEntities = Array.from(registry.entities.values()).filter(e => !e.isDead);
-        if (player && !player.isDead && !allEntities.includes(player)) {
-            allEntities.push(player); // Ensure player is in render list if not in registry
-        }
-        
-        // Sort by renderLayer ascending
-        // Default to ENTITIES (2) layer if not specified
-        allEntities.sort((a, b) => {
-            const layerA = a.renderLayer !== undefined ? a.renderLayer : Z_LAYERS.ENTITIES;
-            const layerB = b.renderLayer !== undefined ? b.renderLayer : Z_LAYERS.ENTITIES;
-            return layerA - layerB;
-        });
+        // 4. Fetch the cached, layer-sorted entity list (zero-allocation in steady state)
+        const allEntities = this._getRenderOrder(registry, player);
 
         // 5. Draw pass
         // Separate entities by layer or just draw them in order, inserting static elements (ground, particles) at correct breakpoints
@@ -115,6 +113,45 @@ export class RenderSystem {
 
         // 6. Restore canvas state
         this.ctx.restore();
+    }
+
+    /**
+     * Returns entities ordered ascending by renderLayer, rebuilding the cache
+     * only when the registry's membership has changed since the last call.
+     * Draw order within a layer follows registration order (Array.sort is
+     * stable), matching the previous per-frame-rebuild behavior exactly.
+     * @private
+     * @param {Registry} registry
+     * @param {Player} player
+     * @returns {Array}
+     */
+    _getRenderOrder(registry, player) {
+        if (registry.version !== this._lastRegistryVersion) {
+            this._renderOrder.length = 0;
+            for (const entity of registry.entities.values()) {
+                if (!entity.isDead) this._renderOrder.push(entity);
+            }
+            this._renderOrder.sort(RenderSystem._compareByRenderLayer);
+            this._lastRegistryVersion = registry.version;
+        }
+
+        // Defensive: covers a hypothetical entity whose shouldRegister() is
+        // false (none exist today). Only allocates on this cold path.
+        if (player && !player.isDead && !this._renderOrder.includes(player)) {
+            return [...this._renderOrder, player].sort(RenderSystem._compareByRenderLayer);
+        }
+
+        return this._renderOrder;
+    }
+
+    /**
+     * Ascending renderLayer comparator, defaulting to ENTITIES when unset.
+     * @private
+     */
+    static _compareByRenderLayer(a, b) {
+        const layerA = a.renderLayer !== undefined ? a.renderLayer : Z_LAYERS.ENTITIES;
+        const layerB = b.renderLayer !== undefined ? b.renderLayer : Z_LAYERS.ENTITIES;
+        return layerA - layerB;
     }
 
     /**

@@ -10,6 +10,12 @@ export default defineConfig({
     baseURL: 'http://localhost:8081',
     trace: 'on-first-retry',
   },
+  webServer: {
+    command: 'python -m http.server 8081',
+    url: 'http://localhost:8081',
+    reuseExistingServer: !process.env.CI,
+    timeout: 10_000,
+  },
   projects: [
     {
       name: 'integration',

@@ -3,6 +3,7 @@
 import { logger, VerbosityLevel } from '../utils/Logger.js';
 import { Dom } from '../utils/Dom.js';
 import { Storage } from './Storage.js';
+import { Config } from '../Config.js';
 
 /**
  * LOG_OVERLAY.js
@@ -14,7 +15,7 @@ export class LogOverlay {
         this.container = null;
         this.logList = null;
         this.maxVisibleLogs = 50;
-        this.isVisible = true;
+        this.isVisible = Config.DEBUG;
         this.isMinimized = false;
         
         // Load saved settings

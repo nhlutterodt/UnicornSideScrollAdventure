@@ -13,21 +13,35 @@ export class Item extends Entity {
      * @param {number} y 
      * @param {Object} itemData - Data from Config.ITEMS
      */
+    static poolable = true;
+
     constructor(x, y, itemData) {
         super(x, y, 30, 30, 'item');
+        this._configure(itemData);
+    }
+
+    /**
+     * Called by EntityPool when reusing a freed instance instead of `new`-ing one.
+     */
+    revive(x, y, itemData) {
+        this.reviveBase(x, y, 30, 30);
+        this._configure(itemData);
+    }
+
+    _configure(itemData) {
         this.itemData = itemData;
         this.vy = 0;
         this.vx = 0;
         this.isGrounded = false;
-        
+
         // Physics
         this.collisionLayer = CollisionLayers.ITEM;
         this.collisionMask = CollisionLayers.PLAYER | CollisionLayers.PLATFORM;
-        
+
         // Animation
         this.bobOffset = Math.random() * Math.PI * 2;
         this.bobSpeed = 3;
-        
+
         this.renderLayer = 2; // Z_LAYERS.ENTITIES
     }
 

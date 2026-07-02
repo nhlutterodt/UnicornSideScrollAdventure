@@ -319,9 +319,9 @@ export const Config = {
     PLATFORM_VERTICAL_RANGE: [200, 450],     
 
     // --- System & Debug ---
-    DEBUG: true,
+    DEBUG: false,
     SHOW_COLLIDERS: false,
-    LOG_LEVEL: 'DEBUG', // NONE, INFO, DEBUG
+    LOG_LEVEL: 'NONE', // NONE, INFO, DEBUG
 
     // --- Particle System ---
     PARTICLE_SYSTEM: {
@@ -329,6 +329,17 @@ export const Config = {
         TIER2_MAX_ACTIVE: 64,
         TIER2_MAX_CHECKS_PER_FRAME: 256,
         DESPAWN_MARGIN: 200
+    },
+
+    // --- Collision System ---
+    // CollisionSystem.resolve() is an intentional O(n^2) nested loop (fine for a
+    // side-scroller's normal entity counts). MAX_ENTITIES documents the ceiling
+    // that assumption is good for - CollisionSystem logs a warning if the live
+    // entity count ever exceeds it (e.g. a spawn/despawn leak), rather than
+    // silently letting the per-frame cost grow unbounded. A spatial grid is the
+    // option if this ceiling is ever legitimately exceeded by design.
+    COLLISION_SYSTEM: {
+        MAX_ENTITIES: 150
     },
 
     // --- Loader Methods ---

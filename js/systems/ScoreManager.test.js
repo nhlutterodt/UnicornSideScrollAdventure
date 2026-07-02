@@ -30,10 +30,14 @@ function restoreStorage() {
     storageData = {};
 }
 
-// Event capture helper
+// Event capture helper - the true original emit is captured ONCE here, at
+// module scope, before any test runs. captureEvents() always wraps *this*
+// reference (never whatever the previous test's beforeEach already wrapped),
+// and restoreEvents() puts it back, so wrapper layers never stack across tests.
+const originalEmit = eventManager.emit;
 let capturedEvents = {};
+
 function captureEvents() {
-    const originalEmit = eventManager.emit;
     eventManager.emit = (eventName, payload) => {
         if (!capturedEvents[eventName]) {
             capturedEvents[eventName] = [];
@@ -44,6 +48,7 @@ function captureEvents() {
 }
 
 function restoreEvents() {
+    eventManager.emit = originalEmit;
     capturedEvents = {};
 }
 

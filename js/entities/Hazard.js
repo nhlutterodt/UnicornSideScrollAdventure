@@ -8,12 +8,22 @@ import { CollisionLayers } from '../utils/PhysicsUtils.js';
  * Base class for specific environmental dangers. Replaces generic Obstacles.
  */
 export class Hazard extends Entity {
+    static poolable = true;
+
     constructor(x, y, width, height, type = 'hazard') {
         super(x, y, width, height, type);
+        this._configureHazard();
+    }
 
+    /**
+     * Shared Hazard-level field reset. Subclasses call this from their own
+     * `revive()` (which bypasses this constructor entirely) alongside
+     * `reviveBase()` and any of their own extra state.
+     */
+    _configureHazard() {
         this.collisionLayer = CollisionLayers.OBSTACLE;
         this.collisionMask = CollisionLayers.PLAYER;
-        
+
         this.renderLayer = 2; // Z_LAYERS.ENTITIES
         this.passed = false;
     }

@@ -1,5 +1,6 @@
 import { Config } from '../Config.js';
 import { Item } from '../entities/Item.js';
+import { entityPool } from '../core/EntityPool.js';
 
 /**
  * LEVEL_UTILS.js
@@ -38,7 +39,7 @@ export class LevelUtils {
             }
         }
         
-        return new Item(x, y, enrichedData);
+        return entityPool.acquire(Item, x, y, enrichedData);
     }
 
     /**

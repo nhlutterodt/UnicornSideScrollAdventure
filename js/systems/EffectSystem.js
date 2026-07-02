@@ -5,6 +5,7 @@ import { ParticleSystem } from './ParticleSystem.js';
 import { Config } from '../Config.js';
 import { LaserEntity } from '../entities/LaserEntity.js';
 import { engineRegistry } from '../core/Registry.js';
+import { entityPool } from '../core/EntityPool.js';
 
 /**
  * EFFECT_SYSTEM.js
@@ -38,8 +39,8 @@ export class EffectSystem {
         
         // 3. Spawn Complex Visual Entities if applicable
         if (effectId === 'LASER') {
-            const laser = new LaserEntity(params.source, params.color, params.duration);
-            // new Entity() naturally registers itself, so we just instantiate it
+            // entityPool.acquire() registers the instance with the Registry itself
+            entityPool.acquire(LaserEntity, params.source, params.color, params.duration);
         } else if (effectId === 'ROAR') {
             if (this.feedback) this.feedback.triggerImpact('medium');
             this.handleRoarImpact(params);
