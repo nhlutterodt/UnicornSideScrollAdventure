@@ -27,7 +27,6 @@ export class ParticleSystem {
         // Visual data (per-index)
         this.colors = new Array(this.maxParticles).fill('#ffffff');
         
-        this.count = 0;
         this.nextIndex = 0;
 
         // Pre-computed Look-Up Tables (LUTs) for curves
@@ -76,6 +75,11 @@ export class ParticleSystem {
      */
     spawn(effect, params) {
         const idx = this.nextIndex;
+
+        // Fixed-capacity pool policy: drop new spawns when the write slot is still alive.
+        if (this.active[idx]) {
+            return;
+        }
         
         this.active[idx] = 1;
         this.x[idx] = params.x;

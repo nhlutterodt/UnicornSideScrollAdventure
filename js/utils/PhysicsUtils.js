@@ -97,8 +97,40 @@ export class PhysicsUtils {
             return true;
         }
 
-        // More robust segment-AABB intersection could go here, 
-        // but for particles, point checks + segment bounds are usually enough.
-        return true; 
+        // Liang-Barsky style clipping against the AABB slabs.
+        // If the clipped segment interval is non-empty, the segment intersects.
+        const left = aabb.x;
+        const right = aabb.x + aabb.width;
+        const top = aabb.y;
+        const bottom = aabb.y + aabb.height;
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+
+        let tMin = 0;
+        let tMax = 1;
+
+        const clip = (p, q) => {
+            if (p === 0) {
+                return q >= 0;
+            }
+
+            const t = q / p;
+            if (p < 0) {
+                if (t > tMax) return false;
+                if (t > tMin) tMin = t;
+            } else {
+                if (t < tMin) return false;
+                if (t < tMax) tMax = t;
+            }
+
+            return true;
+        };
+
+        if (!clip(-dx, x1 - left)) return false;
+        if (!clip(dx, right - x1)) return false;
+        if (!clip(-dy, y1 - top)) return false;
+        if (!clip(dy, bottom - y1)) return false;
+
+        return tMax >= tMin;
     }
 }
