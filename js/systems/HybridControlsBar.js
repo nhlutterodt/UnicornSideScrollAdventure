@@ -35,6 +35,9 @@ export function resolveControlActions(controlsConfig, state, capabilities, conte
 
     const pack = controlsConfig.packs[state] || [];
     const hasAbility = !!context.hasAbility;
+    const canDispatch = typeof context.canDispatch === 'function'
+        ? context.canDispatch
+        : () => true;
 
     return pack
         .map((actionId) => controlsConfig.actions[actionId])
@@ -46,6 +49,7 @@ export function resolveControlActions(controlsConfig, state, capabilities, conte
             if (action.compactOnly && !capabilities.compactViewport) return false;
             if (action.hideOnCompact && capabilities.compactViewport) return false;
             if (action.hideOnTouch && capabilities.touchPrimary) return false;
+            if (!canDispatch(action)) return false;
             return true;
         });
 }
@@ -96,7 +100,10 @@ export class HybridControlsBar {
         if (!this.host || !this.state) return;
 
         const capabilities = resolveCapabilityProfile(window, this.controls.rules);
-        const context = { hasAbility: this.getHasAbility() };
+        const context = {
+            hasAbility: this.getHasAbility(),
+            canDispatch: (action) => this._canDispatch(action)
+        };
         const state = this.state.current;
         const actions = resolveControlActions(this.controls, state, capabilities, context);
 
@@ -156,6 +163,8 @@ export class HybridControlsBar {
         const action = this.controls.actions[actionId];
         if (!action) return;
 
+        if (!this._canDispatch(action)) return;
+
         if (actionId === 'startGame' && this.onStart) {
             this.onStart();
             return;
@@ -170,6 +179,28 @@ export class HybridControlsBar {
         if (this.input && this.input.triggerAction) {
             this.input.triggerAction(inputAction);
         }
+    }
+
+    _canDispatch(action) {
+        if (!action || !action.id) return false;
+
+        if (action.id === 'startGame') {
+            return typeof this.onStart === 'function';
+        }
+
+        if (action.id === 'retryGame') {
+            return typeof this.onRetry === 'function';
+        }
+
+        const inputAction = action.inputAction || action.id;
+        if (!this.input || typeof this.input.triggerAction !== 'function') return false;
+
+        if (typeof this.input.hasAction === 'function') {
+            return this.input.hasAction(inputAction);
+        }
+
+        // Backward-compatible fallback when no action introspection API exists.
+        return true;
     }
 
     dispose() {

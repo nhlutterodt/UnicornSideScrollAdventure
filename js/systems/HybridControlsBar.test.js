@@ -37,6 +37,22 @@ describe('HybridControls helpers', () => {
 
         expect(actions.map(action => action.id)).toEqual(['jump', 'cycleLeft', 'useAbility', 'cycleRight']);
     });
+
+    test('resolveControlActions excludes actions that are not dispatchable', () => {
+        const capabilities = { touchPrimary: false, keyboardPresent: true, compactViewport: false };
+
+        const actions = resolveControlActions(
+            Config.CONTROLS,
+            'PLAYING',
+            capabilities,
+            {
+                hasAbility: true,
+                canDispatch: (action) => action.id !== 'cycleRight'
+            }
+        );
+
+        expect(actions.map(action => action.id)).toEqual(['jump', 'cycleLeft', 'useAbility']);
+    });
 });
 
 describe('HybridControlsBar', () => {
@@ -125,6 +141,34 @@ describe('HybridControlsBar', () => {
         controls.sync();
 
         expect(host.querySelector('button[data-action-id="useAbility"]')).not.toBeNull();
+
+        controls.dispose();
+    });
+
+    test('does not render actions without registered input handlers', () => {
+        const host = document.getElementById('host');
+        const state = new FakeState();
+
+        const controls = new HybridControlsBar({
+            host,
+            inputManager: {
+                triggerAction: jest.fn(),
+                hasAction: (name) => name === 'jump'
+            },
+            stateController: state,
+            controlsConfig: Config.CONTROLS,
+            onStart: jest.fn(),
+            onRetry: jest.fn(),
+            getHasAbility: () => true
+        });
+
+        state.setState('PLAYING');
+        controls.sync();
+
+        expect(host.querySelector('button[data-action-id="jump"]')).not.toBeNull();
+        expect(host.querySelector('button[data-action-id="cycleLeft"]')).toBeNull();
+        expect(host.querySelector('button[data-action-id="useAbility"]')).toBeNull();
+        expect(host.querySelector('button[data-action-id="cycleRight"]')).toBeNull();
 
         controls.dispose();
     });

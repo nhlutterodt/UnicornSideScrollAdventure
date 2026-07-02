@@ -9,7 +9,7 @@ export class InputManager {
      */
     constructor(target = window) {
         this.target = target;
-        this.actions = new Set();
+        this.actions = Object.create(null);
         this.listeners = [];
         
         this.init();
@@ -48,6 +48,23 @@ export class InputManager {
         this.actions[actionName].push(callback);
     }
 
+    /**
+     * Returns true when at least one callback is registered for an action.
+     * @param {string} actionName
+     * @returns {boolean}
+     */
+    hasAction(actionName) {
+        return !!(this.actions[actionName] && this.actions[actionName].length > 0);
+    }
+
+    /**
+     * Returns the currently registered action names.
+     * @returns {string[]}
+     */
+    getRegisteredActions() {
+        return Object.keys(this.actions);
+    }
+
     triggerAction(name) {
         if (this.actions[name]) {
             this.actions[name].forEach(cb => cb());
@@ -70,6 +87,6 @@ export class InputManager {
             el.removeEventListener(type, fn);
         });
         this.listeners = [];
-        this.actions = new Set();
+        this.actions = Object.create(null);
     }
 }
