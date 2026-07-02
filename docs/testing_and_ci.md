@@ -46,7 +46,7 @@ Plain Node ES modules, no ESLint involved. **These were CommonJS (`require`/`mod
 
 `npm test` chains `standard-checker → import-export-checker → identifier-usage-checker → escape-sequence-checker`, stopping at the first failure. See [AI Quality Protocol](ai_quality_protocol.md) for the reasoning behind each rule and [Coding Standards](coding_standards.md) for the underlying style guide.
 
-**Current state**: now that it runs, `standard-checker` reports 3 pre-existing violations (an empty `catch` block in `js/main.js` and `js/systems/AssetManager.js` each, plus a direct `.style.color =` assignment in `js/main.js`) — so `npm test` does not currently pass cleanly. `import-export-checker`, `identifier-usage-checker`, and `escape-sequence-checker` all pass.
+**Current state**: `npm test` passes cleanly (all 4 checkers). Note that `standard-checker`'s "empty catch block" rule is a naive regex checking only whether `{` sits on the same line as `catch (err)`, not whether the block is actually empty — a legitimately non-empty `catch (error) {` block will still be flagged unless the brace is moved to its own line (`catch (error)\n{`), which is the established workaround used throughout this codebase (e.g. `Config.js`, `main.js`, `AssetManager.js`).
 
 > **Known gap**: none of these standards/lint scripts run in the GitHub Actions pipeline below — only Jest and Playwright do. `npm test` / `npm run lint` are enforced by convention (see the AI Quality Protocol's "run `npm test` after every modification") rather than by CI.
 
