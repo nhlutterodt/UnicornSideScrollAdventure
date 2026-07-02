@@ -16,9 +16,13 @@ export class LevelSystem {
         this.distance = 0;
         this.level = 1;
         this.difficultyMultiplier = 1.0;
+
+        const settings = Storage.load('game_settings', {});
+        this.difficultyPresetName = this._resolveDifficultyName(settings?.difficulty);
+        this.difficultyPreset = Config.DIFFICULTY_PRESETS[this.difficultyPresetName] || Config.DIFFICULTY_PRESETS.normal;
         
-        this.gameSpeed = Config.INITIAL_GAME_SPEED;
-        this.spawnInterval = Config.SPAWN_INTERVAL_START;
+        this.gameSpeed = Config.INITIAL_GAME_SPEED * this.difficultyPreset.speedMultiplier;
+        this.spawnInterval = Config.SPAWN_INTERVAL_START * this.difficultyPreset.spawnIntervalMultiplier;
 
         // Eases gameSpeed/spawnInterval toward their new level-derived targets over
         // Config.LEVEL_PROGRESSION.RAMP_DURATION_MS instead of snapping instantly.
@@ -29,6 +33,8 @@ export class LevelSystem {
 
         this.currentStage = null;
         this.worldModifiers = { gravityMultiplier: 1.0, timeScale: 1.0, friction: 1.0, bounciness: 0 };
+        this.entityBudget = Config.COLLISION_SYSTEM.MAX_ENTITIES;
+        this.stageSpawnRates = null;
         
         // Abstracted User Customization
         this.userCustomization = Storage.load('levelConfig', null);
@@ -38,10 +44,16 @@ export class LevelSystem {
 
     init() {
         this.updateStage();
-        logger.info('LevelSystem', 'Initialized with Abstractions');
+        logger.info('LevelSystem', `Initialized with difficulty preset: ${this.difficultyPresetName}`);
         if (this.userCustomization) {
             logger.info('LevelSystem', 'User Customization Detected', this.userCustomization);
         }
+    }
+
+    _resolveDifficultyName(name) {
+        if (!name || typeof name !== 'string') return 'normal';
+        if (Config.DIFFICULTY_PRESETS[name]) return name;
+        return 'normal';
     }
 
     /**
@@ -69,8 +81,8 @@ export class LevelSystem {
     _targetSpeedFor(level) {
         const { SPEED_INCREMENT_PER_LEVEL } = Config.LEVEL_PROGRESSION;
         return Math.min(
-            Config.MAX_GAME_SPEED,
-            Config.INITIAL_GAME_SPEED + (level - 1) * SPEED_INCREMENT_PER_LEVEL
+            Config.MAX_GAME_SPEED * this.difficultyPreset.speedMultiplier,
+            (Config.INITIAL_GAME_SPEED + (level - 1) * SPEED_INCREMENT_PER_LEVEL) * this.difficultyPreset.speedMultiplier
         );
     }
 
@@ -81,7 +93,7 @@ export class LevelSystem {
         const { SPAWN_INTERVAL_DECREMENT } = Config.LEVEL_PROGRESSION;
         return Math.max(
             Config.SPAWN_INTERVAL_MIN,
-            Config.SPAWN_INTERVAL_START - (level - 1) * SPAWN_INTERVAL_DECREMENT
+            (Config.SPAWN_INTERVAL_START - (level - 1) * SPAWN_INTERVAL_DECREMENT) * this.difficultyPreset.spawnIntervalMultiplier
         );
     }
 
@@ -105,7 +117,10 @@ export class LevelSystem {
 
     levelUp(newLevel) {
         this.level = newLevel;
-        this.difficultyMultiplier = Math.min(Config.LEVEL_PROGRESSION.MAX_DIFFICULTY_MULTIPLIER, 1.0 + (this.level - 1) * Config.LEVEL_PROGRESSION.DIFFICULTY_INCREMENT_PER_LEVEL);
+        this.difficultyMultiplier = Math.min(
+            Config.LEVEL_PROGRESSION.MAX_DIFFICULTY_MULTIPLIER,
+            (1.0 + (this.level - 1) * Config.LEVEL_PROGRESSION.DIFFICULTY_INCREMENT_PER_LEVEL) * this.difficultyPreset.difficultyMultiplier
+        );
 
         // Ease into the new speed/spawn-interval targets instead of snapping instantly.
         this.rampFrom = { speed: this.gameSpeed, spawnInterval: this.spawnInterval };
@@ -144,6 +159,10 @@ export class LevelSystem {
             }
 
             this.currentStage = stage;
+            this.entityBudget = Number.isFinite(stage.entityBudget)
+                ? stage.entityBudget
+                : Config.COLLISION_SYSTEM.MAX_ENTITIES;
+            this.stageSpawnRates = stage.spawnRates || null;
             this.worldModifiers = { 
                 gravityMultiplier: 1.0, 
                 timeScale: 1.0, 
@@ -155,6 +174,37 @@ export class LevelSystem {
             logger.info('LevelSystem', `Stage Changed: ${stage.name}`);
             eventManager.emit('STAGE_CHANGED', stage);
         }
+    }
+
+    getSpawnSettings() {
+        const spawnRates = this.stageSpawnRates || {};
+
+        const obstacleMultiplier = Number.isFinite(spawnRates.obstacleIntervalMultiplier)
+            ? spawnRates.obstacleIntervalMultiplier
+            : 1.0;
+        const platformMultiplier = Number.isFinite(spawnRates.platformIntervalMultiplier)
+            ? spawnRates.platformIntervalMultiplier
+            : 1.5;
+        const itemMultiplier = Number.isFinite(spawnRates.itemIntervalMultiplier)
+            ? spawnRates.itemIntervalMultiplier
+            : 1.0;
+        const cloudMultiplier = Number.isFinite(spawnRates.cloudIntervalMultiplier)
+            ? spawnRates.cloudIntervalMultiplier
+            : 1.0;
+
+        return {
+            obstacleInterval: this.spawnInterval * obstacleMultiplier,
+            platformInterval: this.spawnInterval * platformMultiplier,
+            itemInterval: Config.ITEM_SPAWN_INTERVAL * itemMultiplier,
+            cloudInterval: Config.CLOUD_SPAWN_INTERVAL * cloudMultiplier,
+            patternProbability: Number.isFinite(spawnRates.patternProbability)
+                ? spawnRates.patternProbability
+                : Config.PATTERN_PROBABILITY,
+            patternCooldownFallback: Number.isFinite(spawnRates.patternCooldownFallback)
+                ? spawnRates.patternCooldownFallback
+                : Config.PATTERN_COOLDOWN_FALLBACK,
+            entityBudget: this.entityBudget
+        };
     }
 
     /**
@@ -194,8 +244,11 @@ export class LevelSystem {
         this.distance = 0;
         this.level = 1;
         this.difficultyMultiplier = 1.0;
-        this.gameSpeed = Config.INITIAL_GAME_SPEED;
-        this.spawnInterval = Config.SPAWN_INTERVAL_START;
+        const settings = Storage.load('game_settings', {});
+        this.difficultyPresetName = this._resolveDifficultyName(settings?.difficulty);
+        this.difficultyPreset = Config.DIFFICULTY_PRESETS[this.difficultyPresetName] || Config.DIFFICULTY_PRESETS.normal;
+        this.gameSpeed = Config.INITIAL_GAME_SPEED * this.difficultyPreset.speedMultiplier;
+        this.spawnInterval = Config.SPAWN_INTERVAL_START * this.difficultyPreset.spawnIntervalMultiplier;
 
         // Clear any in-progress ramp so a new run doesn't inherit the previous one's easing
         this.rampFrom = { speed: this.gameSpeed, spawnInterval: this.spawnInterval };
@@ -205,5 +258,6 @@ export class LevelSystem {
 
         // Reload user config case they changed it in the lab
         this.userCustomization = Storage.load('levelConfig', null);
+        this.updateStage();
     }
 }

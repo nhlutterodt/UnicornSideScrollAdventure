@@ -54,6 +54,29 @@ export const Config = {
         RAMP_DURATION_MS: 3000
     },
 
+    // --- Difficulty Presets ---
+    // Multipliers are applied by LevelSystem based on settings difficulty.
+    DIFFICULTY_PRESETS: {
+        easy: {
+            speedMultiplier: 0.85,
+            spawnIntervalMultiplier: 1.2,
+            difficultyMultiplier: 0.9,
+            safeStartMultiplier: 1.25
+        },
+        normal: {
+            speedMultiplier: 1.0,
+            spawnIntervalMultiplier: 1.0,
+            difficultyMultiplier: 1.0,
+            safeStartMultiplier: 1.0
+        },
+        hard: {
+            speedMultiplier: 1.2,
+            spawnIntervalMultiplier: 0.85,
+            difficultyMultiplier: 1.15,
+            safeStartMultiplier: 0.8
+        }
+    },
+
     // --- Safe Start ---
     // Gives new runs a clear runway before any damaging hazard can spawn.
     SAFE_START: {
@@ -80,6 +103,14 @@ export const Config = {
         ABILITIES: './js/config/abilities.json',
         EFFECTS: './js/config/effects.json',
         PATTERNS: './js/config/patterns.json'
+    },
+
+    // --- Hazard Mapping ---
+    // Stage names map to hazard IDs resolved by SpawnManager's local registry.
+    STAGE_HAZARD_MAP: {
+        'Crystal Caverns': 'ice_spike',
+        'Inferno Ridge': 'lava_geyser',
+        'Cyber City': 'neon_barrier'
     },
 
     // --- Fallbacks (minimal safe defaults) ---
@@ -444,6 +475,112 @@ export const Config = {
     },
 
     /**
+     * Validates and sanitizes pattern configuration to prevent runtime spawn
+     * crashes from malformed pattern entries.
+     * @param {Object} patterns
+     * @returns {Object} Sanitized patterns map
+     * @private
+     */
+    _validatePatterns(patterns) {
+        if (!patterns || typeof patterns !== 'object' || Array.isArray(patterns)) {
+            logger.warn('Config', 'PATTERNS has invalid root shape, using fallback');
+            return this.FALLBACK.PATTERNS;
+        }
+
+        const sanitized = {};
+        let rejected = 0;
+
+        Object.entries(patterns).forEach(([patternName, pattern]) => {
+            if (!pattern || typeof pattern !== 'object' || Array.isArray(pattern)) {
+                rejected++;
+                logger.warn('Config', `Pattern "${patternName}" rejected: expected object`);
+                return;
+            }
+
+            if (!Array.isArray(pattern.entities) || pattern.entities.length === 0) {
+                rejected++;
+                logger.warn('Config', `Pattern "${patternName}" rejected: missing/empty entities array`);
+                return;
+            }
+
+            const entities = [];
+            pattern.entities.forEach((entity, index) => {
+                const normalized = this._validatePatternEntity(entity, patternName, index);
+                if (normalized) entities.push(normalized);
+            });
+
+            if (entities.length === 0) {
+                rejected++;
+                logger.warn('Config', `Pattern "${patternName}" rejected: no valid entities`);
+                return;
+            }
+
+            const normalizedPattern = { entities };
+            if (Number.isFinite(pattern.durationOffset) && pattern.durationOffset > 0) {
+                normalizedPattern.durationOffset = pattern.durationOffset;
+            }
+
+            sanitized[patternName] = normalizedPattern;
+        });
+
+        if (Object.keys(sanitized).length === 0) {
+            logger.warn('Config', `All patterns rejected (${rejected}); using fallback patterns`);
+            return this.FALLBACK.PATTERNS;
+        }
+
+        if (rejected > 0) {
+            logger.warn('Config', `Patterns sanitized: ${rejected} invalid pattern(s) removed`);
+        }
+
+        return sanitized;
+    },
+
+    /**
+     * Validates and normalizes a single pattern entity object.
+     * @param {Object} entity
+     * @param {string} patternName
+     * @param {number} index
+     * @returns {Object|null}
+     * @private
+     */
+    _validatePatternEntity(entity, patternName, index) {
+        if (!entity || typeof entity !== 'object' || Array.isArray(entity)) {
+            logger.warn('Config', `Pattern "${patternName}" entity[${index}] rejected: expected object`);
+            return null;
+        }
+
+        if (entity.type !== 'hazard' && entity.type !== 'platform') {
+            logger.warn('Config', `Pattern "${patternName}" entity[${index}] rejected: invalid type "${entity.type}"`);
+            return null;
+        }
+
+        if (!Number.isFinite(entity.dx)) {
+            logger.warn('Config', `Pattern "${patternName}" entity[${index}] rejected: dx must be a finite number`);
+            return null;
+        }
+
+        const normalized = {
+            type: entity.type,
+            dx: entity.dx
+        };
+
+        if (Number.isFinite(entity.dy)) {
+            normalized.dy = entity.dy;
+        }
+
+        if (entity.type === 'platform') {
+            if (Number.isFinite(entity.width) && entity.width > 0) {
+                normalized.width = entity.width;
+            }
+            if (Number.isFinite(entity.height) && entity.height > 0) {
+                normalized.height = entity.height;
+            }
+        }
+
+        return normalized;
+    },
+
+    /**
      * Fetches and validates a configuration file.
      * @param {string} key - The config key (STAGES, ITEMS, ABILITIES, EFFECTS)
      * @param {boolean} isArray - Whether the returned data should be an array
@@ -471,6 +608,10 @@ export const Config = {
             if (!content || (isArray && content.length === 0) || (!isArray && Object.keys(content).length === 0)) {
                 logger.warn('Config', `${key} is empty or missing, using fallback`);
                 return this.FALLBACK[key];
+            }
+
+            if (key === 'PATTERNS') {
+                return this._validatePatterns(content);
             }
             
             logger.debug('Config', `Loaded data for ${key}`);

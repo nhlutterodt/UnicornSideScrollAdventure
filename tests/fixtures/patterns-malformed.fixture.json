@@ -1,0 +1,28 @@
+{
+  "patterns": {
+    "missing_entities": {
+      "durationOffset": 500
+    },
+    "invalid_entity_type": {
+      "entities": [
+        { "type": "banana", "dx": 100 }
+      ]
+    },
+    "invalid_dx": {
+      "entities": [
+        { "type": "hazard", "dx": "left" }
+      ]
+    },
+    "invalid_platform_dimensions": {
+      "entities": [
+        { "type": "platform", "dx": 120, "width": 0, "height": -10 }
+      ]
+    },
+    "invalid_duration_offset": {
+      "durationOffset": -10,
+      "entities": [
+        { "type": "hazard", "dx": 40 }
+      ]
+    }
+  }
+}

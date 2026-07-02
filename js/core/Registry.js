@@ -127,6 +127,14 @@ export class Registry {
     }
 
     /**
+     * Returns number of active registered entities.
+     * @returns {number}
+     */
+    getCount() {
+        return this.entities.size;
+    }
+
+    /**
      * Returns entities that match a bitmask of collision layers.
      * Useful for building collision candidate lists.
      * @param {number} layerMask 

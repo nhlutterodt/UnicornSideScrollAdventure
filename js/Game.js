@@ -25,6 +25,7 @@ import { HybridControlsBar } from './systems/HybridControlsBar.js';
 import { ThemeManager } from './systems/ThemeManager.js';
 import { EnvironmentInitializer } from './utils/EnvironmentInitializer.js';
 import { LogOverlay } from './systems/LogOverlay.js';
+import { Storage } from './systems/Storage.js';
 
 /**
  * GAME.js
@@ -114,6 +115,23 @@ export class Game {
         });
         eventManager.on('VIEWPORT_RESIZED', (data) => this.onViewportResize(data));
         eventManager.on('LIFE_CHANGED', () => this.player && this.ui.updateLives());
+        eventManager.on('ENTITY_SPAWNED', (event) => {
+            if (!event) return;
+            this.spawnHistory.push(event);
+            if (this.spawnHistory.length > 100) {
+                this.spawnHistory.shift();
+            }
+
+            if (!this.spawnStats.byType[event.type]) {
+                this.spawnStats.byType[event.type] = 0;
+            }
+            this.spawnStats.byType[event.type]++;
+            this.spawnStats.total++;
+        });
+
+        eventManager.on('ENTITY_BUDGET_WARNING', (event) => {
+            logger.game(VerbosityLevel.MEDIUM, 'Game', '⚠️ Entity budget warning', event);
+        });
     }
 
     init() {
@@ -136,13 +154,19 @@ export class Game {
         // Reset scoring
         this.scoreManager.reset();
         this.gameSpeed = Config.INITIAL_GAME_SPEED;
+        this.spawnHistory = [];
+        this.spawnStats = {
+            total: 0,
+            byType: {}
+        };
+
+        // Reset level progression before deriving preset-dependent runtime values.
+        if (this.level) this.level.reset();
 
         // Safe start: no damaging hazards until this window elapses (see Config.SAFE_START)
-        this.safeStartRemaining = Config.SAFE_START.FIRST_HAZARD_DELAY_MS / 1000;
+        const safeStartMultiplier = this.level?.difficultyPreset?.safeStartMultiplier || 1.0;
+        this.safeStartRemaining = (Config.SAFE_START.FIRST_HAZARD_DELAY_MS / 1000) * safeStartMultiplier;
         this._lastSafeStartTick = null;
-
-        // Reset level progression
-        if (this.level) this.level.reset();
         
         // Clear spawners and all entities
         this.spawnManager.reset();
@@ -200,6 +224,19 @@ export class Game {
         this.state.setState('GAMEOVER');
         this.controlsBar.sync();
         const scoreData = this.scoreManager.finalize();
+        const runTelemetry = {
+            timestamp: Date.now(),
+            score: scoreData.score,
+            isHighScore: scoreData.isHighScore,
+            level: this.level.level,
+            distance: this.level.distance,
+            difficultyPreset: this.level.difficultyPresetName,
+            spawnStats: this.spawnStats,
+            lastSpawns: this.spawnHistory.slice(-15)
+        };
+
+        Storage.save('last_run_telemetry', runTelemetry);
+        eventManager.emit('RUN_TELEMETRY_READY', runTelemetry);
         
         if (scoreData.isHighScore) {
             logger.game(VerbosityLevel.LOW, 'Game', '🏆 NEW HIGH SCORE!', { score: scoreData.score });

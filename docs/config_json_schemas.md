@@ -66,6 +66,15 @@ Defines game stages/levels with visual themes and physics modifiers.
 {
   "levelStart": 1,
   "name": "Morning Meadow",
+  "entityBudget": 110,
+  "spawnRates": {
+    "obstacleIntervalMultiplier": 1.15,
+    "platformIntervalMultiplier": 1.2,
+    "itemIntervalMultiplier": 0.9,
+    "cloudIntervalMultiplier": 1.0,
+    "patternProbability": 0.2,
+    "patternCooldownFallback": 900
+  },
   "theme": {
     "primary": "#8ce68c",
     "secondary": "#76c476",
@@ -87,6 +96,14 @@ Defines game stages/levels with visual themes and physics modifiers.
 |-------|------|----------|------------|-------------|
 | `levelStart` | number | ✅ | >= 1, integer | Level number where stage begins |
 | `name` | string | ✅ | length > 0 | Display name of stage |
+| `entityBudget` | number | ❌ | >= 1, integer | Max recommended active entities before budget warnings |
+| `spawnRates` | object | ❌ | - | Per-stage spawn pacing controls |
+| `spawnRates.obstacleIntervalMultiplier` | number | ❌ | 0.5 - 2.0 | Multiplier applied to level-derived obstacle interval |
+| `spawnRates.platformIntervalMultiplier` | number | ❌ | 0.5 - 3.0 | Multiplier applied to level-derived platform interval |
+| `spawnRates.itemIntervalMultiplier` | number | ❌ | 0.5 - 3.0 | Multiplier applied to base item interval |
+| `spawnRates.cloudIntervalMultiplier` | number | ❌ | 0.5 - 3.0 | Multiplier applied to base cloud interval |
+| `spawnRates.patternProbability` | number | ❌ | 0.0 - 1.0 | Chance to spawn a pattern instead of a single hazard |
+| `spawnRates.patternCooldownFallback` | number | ❌ | >= 100 | Pixel cooldown used when a pattern omits `durationOffset` |
 | `theme` | object | ✅ | - | Visual theme configuration |
 | `theme.primary` | string | ✅ | hex or CSS color | Primary/ground color |
 | `theme.secondary` | string | ✅ | hex or CSS color | Secondary color |
@@ -102,6 +119,8 @@ Defines game stages/levels with visual themes and physics modifiers.
 - At least one stage must be defined
 - `levelStart` values should be unique and sequential
 - Stage with `levelStart: 1` is required (starting stage)
+- `entityBudget` is optional; if omitted, engine default collision budget is used
+- `spawnRates` is optional; if omitted, global spawn defaults are used
 - Hex colors should start with `#` (e.g., `#8ce68c`)
 - Elements array can be empty but must exist
 

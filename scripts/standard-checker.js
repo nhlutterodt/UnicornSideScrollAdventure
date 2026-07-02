@@ -61,6 +61,7 @@ const IGNORE_FILES = [
     'import-export-checker.js', // Checker tool, needs console output
     'identifier-usage-checker.js', // Checker tool, needs console output
     'escape-sequence-checker.js', // Checker tool, needs console output
+    'pattern-config-checker.js', // Checker tool, needs console output
     'init-diagnostics.js',     // Browser diagnostic tool, needs console output
     'Storage.js',              // Allowed to use localStorage
     'StorageManager.js',       // Allowed to use localStorage

@@ -5,6 +5,15 @@
     {
       "levelStart": 1,
       "name": "Morning Meadow",
+      "entityBudget": 110,
+      "spawnRates": {
+        "obstacleIntervalMultiplier": 1.15,
+        "platformIntervalMultiplier": 1.2,
+        "itemIntervalMultiplier": 0.9,
+        "cloudIntervalMultiplier": 1.0,
+        "patternProbability": 0.2,
+        "patternCooldownFallback": 900
+      },
       "theme": {
         "primary": "#8ce68c",
         "secondary": "#76c476",
@@ -21,6 +30,15 @@
     {
       "levelStart": 5,
       "name": "Twilight Clouds",
+      "entityBudget": 120,
+      "spawnRates": {
+        "obstacleIntervalMultiplier": 1.0,
+        "platformIntervalMultiplier": 1.5,
+        "itemIntervalMultiplier": 1.0,
+        "cloudIntervalMultiplier": 0.8,
+        "patternProbability": 0.25,
+        "patternCooldownFallback": 850
+      },
       "theme": {
         "primary": "#a29bfe",
         "secondary": "#6c5ce7",
@@ -37,6 +55,15 @@
     {
       "levelStart": 10,
       "name": "Gravity Void",
+      "entityBudget": 130,
+      "spawnRates": {
+        "obstacleIntervalMultiplier": 0.95,
+        "platformIntervalMultiplier": 1.4,
+        "itemIntervalMultiplier": 1.05,
+        "cloudIntervalMultiplier": 1.1,
+        "patternProbability": 0.28,
+        "patternCooldownFallback": 850
+      },
       "theme": {
         "primary": "#2d3436",
         "secondary": "#000000",
@@ -53,6 +80,15 @@
     {
       "levelStart": 15,
       "name": "Crystal Caverns",
+      "entityBudget": 140,
+      "spawnRates": {
+        "obstacleIntervalMultiplier": 0.9,
+        "platformIntervalMultiplier": 1.35,
+        "itemIntervalMultiplier": 1.1,
+        "cloudIntervalMultiplier": 1.2,
+        "patternProbability": 0.3,
+        "patternCooldownFallback": 800
+      },
       "theme": {
         "primary": "#48dbfb",
         "secondary": "#0abde3",
@@ -69,6 +105,15 @@
     {
       "levelStart": 20,
       "name": "Inferno Ridge",
+      "entityBudget": 145,
+      "spawnRates": {
+        "obstacleIntervalMultiplier": 0.85,
+        "platformIntervalMultiplier": 1.25,
+        "itemIntervalMultiplier": 1.15,
+        "cloudIntervalMultiplier": 1.25,
+        "patternProbability": 0.32,
+        "patternCooldownFallback": 780
+      },
       "theme": {
         "primary": "#ff9f43",
         "secondary": "#ee5253",
@@ -85,6 +130,15 @@
     {
       "levelStart": 25,
       "name": "Cyber City",
+      "entityBudget": 150,
+      "spawnRates": {
+        "obstacleIntervalMultiplier": 0.8,
+        "platformIntervalMultiplier": 1.2,
+        "itemIntervalMultiplier": 1.2,
+        "cloudIntervalMultiplier": 1.3,
+        "patternProbability": 0.35,
+        "patternCooldownFallback": 760
+      },
       "theme": {
         "primary": "#00d2d3",
         "secondary": "#5f27cd",
