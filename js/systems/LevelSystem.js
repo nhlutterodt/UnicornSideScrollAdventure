@@ -7,6 +7,10 @@ import { logger, VerbosityLevel } from '../utils/Logger.js';
 import { eventManager } from './EventManager.js';
 import { Storage } from './Storage.js';
 
+function lerp(a, b, t) {
+    return a + (b - a) * t;
+}
+
 export class LevelSystem {
     constructor() {
         this.distance = 0;
@@ -15,6 +19,13 @@ export class LevelSystem {
         
         this.gameSpeed = Config.INITIAL_GAME_SPEED;
         this.spawnInterval = Config.SPAWN_INTERVAL_START;
+
+        // Eases gameSpeed/spawnInterval toward their new level-derived targets over
+        // Config.LEVEL_PROGRESSION.RAMP_DURATION_MS instead of snapping instantly.
+        this.rampFrom = { speed: this.gameSpeed, spawnInterval: this.spawnInterval };
+        this.rampTo = { speed: this.gameSpeed, spawnInterval: this.spawnInterval };
+        this.rampElapsed = 0;
+        this.rampDuration = 0;
 
         this.currentStage = null;
         this.worldModifiers = { gravityMultiplier: 1.0, timeScale: 1.0, friction: 1.0, bounciness: 0 };
@@ -42,42 +53,81 @@ export class LevelSystem {
         const deltaDist = speed * dt;
         this.distance += deltaDist;
 
-        // progression logic using Config.LEVEL_PROGRESSION
-        const { DISTANCE_PER_LEVEL, SPEED_INCREMENT_PER_LEVEL, SPAWN_INTERVAL_DECREMENT } = Config.LEVEL_PROGRESSION;
+        const { DISTANCE_PER_LEVEL } = Config.LEVEL_PROGRESSION;
 
         const newLevel = Math.floor(this.distance / DISTANCE_PER_LEVEL) + 1;
         if (newLevel > this.level) {
             this.levelUp(newLevel);
         }
 
-        // Gradual speed increase
-        this.gameSpeed = Math.min(
-            Config.MAX_GAME_SPEED, 
-            Config.INITIAL_GAME_SPEED + (this.level - 1) * SPEED_INCREMENT_PER_LEVEL
-        );
+        this._updateRamp(dt);
+    }
 
-        this.spawnInterval = Math.max(
-            Config.SPAWN_INTERVAL_MIN,
-            Config.SPAWN_INTERVAL_START - (this.level - 1) * SPAWN_INTERVAL_DECREMENT
+    /**
+     * Target gameSpeed for a given level (the value a ramp eases toward).
+     */
+    _targetSpeedFor(level) {
+        const { SPEED_INCREMENT_PER_LEVEL } = Config.LEVEL_PROGRESSION;
+        return Math.min(
+            Config.MAX_GAME_SPEED,
+            Config.INITIAL_GAME_SPEED + (level - 1) * SPEED_INCREMENT_PER_LEVEL
         );
+    }
+
+    /**
+     * Target spawnInterval for a given level (the value a ramp eases toward).
+     */
+    _targetSpawnIntervalFor(level) {
+        const { SPAWN_INTERVAL_DECREMENT } = Config.LEVEL_PROGRESSION;
+        return Math.max(
+            Config.SPAWN_INTERVAL_MIN,
+            Config.SPAWN_INTERVAL_START - (level - 1) * SPAWN_INTERVAL_DECREMENT
+        );
+    }
+
+    /**
+     * Eases gameSpeed/spawnInterval from rampFrom toward rampTo over rampDuration
+     * seconds. A no-op once the ramp completes (rampDuration reset to 0).
+     */
+    _updateRamp(dt) {
+        if (this.rampDuration <= 0) return;
+
+        this.rampElapsed += dt;
+        const t = Math.min(1, this.rampElapsed / this.rampDuration);
+
+        this.gameSpeed = lerp(this.rampFrom.speed, this.rampTo.speed, t);
+        this.spawnInterval = lerp(this.rampFrom.spawnInterval, this.rampTo.spawnInterval, t);
+
+        if (t >= 1) {
+            this.rampDuration = 0;
+        }
     }
 
     levelUp(newLevel) {
         this.level = newLevel;
         this.difficultyMultiplier = Math.min(Config.LEVEL_PROGRESSION.MAX_DIFFICULTY_MULTIPLIER, 1.0 + (this.level - 1) * Config.LEVEL_PROGRESSION.DIFFICULTY_INCREMENT_PER_LEVEL);
-        
+
+        // Ease into the new speed/spawn-interval targets instead of snapping instantly.
+        this.rampFrom = { speed: this.gameSpeed, spawnInterval: this.spawnInterval };
+        this.rampTo = {
+            speed: this._targetSpeedFor(this.level),
+            spawnInterval: this._targetSpawnIntervalFor(this.level)
+        };
+        this.rampElapsed = 0;
+        this.rampDuration = Config.LEVEL_PROGRESSION.RAMP_DURATION_MS / 1000;
+
         logger.info('LevelSystem', `Level Up! Now at Level ${this.level}`);
         logger.game(VerbosityLevel.LOW, 'LevelSystem', `📈 LEVEL UP → ${this.level}`, {
             difficulty: this.difficultyMultiplier.toFixed(2),
-            gameSpeed: Math.round(this.gameSpeed),
-            spawnInterval: this.spawnInterval.toFixed(2)
+            gameSpeed: Math.round(this.rampTo.speed),
+            spawnInterval: this.rampTo.spawnInterval.toFixed(2)
         });
-        
+
         this.updateStage();
 
-        eventManager.emit('LEVEL_UP', { 
-            level: this.level, 
-            speed: this.gameSpeed,
+        eventManager.emit('LEVEL_UP', {
+            level: this.level,
+            speed: this.rampTo.speed,
             difficulty: this.difficultyMultiplier,
             stage: this.currentStage
         });
@@ -146,6 +196,13 @@ export class LevelSystem {
         this.difficultyMultiplier = 1.0;
         this.gameSpeed = Config.INITIAL_GAME_SPEED;
         this.spawnInterval = Config.SPAWN_INTERVAL_START;
+
+        // Clear any in-progress ramp so a new run doesn't inherit the previous one's easing
+        this.rampFrom = { speed: this.gameSpeed, spawnInterval: this.spawnInterval };
+        this.rampTo = { speed: this.gameSpeed, spawnInterval: this.spawnInterval };
+        this.rampElapsed = 0;
+        this.rampDuration = 0;
+
         // Reload user config case they changed it in the lab
         this.userCustomization = Storage.load('levelConfig', null);
     }

@@ -81,6 +81,22 @@
     font-size: 0.8em;
 }
 
+.safe-start-countdown {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+    z-index: 6;
+    transition: opacity var(--transition-fast);
+}
+
 /* Success/State Classes */
 .btn-saved {
     background: #ffd700 !important; /* Gold */

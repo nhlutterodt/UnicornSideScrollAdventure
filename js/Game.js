@@ -136,6 +136,10 @@ export class Game {
         this.scoreManager.reset();
         this.gameSpeed = Config.INITIAL_GAME_SPEED;
 
+        // Safe start: no damaging hazards until this window elapses (see Config.SAFE_START)
+        this.safeStartRemaining = Config.SAFE_START.FIRST_HAZARD_DELAY_MS / 1000;
+        this._lastSafeStartTick = null;
+
         // Reset level progression
         if (this.level) this.level.reset();
         
@@ -218,6 +222,8 @@ export class Game {
     update(dt) {
         if (this.state.current !== 'PLAYING') return;
 
+        this._updateSafeStart(dt);
+
         this.level.update(dt);
         this.abilities.update(dt);
         this.gameSpeed = this.level.gameSpeed;
@@ -233,11 +239,35 @@ export class Game {
             onObstaclePassed: () => this.scoreManager.addPoints(1)
         };
 
-        this.spawnManager.update(dt, this.viewport, this.level, this.player, this.particles);
+        const isSafeStart = this.safeStartRemaining > 0;
+        this.spawnManager.update(dt, this.viewport, this.level, this.player, this.particles, isSafeStart);
         this.particles.update(dt, context);
         this.effects.update(dt, context);
         engineRegistry.updateAll(dt, context);
         CollisionSystem.resolve(engineRegistry, this.particles, context);
+    }
+
+    /**
+     * Counts down the safe-start window and emits a tick event only when the
+     * displayed countdown digit changes, so UIManager can stay event-driven
+     * rather than polling every frame.
+     */
+    _updateSafeStart(dt) {
+        if (this.safeStartRemaining <= 0) return;
+
+        this.safeStartRemaining = Math.max(0, this.safeStartRemaining - dt);
+
+        if (this.safeStartRemaining <= 0) {
+            this._lastSafeStartTick = null;
+            eventManager.emit('SAFE_START_END', {});
+            return;
+        }
+
+        const tick = Math.ceil(this.safeStartRemaining);
+        if (tick !== this._lastSafeStartTick) {
+            this._lastSafeStartTick = tick;
+            eventManager.emit('SAFE_START_TICK', { remaining: tick });
+        }
     }
 
     draw() {

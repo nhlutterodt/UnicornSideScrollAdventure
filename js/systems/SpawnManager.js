@@ -61,8 +61,10 @@ export class SpawnManager {
      * @param {LevelSystem} level - Level system for spawn intervals
      * @param {Player} player - Player for trail particles
      * @param {ParticleSystem} particles - Particle system for trails
+     * @param {boolean} isSafeStart - When true, suppresses hazard/pattern spawning
+     *   (used to give new runs a clear runway - see Config.SAFE_START)
      */
-    update(dt, viewport, level, player, particles) {
+    update(dt, viewport, level, player, particles, isSafeStart = false) {
         if (!viewport || !level || !player || !particles) {
             logger.warn('SpawnManager', 'Missing dependencies for update');
             return;
@@ -79,9 +81,12 @@ export class SpawnManager {
             this.patternCooldown -= (level.gameSpeed * dt);
         } else {
             // Only spawn regular structural obstacles/platforms if a pattern isn't actively rolling out
-            
-            // 2. Obstacle & Pattern Spawning
-            this.spawnObstaclesAndPatterns(dt, level, spawnX, logicalHeight);
+
+            // 2. Obstacle & Pattern Spawning - suppressed during the safe-start window since
+            // patterns can also place hazards (platforms are non-damaging, so they're exempt).
+            if (!isSafeStart) {
+                this.spawnObstaclesAndPatterns(dt, level, spawnX, logicalHeight);
+            }
 
             // 3. Platform Spawning
             this.spawnPlatforms(dt, level, spawnX);

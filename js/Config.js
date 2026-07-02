@@ -48,7 +48,16 @@ export const Config = {
         SPEED_INCREMENT_PER_LEVEL: 40,
         SPAWN_INTERVAL_DECREMENT: 0.1,
         DIFFICULTY_INCREMENT_PER_LEVEL: 0.1,
-        MAX_DIFFICULTY_MULTIPLIER: 2.5
+        MAX_DIFFICULTY_MULTIPLIER: 2.5,
+        // How long (ms) a level-up's speed/spawn-interval change takes to ease in,
+        // instead of snapping instantly.
+        RAMP_DURATION_MS: 3000
+    },
+
+    // --- Safe Start ---
+    // Gives new runs a clear runway before any damaging hazard can spawn.
+    SAFE_START: {
+        FIRST_HAZARD_DELAY_MS: 2500
     },
 
     // --- External Config Paths ---

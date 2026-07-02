@@ -42,6 +42,7 @@ export class UIManager {
         this.startHighScoreElement = Dom.get('startHighScore');
         this.gameOverHighScoreElement = Dom.get('gameOverHighScore');
         this.abilityInventoryElement = Dom.get('abilityInventory');
+        this.safeStartElement = Dom.get('safeStartCountdown');
 
         // Player reference for ability UI
         this.player = player;
@@ -49,7 +50,7 @@ export class UIManager {
         // Setup event listeners
         this.setupEventListeners();
 
-        logger.info('UIManager', 'Initialized with 6 DOM elements');
+        logger.info('UIManager', 'Initialized with 7 DOM elements');
     }
 
     /**
@@ -72,6 +73,14 @@ export class UIManager {
 
         eventManager.on('ABILITY_APPLIED', () => {
             this.updateAbilityInventory();
+        });
+
+        eventManager.on('SAFE_START_TICK', (data) => {
+            this.showSafeStartTick(data.remaining);
+        });
+
+        eventManager.on('SAFE_START_END', () => {
+            this.hideSafeStartCountdown('Go!');
         });
 
         logger.debug('UIManager', 'Event listeners registered');
@@ -140,6 +149,30 @@ export class UIManager {
     updateStats(score) {
         this.updateScore(score);
         this.updateLives();
+    }
+
+    /**
+     * Shows the safe-start countdown digit (e.g. 3, 2, 1).
+     * Visually distinct from the invincibility glow - this is a "get ready"
+     * runway indicator, not a power-up.
+     * @param {number} remaining - Whole seconds remaining
+     */
+    showSafeStartTick(remaining) {
+        if (!this.safeStartElement) return;
+        this.safeStartElement.textContent = String(remaining);
+        this.safeStartElement.classList.remove('hidden');
+    }
+
+    /**
+     * Shows a brief "Go!" message, then hides the countdown.
+     * @param {string} text - Text to flash before hiding (default 'Go!')
+     */
+    hideSafeStartCountdown(text = 'Go!') {
+        if (!this.safeStartElement) return;
+        this.safeStartElement.textContent = text;
+        setTimeout(() => {
+            if (this.safeStartElement) this.safeStartElement.classList.add('hidden');
+        }, 600);
     }
 
     /**
