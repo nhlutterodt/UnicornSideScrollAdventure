@@ -25,11 +25,12 @@ async function init() {
         
         // Instantiate and start the game
         window.game = new Game();
-    } catch (error) {
+    } catch (error)
+    {
         const loadingOverlay = document.getElementById('loadingOverlay');
         if (loadingOverlay) {
             loadingOverlay.innerHTML = `Failed to load game: ${error.message}. Please refresh the page.`;
-            loadingOverlay.style.color = "red";
+            loadingOverlay.style.setProperty('color', 'red');
         }
         throw error;
     }

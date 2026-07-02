@@ -63,7 +63,8 @@ class AssetManager {
             await Promise.all(promises);
             this.isInitialized = true;
             logger.info('AssetManager', 'All assets preloaded successfully.');
-        } catch (error) {
+        } catch (error)
+        {
             this.hasFailed = true;
             logger.error('AssetManager', `Asset loading failed: ${error.message}`);
             throw error;
