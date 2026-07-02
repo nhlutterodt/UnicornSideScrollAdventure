@@ -4,8 +4,8 @@
  * Run this to verify the codebase.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 const VIOLATIONS = {
     INLINE_STYLE: {

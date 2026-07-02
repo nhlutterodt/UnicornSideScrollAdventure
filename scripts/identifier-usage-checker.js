@@ -7,8 +7,12 @@
  * This complements import-export-checker.js by validating USAGE, not just imports.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const JS_DIR = path.join(__dirname, '../js');
 const IGNORE_DIRS = ['node_modules', '.git', 'libs'];
@@ -209,8 +213,8 @@ function main() {
 }
 
 // Run if executed directly
-if (require.main === module) {
+if (process.argv[1] === __filename) {
     main();
 }
 
-module.exports = { parseImports, findIdentifierUsages, checkForCaseMismatch };
+export { parseImports, findIdentifierUsages, checkForCaseMismatch };

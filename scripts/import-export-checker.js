@@ -8,8 +8,8 @@
  * - Circular dependencies
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // Track exports by file
 const exportMap = new Map(); // filepath -> { default: string, named: Set<string> }
