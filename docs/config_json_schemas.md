@@ -8,20 +8,22 @@
 
 ## Overview
 
-The game uses three external JSON configuration files to store content data:
+The game uses five external JSON configuration files to store content data:
 - `js/config/stages.json` - Stage/level definitions
 - `js/config/items.json` - Collectible item definitions
 - `js/config/abilities.json` - Power-up ability definitions
+- `js/config/patterns.json` - Named obstacle/platform layout templates used by `SpawnManager`
+- `js/config/effects.json` - Particle-effect presets used by `ParticleSystem`/`EffectSystem`
 
-All JSON files follow a versioned wrapper format with metadata for tracking and migration.
+`stages.json`, `items.json`, and `abilities.json` follow a versioned wrapper format with metadata for tracking and migration (see below). `patterns.json` and `effects.json` do **not** — they are plain keyed objects with no `version`/`lastModified` wrapper.
 
 ---
 
 ## Common Schema Elements
 
-### Version Metadata (All Files)
+### Version Metadata (stages.json, items.json, abilities.json only)
 
-Every JSON file must include version metadata at the root level:
+These three files must include version metadata at the root level:
 
 ```json
 {
@@ -423,6 +425,110 @@ The `effectConfig` object structure depends on the ability implementation:
 
 ---
 
+## patterns.json Schema
+
+### Purpose
+
+Defines named, multi-entity obstacle/platform layout templates that `SpawnManager` can place as a unit instead of spawning a single random hazard.
+
+### Root Object
+
+```json
+{
+  "patterns": { /* map of pattern name -> Pattern object */ }
+}
+```
+
+Unlike stages/items/abilities, this is a plain object with **no `version`/`lastModified` wrapper** and no top-level array — patterns are keyed by name directly.
+
+### Pattern Object
+
+```json
+{
+  "staircase": {
+    "durationOffset": 220,
+    "entities": [
+      { "type": "platform", "dx": 0, "dy": -40, "width": 80, "height": 20 },
+      { "type": "hazard", "dx": 260, "dy": 0 }
+    ]
+  }
+}
+```
+
+**Fields:**
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `durationOffset` | number | ❌ | Pixel-distance the pattern's cooldown lasts before normal single-hazard/platform spawning resumes. Falls back to `Config.PATTERN_COOLDOWN_FALLBACK` (1000) if omitted. |
+| `entities` | array | ✅ | List of Entity Placement objects that make up the pattern. |
+
+**Entity Placement Object:**
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `type` | string | ✅ | `"platform"` or `"hazard"`. |
+| `dx` | number | ✅ | X offset from the pattern's spawn base position. |
+| `dy` | number | ❌ | Y offset from ground level (default 0). |
+| `width` | number | ❌ | Platform-only; defaults to `Config.PLATFORM_MIN_WIDTH`. |
+| `height` | number | ❌ | Platform-only; defaults to `Config.PLATFORM_HEIGHT`. |
+
+**Consumer behavior** (`js/systems/SpawnManager.js`):
+
+- A pattern is only chosen if `Config.PATTERNS` is non-empty and `Math.random() < Config.PATTERN_PROBABILITY` (0.25 by default); otherwise a single hazard is spawned as usual.
+- `type: "hazard"` entries spawn via the same stage-aware hazard selection used for regular spawns (`IceSpike`/`LavaGeyser`/`NeonBarrier`/`Obstacle` depending on the current stage).
+- `type: "platform"` entries instantiate `Platform` directly (patterns do not spawn `CrumblingPlatform` or `JumpPad`).
+- While a pattern's cooldown is active, ordinary obstacle/platform spawning pauses, but cloud and item spawning continue unaffected.
+
+---
+
+## effects.json Schema
+
+### Purpose
+
+Defines reusable particle-effect presets consumed by `ParticleSystem.play(effectId, params)` and `EffectSystem`.
+
+### Root Object
+
+```json
+{
+  "effects": { /* map of EFFECT_ID -> Effect object */ }
+}
+```
+
+Like `patterns.json`, this has **no `version`/`lastModified` wrapper** — effects are keyed directly by ID (convention: `SCREAMING_SNAKE_CASE`).
+
+### Effect Object
+
+```json
+{
+  "TRAIL": {
+    "count": 1,
+    "life": [0.3, 0.6],
+    "size": [2, 4],
+    "speed": [10, 30],
+    "gravity": 0,
+    "tier": 0,
+    "color": "#ffccf9"
+  }
+}
+```
+
+**Fields:**
+
+| Field | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `count` | number | ❌ | 1 | Particles spawned per `play()` call. |
+| `life` | `[min, max]` | ❌ | `[0.5, 1.0]` | Randomized particle lifetime in seconds. |
+| `size` | `[min, max]` | ❌ | `[2, 5]` | Randomized particle size. |
+| `speed` | `[min, max]` | ❌ | `[50, 100]` | Randomized initial speed magnitude; direction is a random angle unless overridden by `params.vx`/`vy` at call time. |
+| `gravity` | number | ❌ | 0 | Per-particle gravity applied over its lifetime. |
+| `tier` | number | ❌ | 0 | Used for tiered collision-check budgeting (see `Config.PARTICLE_SYSTEM.TIER2_MAX_ACTIVE`/`TIER2_MAX_CHECKS_PER_FRAME`) — higher-tier effects get collision checks under a stricter per-frame budget. |
+| `color` | string | ❌ | — | Decorative default; can be overridden by `params.color` at call time. |
+
+**Known effect IDs currently defined**: `TRAIL`, `LAND_DUST`, `IMPACT_SPARK`, `PICKUP_BURST`, `ROAR`, `LASER`. `ROAR` and `LASER` are special-cased in `EffectSystem` beyond pure particle spawning — `LASER` spawns a `LaserEntity`, and `ROAR` also applies a radius-based force/destroy pass over nearby obstacles.
+
+---
+
 ## Validation & Testing
 
 ### Manual Validation
@@ -450,17 +556,17 @@ Use these tools to validate JSON syntax:
 
 ### Runtime Validation
 
-The Config.js loader includes validation:
-- Checks for required fields
-- Validates data types
-- Logs warnings for malformed data
-- Falls back to safe defaults on failure
+There is **no dedicated `ConfigValidator` module** — this doc previously implied per-field type/required-field checking that doesn't exist in code. The actual validation in `Config._fetchConfig()` (`js/Config.js`) is intentionally thin:
+- Confirms the fetched JSON has the expected top-level key (`stages`/`items`/`abilities`/`patterns`/`effects`).
+- Checks that the content is non-empty (array length, or object key count for `patterns`/`effects`).
+- Falls back to `Config.FALLBACK[key]` if the fetch fails, the key is missing, or the content is empty.
 
-Check browser console for validation messages:
+It does **not** check individual required fields (e.g. a stage missing `name` will not be caught or logged — it will simply be loaded as-is and likely fail later wherever that field is read). If you add stricter validation, update this section accordingly.
+
+Check browser console for the load messages:
 ```
 [Config] Loading external configuration...
-[ConfigValidator] Stage[0]: Missing 'name'  // Validation error example
-[Config] Loaded 3 stages, 7 items, 2 abilities  // Success message
+[Config] Loaded 6 stages, 8 items, 2 abilities, and effects.
 ```
 
 ---
@@ -485,10 +591,7 @@ Run through JSONLint or use VS Code's built-in JSON formatter
 
 ### Issue: Missing Required Field
 
-**Symptom:**
-```
-[ConfigValidator] Stage[2]: Missing or invalid 'levelStart'
-```
+**Symptom:** No console error — the loader doesn't validate individual fields, so a stage/item/ability missing a required field will load silently and fail wherever that field is later read (e.g. `undefined` colors, `NaN` physics modifiers).
 
 **Causes:**
 - Field name typo
@@ -663,18 +766,32 @@ Currently not implemented - all configs use v1.0.0.
 - [Coding Standards](coding_standards.md)
 
 ### File Locations
-- `js/Config.js` - Configuration loader
+
+- `js/Config.js` - Configuration loader (also holds the small hardcoded `FALLBACK` data set)
 - `js/config/stages.json` - Stage definitions
 - `js/config/items.json` - Item definitions
 - `js/config/abilities.json` - Ability definitions
+- `js/config/patterns.json` - Obstacle/platform pattern templates
+- `js/config/effects.json` - Particle effect presets
 
 ### Key Constants (Config.js)
+
 - `Config.ITEM_TYPES` - Valid item type enum
-- `Config.CONFIG_PATHS` - JSON file paths
+- `Config.CONFIG_PATHS` - JSON file paths (includes `EFFECTS`/`PATTERNS`)
 - `Config.FALLBACK` - Fallback configurations
+- `Config.PATTERN_PROBABILITY` (0.25) / `Config.PATTERN_COOLDOWN_FALLBACK` (1000) - govern pattern spawn frequency and default cooldown
+- `Config.CRUMBLING_PLATFORM_PROBABILITY` (0.15) / `Config.CRUMBLING_PLATFORM_DELAY` (0.4) - crumbling-platform spawn odds and shake duration
+- `Config.JUMP_PAD_ON_PLATFORM_PROBABILITY` (0.10) - odds a plain platform gets a jump pad
+- `Config.LEVEL_PROGRESSION.DIFFICULTY_INCREMENT_PER_LEVEL` (0.1) - per-level difficulty scaling
+- `Config.LEVEL_PROGRESSION.RAMP_DURATION_MS` (3000) - how long a level-up's speed/spawn-interval change takes to ease in, instead of snapping instantly
+- `Config.INPUT_TIMING.JUMP_COYOTE_MS` / `JUMP_BUFFER_MS` (120 / 120) - coyote-time grace window and jump-buffer window, consumed by `Player.jump()` via `InputBuffer`
+- `Config.SAFE_START.FIRST_HAZARD_DELAY_MS` (2500) - how long a new run goes before `SpawnManager` allows any hazard/pattern to spawn
+- `Config.FEEDBACK` - `intensity`, `screenShakeEnabled`, `hitStopEnabled`, and `presets` (`medium`/`heavy`) consumed by `FeedbackSystem` for screen shake and hit-stop
+
+These four are plain JS constants, not JSON-file-driven - see [Architecture](architecture.md) for the systems that consume them (Input Forgiveness, Impact Feedback, and Safe Start & Difficulty Ramp sections).
 
 ---
 
-**Last Updated:** 2026-01-23  
-**Schema Version:** 1.0.0  
+**Last Updated:** 2026-07-02
+**Schema Version:** 1.0.0
 **Maintainer:** Development Team

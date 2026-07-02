@@ -16,15 +16,17 @@ Welcome to **Unicorn Magic Run**, a magical side-scrolling adventure game!
 -   **Responsive Design**: Play on desktop or mobile devices.
 -   **Score Tracking**: Try to beat your high score!
 
-## � Development & Protocols
+## 🛠️ Development & Protocols
 
 -   **[Coding Standards](coding_standards.md)**: Guidelines for HTML, CSS, and JS.
 -   **[AI Quality Protocol](ai_quality_protocol.md)**: Deterministic checklist for AI agents to prevent regressions and quality failures.
 -   **[Architecture](architecture.md)**: Core engine design and state management.
 -   **[Item System Architecture](item_system_architecture.md)**: Details on the decoupled Item and Ability system (Manager Pattern).
+-   **[Testing & CI](testing_and_ci.md)**: Jest unit tests, Playwright integration/regression tests, and the GitHub Actions pipeline.
+
 ## ⚙️ Configuration & Data Management
 
--   **[Configuration JSON Schemas](config_json_schemas.md)**: Complete reference for editing stages, items, and abilities.
+-   **[Configuration JSON Schemas](config_json_schemas.md)**: Complete reference for editing stages, items, abilities, patterns, and effects.
 -   **[Data-Driven Design Pattern](data_driven_design_pattern.md)**: Best practices for externalizing game content.
 -   **[Config Externalization Lessons Learned](config_externalization_lessons_learned.md)**: Implementation insights and team knowledge.
 
@@ -35,6 +37,8 @@ Game content is now stored in external JSON files for easy editing:
 -   **Stages**: `js/config/stages.json` - Level themes, physics, and progression
 -   **Items**: `js/config/items.json` - Collectibles, power-ups, and spawn weights
 -   **Abilities**: `js/config/abilities.json` - Special abilities and their effects
+-   **Patterns**: `js/config/patterns.json` - Multi-entity obstacle/platform layout templates
+-   **Effects**: `js/config/effects.json` - Particle effect presets
 
 See [config_json_schemas.md](config_json_schemas.md) for detailed schema documentation and examples.
 

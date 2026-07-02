@@ -104,6 +104,8 @@ const music = new Howl({
 
 ## 4. Aggressive Verification Tools
 
+> This section predates the Jest/Playwright/CI setup added later. See [Testing & CI](testing_and_ci.md) for the full test-layer and pipeline reference — the scripts below are the "standards" layer only and are **not** currently run in CI, only via `npm test` locally.
+
 Multiple custom scripts ensure code quality:
 
 ### 4.1 Standard Checker (`scripts/standard-checker.js`)
