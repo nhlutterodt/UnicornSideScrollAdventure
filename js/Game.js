@@ -21,6 +21,7 @@ import { SpawnManager } from './systems/SpawnManager.js';
 import { UIManager } from './systems/UIManager.js';
 import { RenderSystem } from './systems/RenderSystem.js';
 import { GameInputHandler } from './systems/GameInputHandler.js';
+import { HybridControlsBar } from './systems/HybridControlsBar.js';
 import { ThemeManager } from './systems/ThemeManager.js';
 import { EnvironmentInitializer } from './utils/EnvironmentInitializer.js';
 import { LogOverlay } from './systems/LogOverlay.js';
@@ -76,6 +77,15 @@ export class Game {
         this.ui = new UIManager();
         this.renderer = new RenderSystem(this.canvas, this.ctx, this.viewport, this.level, LOGICAL_HEIGHT);
         this.inputHandler = new GameInputHandler(this.input, this.state);
+        this.controlsBar = new HybridControlsBar({
+            host: Dom.get('gameControlsHost'),
+            inputManager: this.input,
+            stateController: this.state,
+            controlsConfig: Config.CONTROLS,
+            onStart: () => this.start(),
+            onRetry: () => this.start(),
+            getHasAbility: () => !!(this.player && this.player.abilities && this.player.abilities.length > 0)
+        });
         this.themeManager = new ThemeManager(this.particles, this.viewport, LOGICAL_HEIGHT);
         this.updateHighScoreUI();
 
@@ -98,26 +108,15 @@ export class Game {
 
     setupEvents() {
         eventManager.on('LEVEL_UP', ({ level }) => logger.info('Game', `Level ${level} reached`));
-        eventManager.on('ABILITY_APPLIED', () => this.ui.updateAbilityInventory());
+        eventManager.on('ABILITY_APPLIED', () => {
+            this.ui.updateAbilityInventory();
+            this.controlsBar.sync();
+        });
         eventManager.on('VIEWPORT_RESIZED', (data) => this.onViewportResize(data));
         eventManager.on('LIFE_CHANGED', () => this.player && this.ui.updateLives());
     }
 
     init() {
-        // Register start button handlers with validation
-        const startButtons = Dom.all('.js-start-btn');
-        if (startButtons.length === 0) {
-            logger.warn('Game', 'No start buttons found. Check DOM structure.');
-        } else {
-            logger.info('Game', `Registering ${startButtons.length} start button(s)`);
-            startButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    logger.info('Game', 'Start button clicked');
-                    this.start();
-                });
-            });
-        }
-        
         // Register resize handler
         window.addEventListener('resize', () => this.resize());
         
@@ -163,6 +162,7 @@ export class Game {
         this.ui.setPlayer(this.player);
         this.ui.updateStats(this.scoreManager.getScore());
         this.inputHandler.bindGameCommands(this.player, this.particles, this.effects, this.ui);
+        this.controlsBar.sync();
         
         logger.debug('Game', `Player created at (${this.player.x}, ${this.player.y})`);
 
@@ -181,6 +181,7 @@ export class Game {
         
         // Transition to playing state
         this.state.setState('PLAYING');
+        this.controlsBar.sync();
         
         logger.info('Game', `Game started. State: ${this.state.current}`);
         logger.game(VerbosityLevel.MEDIUM, 'Game', 'Entered PLAYING state', { 
@@ -197,6 +198,7 @@ export class Game {
         });
         
         this.state.setState('GAMEOVER');
+        this.controlsBar.sync();
         const scoreData = this.scoreManager.finalize();
         
         if (scoreData.isHighScore) {
@@ -225,6 +227,7 @@ export class Game {
         // Decays independently of state/hit-stop so a death-impact shake can still
         // play out as the screen cuts to GAMEOVER, rather than freezing mid-shake.
         this.feedback.update(dt);
+        this.controlsBar.sync();
 
         if (this.state.current !== 'PLAYING') return;
 

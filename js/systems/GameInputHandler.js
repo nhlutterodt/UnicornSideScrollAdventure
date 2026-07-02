@@ -3,7 +3,6 @@
 import { Config } from '../Config.js';
 import { engineRegistry } from '../core/Registry.js';
 import { logger } from '../utils/Logger.js';
-import { Dom } from '../utils/Dom.js';
 
 /**
  * GameInputHandler - Manages game-specific input routing and command handling
@@ -58,28 +57,8 @@ export class GameInputHandler {
         this._setupJumpHandler();
         this._setupAbilityHandler();
         this._setupAbilityCycleHandlers();
-        this._bindTouchControls();
 
         logger.info('GameInputHandler', 'Game commands bound');
-    }
-
-    /**
-     * Wires the on-screen mobile ability buttons to the same InputManager actions
-     * used by keyboard (E/Q/R), so cooldown/state-gating logic lives in one place.
-     * Guarded so repeated calls (e.g. on player respawn) don't stack listeners.
-     * @private
-     */
-    _bindTouchControls() {
-        if (this._touchControlsBound) return;
-        this._touchControlsBound = true;
-
-        const prevBtn = Dom.get('abilityTouchPrev', true);
-        const useBtn = Dom.get('abilityTouchUse', true);
-        const nextBtn = Dom.get('abilityTouchNext', true);
-
-        if (prevBtn) prevBtn.addEventListener('click', () => this.input.triggerAction('cycleLeft'));
-        if (useBtn) useBtn.addEventListener('click', () => this.input.triggerAction('useAbility'));
-        if (nextBtn) nextBtn.addEventListener('click', () => this.input.triggerAction('cycleRight'));
     }
 
     /**

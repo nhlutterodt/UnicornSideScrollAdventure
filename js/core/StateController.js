@@ -47,6 +47,9 @@ export class StateController {
      */
     subscribe(callback) {
         this.observers.push(callback);
+        return () => {
+            this.observers = this.observers.filter(observer => observer !== callback);
+        };
     }
 
     notify(newState, oldState) {

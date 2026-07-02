@@ -331,6 +331,70 @@ export const Config = {
         DESPAWN_MARGIN: 200
     },
 
+    // --- Hybrid Controls Contract ---
+    CONTROLS: {
+        actions: {
+            startGame: {
+                id: 'startGame',
+                label: 'Start Adventure',
+                icon: '▶',
+                ariaLabel: 'Start game',
+                variant: 'primary'
+            },
+            retryGame: {
+                id: 'retryGame',
+                label: 'Try Again',
+                icon: '↻',
+                ariaLabel: 'Start new game',
+                variant: 'primary'
+            },
+            jump: {
+                id: 'jump',
+                label: 'Jump',
+                icon: '↑',
+                ariaLabel: 'Jump',
+                variant: 'secondary',
+                inputAction: 'jump'
+            },
+            useAbility: {
+                id: 'useAbility',
+                label: 'Use',
+                icon: '✦',
+                ariaLabel: 'Use current ability',
+                variant: 'primary',
+                inputAction: 'useAbility',
+                requiresAbility: true
+            },
+            cycleLeft: {
+                id: 'cycleLeft',
+                label: 'Prev',
+                icon: '◀',
+                ariaLabel: 'Previous ability',
+                variant: 'secondary',
+                inputAction: 'cycleLeft',
+                requiresAbility: true
+            },
+            cycleRight: {
+                id: 'cycleRight',
+                label: 'Next',
+                icon: '▶',
+                ariaLabel: 'Next ability',
+                variant: 'secondary',
+                inputAction: 'cycleRight',
+                requiresAbility: true
+            }
+        },
+        packs: {
+            START: ['startGame'],
+            PLAYING: ['jump', 'cycleLeft', 'useAbility', 'cycleRight'],
+            GAMEOVER: ['retryGame']
+        },
+        rules: {
+            compactViewportPx: 900,
+            precedence: ['touchPrimary', 'keyboardPresent', 'compactViewport']
+        }
+    },
+
     // --- Collision System ---
     // CollisionSystem.resolve() is an intentional O(n^2) nested loop (fine for a
     // side-scroller's normal entity counts). MAX_ENTITIES documents the ceiling

@@ -64,7 +64,7 @@ test.describe('game boots and renders', () => {
         const startScreen = page.locator('#startScreen');
         await expect(startScreen).toBeVisible();
 
-        await page.click('.js-start-btn');
+        await page.click('[data-action-id="startGame"]');
 
         const gameContainer = page.locator('#gameContainer');
         await expect(gameContainer).toHaveAttribute('data-state', 'PLAYING');
