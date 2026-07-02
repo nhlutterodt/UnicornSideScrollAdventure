@@ -60,6 +60,19 @@ export const Config = {
         FIRST_HAZARD_DELAY_MS: 2500
     },
 
+    // --- Impact Feedback (screen shake + hit-stop) ---
+    // Consumed by FeedbackSystem. `intensity` scales shake magnitude only, so it can be
+    // dialed down (e.g. a future accessibility setting) without touching hit-stop timing.
+    FEEDBACK: {
+        intensity: 1.0,
+        screenShakeEnabled: true,
+        hitStopEnabled: true,
+        presets: {
+            medium: { hitStopMs: 60, shakeMagnitude: 4, shakeDurationMs: 150 },
+            heavy: { hitStopMs: 100, shakeMagnitude: 8, shakeDurationMs: 250 }
+        }
+    },
+
     // --- External Config Paths ---
     CONFIG_PATHS: {
         STAGES: './js/config/stages.json',

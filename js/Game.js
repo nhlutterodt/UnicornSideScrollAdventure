@@ -8,6 +8,7 @@ import { Config } from './Config.js';
 import { CollisionSystem } from './systems/CollisionSystem.js';
 import { ParticleSystem } from './systems/ParticleSystem.js';
 import { EffectSystem } from './systems/EffectSystem.js';
+import { FeedbackSystem } from './systems/FeedbackSystem.js';
 
 import { logger, VerbosityLevel } from './utils/Logger.js';
 import { eventManager } from './systems/EventManager.js';
@@ -64,7 +65,8 @@ export class Game {
         
         // Modules
         this.particles = new ParticleSystem();
-        this.effects = new EffectSystem(this.particles);
+        this.feedback = new FeedbackSystem(Config.FEEDBACK);
+        this.effects = new EffectSystem(this.particles, this.feedback);
         this.abilities = new AbilityManager(this);
         this.level = new LevelSystem();
         this.scoreManager = new ScoreManager();
@@ -220,12 +222,20 @@ export class Game {
     }
 
     update(dt) {
+        // Decays independently of state/hit-stop so a death-impact shake can still
+        // play out as the screen cuts to GAMEOVER, rather than freezing mid-shake.
+        this.feedback.update(dt);
+
         if (this.state.current !== 'PLAYING') return;
 
         this._updateSafeStart(dt);
 
-        this.level.update(dt);
-        this.abilities.update(dt);
+        // Hit-stop freezes gameplay logic while particles keep animating on the raw dt,
+        // so an impact still feels alive during the freeze-frame.
+        const gameplayDt = this.feedback.getGameplayDt(dt);
+
+        this.level.update(gameplayDt);
+        this.abilities.update(gameplayDt);
         this.gameSpeed = this.level.gameSpeed;
 
         const context = {
@@ -236,14 +246,15 @@ export class Game {
             platforms: engineRegistry.getByType('platform'),
             registry: engineRegistry,
             particles: this.particles,
+            feedback: this.feedback,
             onObstaclePassed: () => this.scoreManager.addPoints(1)
         };
 
         const isSafeStart = this.safeStartRemaining > 0;
-        this.spawnManager.update(dt, this.viewport, this.level, this.player, this.particles, isSafeStart);
+        this.spawnManager.update(gameplayDt, this.viewport, this.level, this.player, this.particles, isSafeStart);
         this.particles.update(dt, context);
-        this.effects.update(dt, context);
-        engineRegistry.updateAll(dt, context);
+        this.effects.update(gameplayDt, context);
+        engineRegistry.updateAll(gameplayDt, context);
         CollisionSystem.resolve(engineRegistry, this.particles, context);
     }
 
@@ -271,6 +282,7 @@ export class Game {
     }
 
     draw() {
-        this.renderer.render(this.player, engineRegistry, this.particles, this.effects, this.gameSpeed);
+        const shakeOffset = this.feedback.getShakeOffset();
+        this.renderer.render(this.player, engineRegistry, this.particles, this.effects, this.gameSpeed, shakeOffset);
     }
 }

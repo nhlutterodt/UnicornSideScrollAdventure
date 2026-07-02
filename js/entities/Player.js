@@ -167,6 +167,7 @@ export class Player extends Entity {
             
             if (this.lives <= 0) {
                 logger.game(VerbosityLevel.LOW, 'Player', '☠️ DEATH - No lives remaining');
+                if (context?.feedback) context.feedback.triggerImpact('heavy');
                 if (this.onGameOver) {
                     if (particles) particles.play('IMPACT_SPARK', { x: this.x + this.width, y: this.y + this.height / 2 });
                     this.onGameOver();
@@ -174,6 +175,7 @@ export class Player extends Entity {
             } else {
                 // Flash or some feedback for losing a life but staying alive
                 logger.game(VerbosityLevel.MEDIUM, 'Player', '💚 Invincibility granted (1.5s)');
+                if (context?.feedback) context.feedback.triggerImpact('medium');
                 if (particles) particles.play('IMPACT_SPARK', { x: this.x + this.width, y: this.y + this.height / 2 });
                 this.invincibleTimer = 1.5; // Short grace period
                 other.destroy(); // Remove the obstacle we hit

@@ -13,10 +13,12 @@ import { engineRegistry } from '../core/Registry.js';
  */
 export class EffectSystem {
     /**
-     * @param {ParticleSystem} particleSystem 
+     * @param {ParticleSystem} particleSystem
+     * @param {FeedbackSystem} [feedbackSystem] - Optional; enables shake/hit-stop on triggers like ROAR
      */
-    constructor(particleSystem) {
+    constructor(particleSystem, feedbackSystem = null) {
         this.particles = particleSystem || new ParticleSystem();
+        this.feedback = feedbackSystem;
         this.audio = new AudioSystem();
     }
 
@@ -39,6 +41,7 @@ export class EffectSystem {
             const laser = new LaserEntity(params.source, params.color, params.duration);
             // new Entity() naturally registers itself, so we just instantiate it
         } else if (effectId === 'ROAR') {
+            if (this.feedback) this.feedback.triggerImpact('medium');
             this.handleRoarImpact(params);
         }
     }

@@ -55,17 +55,21 @@ export class RenderSystem {
      * @param {ParticleSystem} particles - Particle system
      * @param {EffectSystem} effects - Effect system
      * @param {number} gameSpeed - Current game speed for environment scrolling
+     * @param {{x: number, y: number}} [shakeOffset] - Screen-shake translate from FeedbackSystem
      */
-    render(player, registry, particles, effects, gameSpeed) {
+    render(player, registry, particles, effects, gameSpeed, shakeOffset) {
         // 1. Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // 2. Draw background theme
         this._drawBackground();
 
-        // 3. Apply viewport scaling
+        // 3. Apply viewport scaling + screen shake
         this.ctx.save();
         this.ctx.scale(this.viewport.scaleRatio, this.viewport.scaleRatio);
+        if (shakeOffset && (shakeOffset.x !== 0 || shakeOffset.y !== 0)) {
+            this.ctx.translate(shakeOffset.x, shakeOffset.y);
+        }
 
         // 4. Collect and sort all visible entities by layer
         const allEntities = Array.from(registry.entities.values()).filter(e => !e.isDead);
