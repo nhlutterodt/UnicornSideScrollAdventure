@@ -48,6 +48,12 @@ export class AudioSystem {
             
             this.initialized = true;
             logger.info('AudioSystem', `Initialized with volume=${this.savedVolume}, muted=${this.savedMuted}`);
+
+            // Generate and register procedural audio assets
+            this.registerProceduralSounds();
+
+            // Hook up systemic event listeners
+            this.setupEventListeners();
         } catch (err)
         {
             ErrorHandler.handle(err, 'AudioSystem.init', 'Failed to initialize Howler.js');
@@ -245,7 +251,218 @@ export class AudioSystem {
         
         logger.info('AudioSystem', 'Disposed');
     }
+
+    registerProceduralSounds() {
+        try {
+            logger.info('AudioSystem', 'Generating and registering procedural sounds...');
+            
+            const jumpUrl = generateSweep(880, 880, 0.15, 'sine', 0.5);
+            if (!jumpUrl) {
+                logger.warn('AudioSystem', 'Skipping procedural sound generation (AudioContext unavailable)');
+                return;
+            }
+            
+            const pickupUrl = generateSweep(1320, 1320, 0.1, 'triangle', 0.6);
+            const collisionUrl = generateSweep(220, 220, 0.2, 'square', 0.4);
+            const laserUrl = generateSweep(2000, 500, 0.25, 'sawtooth', 0.4);
+            const roarUrl = generateSweep(100, 30, 0.6, 'square', 0.6);
+            const musicUrl = generateMelody(4.0);
+            const levelUpUrl = generateSweep(440, 1760, 0.4, 'triangle', 0.5);
+            const gameOverUrl = generateSweep(300, 80, 0.8, 'sawtooth', 0.5);
+            
+            this.registerSound('jump', jumpUrl);
+            this.registerSound('pickup', pickupUrl);
+            this.registerSound('collision', collisionUrl);
+            this.registerSound('LASER', laserUrl);
+            this.registerSound('ROAR', roarUrl);
+            this.registerSound('music', musicUrl, { loop: true, volume: 0.6 });
+            this.registerSound('level-up', levelUpUrl);
+            this.registerSound('game-over', gameOverUrl);
+            
+            logger.info('AudioSystem', 'All procedural sounds registered successfully');
+        } catch (error) {
+            logger.warn('AudioSystem', 'Failed to generate/register procedural sounds:', error);
+        }
+    }
+
+    setupEventListeners() {
+        eventManager.on('PLAYER_JUMP', () => {
+            this.play('jump');
+        });
+
+        eventManager.on('LIFE_CHANGED', (data) => {
+            if (data.delta < 0) {
+                this.play('collision');
+            } else if (data.delta > 0) {
+                this.play('pickup');
+            }
+        });
+
+        eventManager.on('LEVEL_UP', () => {
+            this.play('level-up');
+        });
+
+        eventManager.on('GAME_STARTED', () => {
+            this.stop('music');
+            this.play('music');
+        });
+
+        eventManager.on('GAME_OVER', () => {
+            this.stop('music');
+            this.play('game-over');
+        });
+    }
 }
 
 // Export singleton instance
 export const audioSystem = new AudioSystem();
+
+// ==========================================
+// Procedural Audio Generation Helpers
+// ==========================================
+
+function generateSweep(frequencyStart, frequencyEnd, duration, waveType = 'sine', volume = 0.5) {
+    const AudioContextClass = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
+    if (!AudioContextClass) {
+        logger.warn('AudioSystem', 'Web Audio API (AudioContext) is not supported in this environment');
+        return '';
+    }
+    const audioContext = new AudioContextClass();
+    const sampleRate = audioContext.sampleRate;
+    const numSamples = sampleRate * duration;
+    const audioBuffer = audioContext.createBuffer(1, numSamples, sampleRate);
+    const channelData = audioBuffer.getChannelData(0);
+    
+    for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        const phase = 2 * Math.PI * (frequencyStart * t + 0.5 * (frequencyEnd - frequencyStart) * t * t / duration);
+        
+        let sample;
+        switch (waveType) {
+            case 'square':
+                sample = Math.sin(phase) > 0 ? volume : -volume;
+                break;
+            case 'sawtooth':
+                sample = volume * (2 * ((phase / (2 * Math.PI)) % 1) - 1);
+                break;
+            case 'triangle':
+                sample = volume * (Math.abs(((phase / (2 * Math.PI)) % 1) * 4 - 2) - 1);
+                break;
+            case 'sine':
+            default:
+                sample = volume * Math.sin(phase);
+        }
+        
+        // Envelope
+        const fadeIn = Math.min(i / (sampleRate * 0.005), 1);
+        const fadeOut = Math.min((numSamples - i) / (sampleRate * 0.05), 1);
+        channelData[i] = sample * fadeIn * fadeOut;
+    }
+    
+    const wav = audioBufferToWav(audioBuffer);
+    const base64 = arrayBufferToBase64(wav);
+    return `data:audio/wav;base64,${base64}`;
+}
+
+function generateMelody(duration = 4.0) {
+    const AudioContextClass = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
+    if (!AudioContextClass) {
+        logger.warn('AudioSystem', 'Web Audio API (AudioContext) is not supported in this environment');
+        return '';
+    }
+    const audioContext = new AudioContextClass();
+    const sampleRate = audioContext.sampleRate;
+    const numSamples = sampleRate * duration;
+    const audioBuffer = audioContext.createBuffer(1, numSamples, sampleRate);
+    const channelData = audioBuffer.getChannelData(0);
+    
+    // Simple chord progression: C-G-Am-F
+    const notes = [
+        [262, 330, 392], // C major chord
+        [392, 494, 588], // G major chord  
+        [220, 262, 330], // A minor chord
+        [349, 440, 523]  // F major chord
+    ];
+    
+    const noteLength = duration / notes.length;
+    
+    for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        const noteIndex = Math.floor(t / noteLength);
+        const chord = notes[Math.min(noteIndex, notes.length - 1)];
+        
+        let sample = 0;
+        chord.forEach(freq => {
+            sample += 0.15 * Math.sin(2 * Math.PI * freq * t);
+        });
+        
+        const noteTime = t % noteLength;
+        const attack = Math.min(noteTime / 0.05, 1);
+        const release = Math.min((noteLength - noteTime) / 0.1, 1);
+        
+        channelData[i] = sample * attack * release;
+    }
+    
+    const wav = audioBufferToWav(audioBuffer);
+    const base64 = arrayBufferToBase64(wav);
+    return `data:audio/wav;base64,${base64}`;
+}
+
+function audioBufferToWav(buffer) {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const format = 1; // PCM
+    const bitDepth = 16;
+    
+    const bytesPerSample = bitDepth / 8;
+    const blockAlign = numChannels * bytesPerSample;
+    
+    const data = new Float32Array(buffer.length);
+    buffer.copyFromChannel(data, 0);
+    
+    const dataLength = data.length * bytesPerSample;
+    const bufferLength = 44 + dataLength;
+    const arrayBuffer = new ArrayBuffer(bufferLength);
+    const view = new DataView(arrayBuffer);
+    
+    // WAV header
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, bufferLength - 8, true);
+    writeString(view, 8, 'WAVE');
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, format, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * blockAlign, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitDepth, true);
+    writeString(view, 36, 'data');
+    view.setUint32(40, dataLength, true);
+    
+    // Write audio data
+    let offset = 44;
+    for (let i = 0; i < data.length; i++) {
+        const sample = Math.max(-1, Math.min(1, data[i]));
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+        offset += 2;
+    }
+    
+    return arrayBuffer;
+}
+
+function writeString(view, offset, string) {
+    for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+    }
+}
+
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}

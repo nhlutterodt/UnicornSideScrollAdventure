@@ -4,6 +4,7 @@ import { EffectSystem } from './systems/EffectSystem.js';
 import { Config } from './Config.js';
 import { engineRegistry } from './core/Registry.js';
 import { Storage } from './systems/Storage.js';
+import { ErrorHandler } from './utils/ErrorHandler.js';
 
 /**
  * POWERS-TEST-MAIN.js
@@ -149,4 +150,15 @@ class PowersLab {
     }
 }
 
-new PowersLab();
+// Async init to ensure config loads
+async function initLab() {
+    try {
+        await Config.loadExternalConfig();
+        window.lab = new PowersLab();
+    } catch (err) {
+        ErrorHandler.handle('PowersLab', err.message, true);
+    }
+}
+
+// Auto-init
+document.addEventListener('DOMContentLoaded', initLab);

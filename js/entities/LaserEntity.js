@@ -1,6 +1,6 @@
-'use strict';
-
 import { VisualEntity } from './VisualEntity.js';
+import { eventManager } from '../systems/EventManager.js';
+import { CollisionLayers } from '../utils/PhysicsUtils.js';
 
 /**
  * LASER_ENTITY.js
@@ -52,7 +52,7 @@ export class LaserEntity extends VisualEntity {
         const laserY = this.y;
         const laserLength = this.width;
         
-        const obstacles = registry.getByType('obstacle');
+        const obstacles = registry.getEntitiesByLayers(CollisionLayers.OBSTACLE);
         obstacles.forEach(obstacle => {
             if (this.targetsHit.has(obstacle.id)) return;
 
@@ -61,6 +61,10 @@ export class LaserEntity extends VisualEntity {
                 laserX < obstacle.x + obstacle.width && (laserX + laserLength) > obstacle.x) {
                 
                 this.targetsHit.add(obstacle.id);
+                if (!obstacle.passed) {
+                    obstacle.passed = true;
+                    eventManager.emit('OBSTACLE_PASSED', { obstacle, reason: 'ability' });
+                }
                 obstacle.destroy();
                 
                 // Visual feedback on target via the EffectSystem/Particles

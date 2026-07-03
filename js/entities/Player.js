@@ -164,6 +164,7 @@ export class Player extends Entity {
                 livesRemaining: this.lives,
                 position: { x: Math.round(this.x), y: Math.round(this.y) }
             });
+            eventManager.emit('LIFE_CHANGED', { player: this, lives: this.lives, delta: -1 });
             
             if (this.lives <= 0) {
                 logger.game(VerbosityLevel.LOW, 'Player', '☠️ DEATH - No lives remaining');
@@ -392,6 +393,7 @@ export class Player extends Entity {
         // Pass color info for particles
         const particleColor = this.appearance.trail.colors[0];
         if (onJump) onJump(this.x + 10, this.y + this.height, particleColor);
+        eventManager.emit('PLAYER_JUMP', { player: this });
     }
 
     draw(ctx) {

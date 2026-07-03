@@ -23,7 +23,9 @@ export class LavaGeyser extends Hazard {
 
     draw(ctx) {
         ctx.save();
-        ctx.translate(this.x, this.y);
+        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+        if (this.rotation) ctx.rotate(this.rotation);
+        ctx.translate(-this.width / 2, -this.height / 2);
         
         // Base volcano
         ctx.fillStyle = '#4b2e2e';
@@ -59,7 +61,9 @@ export class IceSpike extends Hazard {
 
     draw(ctx) {
         ctx.save();
-        ctx.translate(this.x, this.y);
+        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+        if (this.rotation) ctx.rotate(this.rotation);
+        ctx.translate(-this.width / 2, -this.height / 2);
         
         ctx.fillStyle = '#82ccdd';
         ctx.beginPath();
@@ -94,7 +98,9 @@ export class NeonBarrier extends Hazard {
 
     draw(ctx) {
         ctx.save();
-        ctx.translate(this.x, this.y);
+        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+        if (this.rotation) ctx.rotate(this.rotation);
+        ctx.translate(-this.width / 2, -this.height / 2);
         
         // Cyber block
         ctx.fillStyle = '#1e272e';

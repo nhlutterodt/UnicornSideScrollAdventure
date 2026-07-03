@@ -1,7 +1,6 @@
-'use strict';
-
 import { Entity } from '../core/Entity.js';
 import { CollisionLayers } from '../utils/PhysicsUtils.js';
+import { eventManager } from '../systems/EventManager.js';
 
 /**
  * HAZARD.js
@@ -26,30 +25,69 @@ export class Hazard extends Entity {
 
         this.renderLayer = 2; // Z_LAYERS.ENTITIES
         this.passed = false;
+
+        // Physics/Flung state for abilities
+        this.vx = 0;
+        this.vy = 0;
+        this.isFlung = false;
+        this.rotation = 0;
+        this.rotationSpeed = 0;
+    }
+
+    applyForce(fx, fy) {
+        this.isFlung = true;
+        this.vx = fx;
+        this.vy = fy;
+        this.rotationSpeed = (Math.random() - 0.5) * 8;
+        
+        // Disable collision once flung
+        this.collisionLayer = CollisionLayers.NONE;
+        this.collisionMask = CollisionLayers.NONE;
     }
 
     update(dt, context) {
         const { gameSpeed, logicalHeight, config, onObstaclePassed } = context;
         const oldX = this.x;
-        this.x -= gameSpeed * dt;
-        
-        // Snap to ground by default, though subclasses might override
-        this.y = logicalHeight - config.GROUND_HEIGHT - this.height;
 
-        // Score mechanism (player passes obstacle)
-        if (oldX >= 80 && this.x < 80 && !this.passed) {
-            this.passed = true;
-            if (onObstaclePassed) onObstaclePassed();
+        if (this.isFlung) {
+            // Apply gravity and update position
+            this.vy += config.GRAVITY * dt;
+            this.x += this.vx * dt;
+            this.y += this.vy * dt;
+            this.rotation += this.rotationSpeed * dt;
+        } else {
+            this.x -= gameSpeed * dt;
+            
+            // Snap to ground by default, though subclasses might override
+            this.y = logicalHeight - config.GROUND_HEIGHT - this.height;
+
+            // Score mechanism (player passes obstacle)
+            if (oldX >= 80 && this.x < 80 && !this.passed) {
+                this.passed = true;
+                eventManager.emit('OBSTACLE_PASSED', { obstacle: this });
+                if (onObstaclePassed) onObstaclePassed();
+            }
         }
     }
 
     draw(ctx) {
+        ctx.save();
+        
+        // Translate to center, rotate, translate back
+        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+        if (this.rotation) ctx.rotate(this.rotation);
+        ctx.translate(-this.width / 2, -this.height / 2);
+
         // Fallback drawing, subclasses should override
         ctx.fillStyle = 'red';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillRect(0, 0, this.width, this.height);
+        
+        ctx.restore();
     }
 
     get isOffscreen() {
-        return this.x + this.width < 0;
+        return this.isFlung
+            ? (this.x + this.width < -200 || this.x > 2000 || this.y > 1000)
+            : (this.x + this.width < 0);
     }
 }

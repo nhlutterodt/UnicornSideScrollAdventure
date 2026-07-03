@@ -14,6 +14,7 @@ export class AbilityManager {
         
         // Active global/systemic modifiers
         this.globalModifiers = new Set();
+        this._timeScaleTimeoutId = null; // Track overlapping timers
         
         this.init();
     }
@@ -62,15 +63,34 @@ export class AbilityManager {
         // Handle global time-based effects or systemic updates here
     }
 
+    reset() {
+        if (this._timeScaleTimeoutId) {
+            clearTimeout(this._timeScaleTimeoutId);
+            this._timeScaleTimeoutId = null;
+            logger.debug('AbilityManager', 'Cleared time scale timeout during reset');
+        }
+        if (this.game && this.game.loop) {
+            this.game.loop.setTimeScale(1.0);
+        }
+    }
+
     setTimeScale(scale, duration = 0) {
         if (!this.game || !this.game.loop) return;
+        
+        // Clear any existing timer to prevent premature reset of timescale
+        if (this._timeScaleTimeoutId) {
+            clearTimeout(this._timeScaleTimeoutId);
+            this._timeScaleTimeoutId = null;
+            logger.debug('AbilityManager', 'Cleared existing time scale timeout');
+        }
         
         this.game.loop.setTimeScale(scale);
         logger.info('AbilityManager', `Global Time Scale set to ${scale}`);
 
         if (duration > 0) {
-            setTimeout(() => {
+            this._timeScaleTimeoutId = setTimeout(() => {
                 this.game.loop.setTimeScale(1.0);
+                this._timeScaleTimeoutId = null;
                 logger.info('AbilityManager', 'Global Time Scale reset to 1.0');
             }, duration * 1000);
         }
@@ -85,7 +105,9 @@ export class AbilityManager {
 
     _handleLife(target, itemData) {
         if (typeof target.lives === 'number') {
-            target.lives += (itemData.value || 1);
+            const delta = itemData.value || 1;
+            target.lives += delta;
+            eventManager.emit('LIFE_CHANGED', { player: target, lives: target.lives, delta });
         }
     }
 

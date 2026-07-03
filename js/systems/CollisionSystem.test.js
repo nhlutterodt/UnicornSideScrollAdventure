@@ -63,3 +63,41 @@ describe('CollisionSystem entity budget', () => {
         expect(warnSpy).toHaveBeenCalledTimes(2);
     });
 });
+
+describe('CollisionSystem callback safety', () => {
+    test('does not trigger onCollision for an entity that dies mid-resolve', () => {
+        const entityA = {
+            collisionLayer: 1, // PLAYER
+            collisionMask: 16, // ITEM
+            x: 10,
+            y: 10,
+            width: 20,
+            height: 20,
+            isDead: false,
+            onCollision: jest.fn((other) => {
+                other.isDead = true; // Mark other entity as dead
+            })
+        };
+        const entityB = {
+            collisionLayer: 16, // ITEM
+            collisionMask: 1, // PLAYER
+            x: 10,
+            y: 10,
+            width: 20,
+            height: 20,
+            isDead: false,
+            onCollision: jest.fn()
+        };
+
+        const map = new Map();
+        map.set('a', entityA);
+        map.set('b', entityB);
+        const registry = { entities: map };
+
+        CollisionSystem.resolve(registry, null, {});
+
+        expect(entityA.onCollision).toHaveBeenCalledTimes(1);
+        expect(entityB.onCollision).not.toHaveBeenCalled();
+    });
+});
+

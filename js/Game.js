@@ -108,6 +108,9 @@ export class Game {
     }
 
     setupEvents() {
+        eventManager.on('OBSTACLE_PASSED', () => {
+            this.scoreManager.addPoints(1);
+        });
         eventManager.on('LEVEL_UP', ({ level }) => logger.info('Game', `Level ${level} reached`));
         eventManager.on('ABILITY_APPLIED', () => {
             this.ui.updateAbilityInventory();
@@ -170,6 +173,7 @@ export class Game {
         
         // Clear spawners and all entities
         this.spawnManager.reset();
+        this.abilities.reset();
         engineRegistry.clear();
         
         logger.debug('Game', 'Registry cleared, creating new player...');
@@ -206,6 +210,7 @@ export class Game {
         // Transition to playing state
         this.state.setState('PLAYING');
         this.controlsBar.sync();
+        eventManager.emit('GAME_STARTED');
         
         logger.info('Game', `Game started. State: ${this.state.current}`);
         logger.game(VerbosityLevel.MEDIUM, 'Game', 'Entered PLAYING state', { 
@@ -287,7 +292,7 @@ export class Game {
             registry: engineRegistry,
             particles: this.particles,
             feedback: this.feedback,
-            onObstaclePassed: () => this.scoreManager.addPoints(1)
+            onObstaclePassed: () => {} // Legacy callback, handled via OBSTACLE_PASSED event now
         };
 
         const isSafeStart = this.safeStartRemaining > 0;

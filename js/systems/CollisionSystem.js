@@ -43,8 +43,8 @@ export class CollisionSystem {
                     const padding = Math.max(a.collisionPadding || 0, b.collisionPadding || 0);
                     
                     if (PhysicsUtils.checkCollision(a, b, padding)) {
-                        if (a.onCollision) a.onCollision(b, particles, context);
-                        if (b.onCollision) b.onCollision(a, particles, context);
+                        if (a.onCollision && !a.isDead) a.onCollision(b, particles, context);
+                        if (b.onCollision && !b.isDead) b.onCollision(a, particles, context);
                     }
                 }
             }

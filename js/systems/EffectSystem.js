@@ -1,11 +1,11 @@
-'use strict';
-
 import { AudioSystem } from './AudioSystem.js';
 import { ParticleSystem } from './ParticleSystem.js';
 import { Config } from '../Config.js';
 import { LaserEntity } from '../entities/LaserEntity.js';
 import { engineRegistry } from '../core/Registry.js';
 import { entityPool } from '../core/EntityPool.js';
+import { CollisionLayers } from '../utils/PhysicsUtils.js';
+import { eventManager } from './EventManager.js';
 
 /**
  * EFFECT_SYSTEM.js
@@ -21,6 +21,7 @@ export class EffectSystem {
         this.particles = particleSystem || new ParticleSystem();
         this.feedback = feedbackSystem;
         this.audio = new AudioSystem();
+        this.audio.init().catch(err => logger.warn('EffectSystem', 'Failed to initialize AudioSystem:', err));
     }
 
     /**
@@ -55,13 +56,19 @@ export class EffectSystem {
         if (!registry) return;
 
         // Get all obstacles
-        const obstacles = registry.getByType('obstacle');
+        const obstacles = registry.getEntitiesByLayers(CollisionLayers.OBSTACLE);
         obstacles.forEach(obstacle => {
             const dx = (obstacle.x + obstacle.width / 2) - x;
             const dy = (obstacle.y + obstacle.height / 2) - y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             if (distance < (radius || 200)) {
+                // Grant points if not already passed
+                if (!obstacle.passed) {
+                    obstacle.passed = true;
+                    eventManager.emit('OBSTACLE_PASSED', { obstacle, reason: 'ability' });
+                }
+
                 // Apply "Force" to obstacle
                 if (obstacle.applyForce) {
                     obstacle.applyForce(dx / distance * 500, dy / distance * 500);
