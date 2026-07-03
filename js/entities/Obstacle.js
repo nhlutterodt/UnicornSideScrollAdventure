@@ -9,26 +9,30 @@ import { eventManager } from '../systems/EventManager.js';
 export class Obstacle extends Entity {
     static poolable = true;
 
-    constructor(x, y) {
-        const { width, height } = Obstacle._rollDims();
-        super(x, y - height, width, height, 'obstacle');
-        this._configure();
+    constructor(x, y, width, height, yOffset = 0) {
+        const rolled = Obstacle._rollDims();
+        const finalW = width || rolled.width;
+        const finalH = height || rolled.height;
+        super(x, y - finalH, finalW, finalH, 'obstacle');
+        this._configure(yOffset);
     }
 
     /**
      * Called by EntityPool when reusing a freed instance instead of `new`-ing one.
      */
-    revive(x, y) {
-        const { width, height } = Obstacle._rollDims();
-        this.reviveBase(x, y - height, width, height);
-        this._configure();
+    revive(x, y, width, height, yOffset = 0) {
+        const rolled = Obstacle._rollDims();
+        const finalW = width || rolled.width;
+        const finalH = height || rolled.height;
+        this.reviveBase(x, y - finalH, finalW, finalH);
+        this._configure(yOffset);
     }
 
     static _rollDims() {
         return { width: 40, height: 40 + Math.random() * 20 };
     }
 
-    _configure() {
+    _configure(yOffset = 0) {
         this.type = Math.random() > 0.5 ? '💎' : '🌵';
 
         // Collision Setup
@@ -44,6 +48,7 @@ export class Obstacle extends Entity {
         this.isFlung = false;
         this.rotation = 0;
         this.rotationSpeed = 0;
+        this.yOffset = yOffset;
     }
 
     applyForce(fx, fy) {
@@ -69,7 +74,7 @@ export class Obstacle extends Entity {
             this.rotation += this.rotationSpeed * dt;
         } else {
             this.x -= gameSpeed * dt;
-            this.y = logicalHeight - config.GROUND_HEIGHT - this.height;
+            this.y = logicalHeight - config.GROUND_HEIGHT - this.height + (this.yOffset || 0);
 
             // Check if passed player (player is at x=80)
             if (oldX >= 80 && this.x < 80 && !this.passed) {

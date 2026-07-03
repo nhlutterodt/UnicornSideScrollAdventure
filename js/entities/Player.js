@@ -190,11 +190,6 @@ export class Player extends Entity {
                 
                 logger.game(VerbosityLevel.HIGH, 'Player', '🟢 Landed on platform', { bounciness });
                 
-                // Crumbling Platform Trigger
-                if (other.type === 'crumbling_platform') {
-                    other.activate();
-                }
-                
                 if (bounciness > 0.1 && Math.abs(this.vy) > 100) {
                     this.y = other.y - this.height - 2;
                     this.vy = -this.vy * bounciness;
@@ -206,34 +201,6 @@ export class Player extends Entity {
                     this.isGrounded = true;
                 }
             }
-        }
-
-        if (other.entityType === 'jump_pad') {
-            // Jump pad logic - applies massive upward force instantly when touched from above or side
-            if (!other.isActivated) {
-                const config = context.config;
-                // Standard jump velocity * multiplier
-                const boostVy = -config.JUMP_FORCE * other.boostMultiplier;
-                
-                this.y = other.y - this.height - 5; // Snap above
-                this.vy = boostVy;
-                this.isGrounded = false;
-                
-                other.activate();
-                
-                logger.game(VerbosityLevel.HIGH, 'Player', '🚀 HIT JUMP PAD', { velocity: Math.round(boostVy) });
-                if (particles) particles.play('PICKUP_BURST', { x: this.x + this.width / 2, y: this.y + this.height });
-            }
-        }
-
-        if (other.entityType === 'item') {
-            logger.game(VerbosityLevel.MEDIUM, 'Player', '✨ ITEM PICKUP', {
-                itemType: other.itemData?.type || 'unknown',
-                itemId: other.itemData?.id || 'unknown'
-            });
-            eventManager.emit('ITEM_PICKED_UP', { player: this, itemData: other.itemData, context: { particles } });
-            if (particles) particles.play('PICKUP_BURST', { x: this.x + this.width / 2, y: this.y + this.height / 2 });
-            other.destroy();
         }
     }
 

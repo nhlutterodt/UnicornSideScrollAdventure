@@ -2,6 +2,8 @@
 
 import { Entity } from '../core/Entity.js';
 import { CollisionLayers } from '../utils/PhysicsUtils.js';
+import { Config } from '../Config.js';
+import { logger, VerbosityLevel } from '../utils/Logger.js';
 
 /**
  * JumpPad.js
@@ -50,6 +52,26 @@ export class JumpPad extends Entity {
             this.animTimer += dt;
             if (this.animTimer > 0.5) {
                 this.isActivated = false; // Reset visually after 0.5s
+            }
+        }
+    }
+
+    onCollision(other, particles, context) {
+        if (other.entityType === 'player') {
+            // Guard: ensure the player is falling or moving horizontally onto the pad (not rising from underneath)
+            if (!this.isActivated && other.vy >= 0) {
+                const config = context.config || Config;
+                // Standard jump force is negative; multiplying by boostMultiplier correctly keeps it negative (upward)
+                const boostVy = config.JUMP_FORCE * this.boostMultiplier;
+                
+                other.y = this.y - other.height - 5; // Snap above
+                other.vy = boostVy;
+                other.isGrounded = false;
+                
+                this.activate();
+                
+                logger.game(VerbosityLevel.HIGH, 'Player', '🚀 HIT JUMP PAD', { velocity: Math.round(boostVy) });
+                if (particles) particles.play('PICKUP_BURST', { x: other.x + other.width / 2, y: other.y + other.height });
             }
         }
     }

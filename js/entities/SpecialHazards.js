@@ -5,14 +5,16 @@ import { Hazard } from './Hazard.js';
 export class LavaGeyser extends Hazard {
     static poolable = true;
 
-    constructor(x, y) {
-        super(x, y, 50, 80, 'lava_geyser');
+    constructor(x, y, width, height, yOffset = 0) {
+        super(x, y, width || 50, height || 80, 'lava_geyser', yOffset);
         this.animTimer = 0;
     }
 
-    revive(x, y) {
-        this.reviveBase(x, y, 50, 80);
-        this._configureHazard();
+    revive(x, y, width, height, yOffset = 0) {
+        const finalW = width || 50;
+        const finalH = height || 80;
+        this.reviveBase(x, y, finalW, finalH);
+        this._configureHazard(yOffset);
         this.animTimer = 0;
     }
 
@@ -49,14 +51,16 @@ export class LavaGeyser extends Hazard {
 export class IceSpike extends Hazard {
     static poolable = true;
 
-    constructor(x, y) {
+    constructor(x, y, width, height, yOffset = 0) {
         // Skinny, tall
-        super(x, y, 30, 90, 'ice_spike');
+        super(x, y, width || 30, height || 90, 'ice_spike', yOffset);
     }
 
-    revive(x, y) {
-        this.reviveBase(x, y, 30, 90);
-        this._configureHazard();
+    revive(x, y, width, height, yOffset = 0) {
+        const finalW = width || 30;
+        const finalH = height || 90;
+        this.reviveBase(x, y, finalW, finalH);
+        this._configureHazard(yOffset);
     }
 
     draw(ctx) {
@@ -87,13 +91,15 @@ export class IceSpike extends Hazard {
 export class NeonBarrier extends Hazard {
     static poolable = true;
 
-    constructor(x, y) {
-        super(x, y, 20, 100, 'neon_barrier');
+    constructor(x, y, width, height, yOffset = 0) {
+        super(x, y, width || 20, height || 100, 'neon_barrier', yOffset);
     }
 
-    revive(x, y) {
-        this.reviveBase(x, y, 20, 100);
-        this._configureHazard();
+    revive(x, y, width, height, yOffset = 0) {
+        const finalW = width || 20;
+        const finalH = height || 100;
+        this.reviveBase(x, y, finalW, finalH);
+        this._configureHazard(yOffset);
     }
 
     draw(ctx) {

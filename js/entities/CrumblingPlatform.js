@@ -66,6 +66,15 @@ export class CrumblingPlatform extends Platform {
         }
     }
 
+    onCollision(other, particles, context) {
+        if (other.entityType === 'player') {
+            // Trigger crumbling when landed on from above
+            if (other.vy >= 0 && (other.y + other.height - this.y) < 20) {
+                this.activate();
+            }
+        }
+    }
+
     draw(ctx) {
         ctx.save();
         

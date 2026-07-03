@@ -9,9 +9,9 @@ import { eventManager } from '../systems/EventManager.js';
 export class Hazard extends Entity {
     static poolable = true;
 
-    constructor(x, y, width, height, type = 'hazard') {
+    constructor(x, y, width, height, type = 'hazard', yOffset = 0) {
         super(x, y, width, height, type);
-        this._configureHazard();
+        this._configureHazard(yOffset);
     }
 
     /**
@@ -19,7 +19,7 @@ export class Hazard extends Entity {
      * `revive()` (which bypasses this constructor entirely) alongside
      * `reviveBase()` and any of their own extra state.
      */
-    _configureHazard() {
+    _configureHazard(yOffset = 0) {
         this.collisionLayer = CollisionLayers.OBSTACLE;
         this.collisionMask = CollisionLayers.PLAYER;
 
@@ -32,6 +32,7 @@ export class Hazard extends Entity {
         this.isFlung = false;
         this.rotation = 0;
         this.rotationSpeed = 0;
+        this.yOffset = yOffset;
     }
 
     applyForce(fx, fy) {
@@ -58,8 +59,8 @@ export class Hazard extends Entity {
         } else {
             this.x -= gameSpeed * dt;
             
-            // Snap to ground by default, though subclasses might override
-            this.y = logicalHeight - config.GROUND_HEIGHT - this.height;
+            // Snap to ground + yOffset
+            this.y = logicalHeight - config.GROUND_HEIGHT - this.height + (this.yOffset || 0);
 
             // Score mechanism (player passes obstacle)
             if (oldX >= 80 && this.x < 80 && !this.passed) {

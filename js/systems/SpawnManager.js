@@ -222,10 +222,10 @@ export class SpawnManager {
      * Helper to spawn a single specific hazard based on stage
      * @private
      */
-    spawnSingleHazard(x, y, stageName, level, reason = 'hazard') {
+    spawnSingleHazard(x, y, stageName, level, reason = 'hazard', width = null, height = null, yOffset = 0) {
         const hazardId = Config.STAGE_HAZARD_MAP[stageName] || 'default';
         const HazardClass = HAZARD_REGISTRY[hazardId] || HAZARD_REGISTRY.default;
-        entityPool.acquire(HazardClass, x, y);
+        entityPool.acquire(HazardClass, x, y, width, height, yOffset);
         this._emitSpawnTelemetry('hazard', x, y, level, reason);
     }
 
@@ -239,7 +239,7 @@ export class SpawnManager {
             const y = groundY + (ent.dy || 0);
             
             if (ent.type === 'hazard') {
-                this.spawnSingleHazard(x, y, stageName, level, 'pattern_hazard');
+                this.spawnSingleHazard(x, y, stageName, level, 'pattern_hazard', ent.width, ent.height, ent.dy || 0);
             } else if (ent.type === 'platform') {
                 const width = ent.width || Config.PLATFORM_MIN_WIDTH;
                 const height = ent.height || Config.PLATFORM_HEIGHT;

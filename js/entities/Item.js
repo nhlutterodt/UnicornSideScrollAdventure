@@ -51,6 +51,24 @@ export class Item extends Entity {
         // Horizontal movement (matches world)
         this.vx = -gameSpeed;
         
+        const groundY = logicalHeight - config.GROUND_HEIGHT - this.height;
+        
+        // If grounded on a platform, check if we scrolled off
+        if (this.isGrounded && this.y < groundY - 5) {
+            let stillOnPlatform = false;
+            if (context.platforms) {
+                for (const p of context.platforms) {
+                    if (this.x < p.x + p.width && this.x + this.width > p.x && Math.abs(this.y + this.height - p.y) < 5) {
+                        stillOnPlatform = true;
+                        break;
+                    }
+                }
+            }
+            if (!stillOnPlatform) {
+                this.isGrounded = false;
+            }
+        }
+        
         // Gravity
         if (!this.isGrounded) {
             const worldGravityMod = worldModifiers?.gravityMultiplier || 1.0;
@@ -60,7 +78,6 @@ export class Item extends Entity {
         PhysicsUtils.integrate(this, dt);
         
         // Ground check
-        const groundY = logicalHeight - config.GROUND_HEIGHT - this.height;
         if (this.y >= groundY) {
             this.y = groundY;
             this.vy = 0;
