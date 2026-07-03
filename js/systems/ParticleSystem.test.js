@@ -134,4 +134,53 @@ describe('ParticleSystem spawn saturation behavior', () => {
         expect(system.x[1]).toBe(42);
         expect(system.nextIndex).toBe(2); // (1 + 1) % 3
     });
+
+    test('broadphase proximity filtering bypasses far-away obstacles', () => {
+        // Set up mock obstacles in registry
+        const nearObstacle = {
+            collisionLayer: 2, // CollisionLayers.OBSTACLE
+            x: 100,
+            y: 100,
+            width: 32,
+            height: 32,
+            isDead: false
+        };
+        const farObstacle = {
+            collisionLayer: 2, // CollisionLayers.OBSTACLE
+            x: 500,
+            y: 100,
+            width: 32,
+            height: 32,
+            isDead: false
+        };
+
+        engineRegistry.register(nearObstacle, 'obstacle');
+        engineRegistry.register(farObstacle, 'obstacle');
+
+        const system = new ParticleSystem();
+        const tier2Effect = {
+            life: [1, 1],
+            speed: [0, 0],
+            size: [2, 2],
+            gravity: 0,
+            tier: 2, // Enable Tier 2 sweeps
+            color: '#fff'
+        };
+
+        // Spawn particle 0 near nearObstacle
+        // Particle is at x=90 (within 50px of obstacle at 100)
+        system.spawn(tier2Effect, { x: 90, y: 110, vx: 0, vy: 0 });
+
+        // Spawn particle 1 far from both obstacles
+        // Particle is at x=300 (more than 50px from obstacle at 100 and obstacle at 500)
+        system.spawn(tier2Effect, { x: 300, y: 110, vx: 0, vy: 0 });
+
+        // Update the particle system.
+        // Particle 0 checks nearObstacle (Diff = 10 <= 50) and skips farObstacle (Diff = 410 > 50).
+        // Particle 1 skips both obstacles (Diff = 200 > 50).
+        // Total Tier 2 checks should be exactly 1.
+        system.update(0.016, { gameSpeed: 0, logicalHeight: 600 });
+
+        expect(system.metrics.tier2Checks).toBe(1);
+    });
 });

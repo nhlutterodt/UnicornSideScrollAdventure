@@ -177,6 +177,12 @@ export class ParticleSystem {
                 for (const entity of candidates) {
                     if (this.metrics.tier2Checks >= cfg.TIER2_MAX_CHECKS_PER_FRAME) break;
                     
+                    // Cheap horizontal broadphase check
+                    const margin = 50;
+                    if (this.x[i] < entity.x - margin || this.x[i] > entity.x + entity.width + margin) {
+                        continue;
+                    }
+
                     this.metrics.tier2Checks++;
                     if (PhysicsUtils.testSegmentVsAABB(prevX, prevY, this.x[i], this.y[i], entity)) {
                         this.active[i] = 0; // Destroy particle on hit for simplicity
@@ -202,6 +208,9 @@ export class ParticleSystem {
     draw(ctx) {
         ctx.save();
         
+        let lastAlpha = -1;
+        let lastColor = null;
+
         for (let i = 0; i < this.maxParticles; i++) {
             if (!this.active[i]) continue;
 
@@ -212,8 +221,18 @@ export class ParticleSystem {
             const sizeScale = this.sizeLUT[lutIdx];
             const currentSize = this.size[i] * sizeScale;
 
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = this.colors[i];
+            // Quantize alpha to 10 levels to group states and reduce expensive context changes
+            const qAlpha = Math.round(alpha * 10) / 10;
+            const color = this.colors[i];
+
+            if (qAlpha !== lastAlpha) {
+                ctx.globalAlpha = qAlpha;
+                lastAlpha = qAlpha;
+            }
+            if (color !== lastColor) {
+                ctx.fillStyle = color;
+                lastColor = color;
+            }
             
             // Draw as squares for performance, or circles if fidelity is required
             ctx.fillRect(
