@@ -34,6 +34,10 @@ export class ParticleSystem {
         this.sizeLUT = new Float32Array(128);
         this.initLUTs();
 
+        // Cached candidate lists to prevent GC allocations
+        this.candidatesCache = [];
+        this.lastRegistryVersion = -1;
+
         // Performance Metrics
         this.metrics = {
             activeCount: 0,
@@ -74,10 +78,21 @@ export class ParticleSystem {
      * Internal: Spawns a single particle into the circular buffer.
      */
     spawn(effect, params) {
-        const idx = this.nextIndex;
+        let idx = this.nextIndex;
 
-        // Fixed-capacity pool policy: drop new spawns when the write slot is still alive.
-        if (this.active[idx]) {
+        // Scan starting from nextIndex for the first available slot
+        let found = false;
+        for (let i = 0; i < this.maxParticles; i++) {
+            const checkIdx = (this.nextIndex + i) % this.maxParticles;
+            if (!this.active[checkIdx]) {
+                idx = checkIdx;
+                found = true;
+                break;
+            }
+        }
+
+        // Fixed-capacity pool policy: drop new spawns when the pool is completely full
+        if (!found) {
             return;
         }
         
@@ -104,7 +119,7 @@ export class ParticleSystem {
         this.tier[idx] = effect.tier || 0;
         this.colors[idx] = params.color || effect.color || '#ffffff';
 
-        this.nextIndex = (this.nextIndex + 1) % this.maxParticles;
+        this.nextIndex = (idx + 1) % this.maxParticles;
     }
 
     /**
@@ -119,10 +134,14 @@ export class ParticleSystem {
         this.metrics.tier2Checks = 0;
         this.metrics.budgetDrops = 0;
 
-        // Collect Tier 2 candidates once per frame
-        const candidates = engineRegistry.getEntitiesByLayers(
-            CollisionLayers.OBSTACLE | CollisionLayers.PLATFORM
-        );
+        // Collect Tier 2 candidates only when registry membership changes
+        if (engineRegistry.version !== this.lastRegistryVersion) {
+            this.candidatesCache = engineRegistry.getEntitiesByLayers(
+                CollisionLayers.OBSTACLE | CollisionLayers.PLATFORM
+            );
+            this.lastRegistryVersion = engineRegistry.version;
+        }
+        const candidates = this.candidatesCache;
 
         for (let i = 0; i < this.maxParticles; i++) {
             if (!this.active[i]) continue;

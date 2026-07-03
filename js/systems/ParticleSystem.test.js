@@ -104,4 +104,34 @@ describe('ParticleSystem spawn saturation behavior', () => {
         expect(system.x[0]).toBe(50);
         expect(system.y[0]).toBe(50);
     });
+
+    test('middle slot reclamation when write pointer points to active slot', () => {
+        Config.PARTICLE_SYSTEM.MAX_PARTICLES = 3;
+        const system = new ParticleSystem();
+        const effect = {
+            life: [999, 999],
+            speed: [0, 0],
+            size: [1, 1],
+            gravity: 0,
+            tier: 0,
+            color: '#fff'
+        };
+
+        system.spawn(effect, { x: 10, y: 10 });
+        system.spawn(effect, { x: 20, y: 20 });
+        system.spawn(effect, { x: 30, y: 30 });
+
+        // Pool is full. nextIndex is 0.
+        // Manually expire slot 1, while slot 0 and 2 remain active
+        system.active[1] = 0;
+
+        // Try spawning. It should find slot 1, even though nextIndex points to slot 0 (which is active)
+        system.spawn(effect, { x: 42, y: 42 });
+
+        expect(system.active[0]).toBe(1);
+        expect(system.active[1]).toBe(1); // Reclaimed!
+        expect(system.active[2]).toBe(1);
+        expect(system.x[1]).toBe(42);
+        expect(system.nextIndex).toBe(2); // (1 + 1) % 3
+    });
 });
