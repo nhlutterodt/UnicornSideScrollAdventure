@@ -31,6 +31,12 @@ export class ScoreManager {
         this.highScore = Storage.load('highScore', 0);
         
         logger.info('ScoreManager', `Initialized with high score: ${this.highScore}`);
+
+        // Award 50 bonus points for hazard-to-hazard interaction chain reactions
+        eventManager.on('HAZARD_INTERACTION', (data) => {
+            logger.info('ScoreManager', `Puzzle defused! Awarding 50 bonus points.`);
+            this.addPoints(50);
+        });
     }
 
     /**

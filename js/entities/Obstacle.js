@@ -1,19 +1,19 @@
-import { Entity } from '../core/Entity.js';
+import { Hazard } from './Hazard.js';
 import { CollisionLayers } from '../utils/PhysicsUtils.js';
 import { eventManager } from '../systems/EventManager.js';
 
 /**
  * OBSTACLE.js
- * Hazards the player must jump over.
+ * Hazards the player must jump over. Extends Hazard.
  */
-export class Obstacle extends Entity {
+export class Obstacle extends Hazard {
     static poolable = true;
 
     constructor(x, y, width, height, yOffset = 0) {
         const rolled = Obstacle._rollDims();
         const finalW = width || rolled.width;
         const finalH = height || rolled.height;
-        super(x, y - finalH, finalW, finalH, 'obstacle');
+        super(x, y - finalH, finalW, finalH, 'obstacle', yOffset);
         this._configure(yOffset);
     }
 
@@ -25,6 +25,7 @@ export class Obstacle extends Entity {
         const finalW = width || rolled.width;
         const finalH = height || rolled.height;
         this.reviveBase(x, y - finalH, finalW, finalH);
+        this._configureHazard(yOffset);
         this._configure(yOffset);
     }
 
@@ -34,32 +35,6 @@ export class Obstacle extends Entity {
 
     _configure(yOffset = 0) {
         this.type = Math.random() > 0.5 ? '💎' : '🌵';
-
-        // Collision Setup
-        this.collisionLayer = CollisionLayers.OBSTACLE;
-        this.collisionMask = CollisionLayers.PLAYER;
-
-        this.renderLayer = 2; // Z_LAYERS.ENTITIES
-        this.passed = false;
-
-        // Physics/Flung state for abilities (e.g. Sonic Roar applyForce)
-        this.vx = 0;
-        this.vy = 0;
-        this.isFlung = false;
-        this.rotation = 0;
-        this.rotationSpeed = 0;
-        this.yOffset = yOffset;
-    }
-
-    applyForce(fx, fy) {
-        this.isFlung = true;
-        this.vx = fx;
-        this.vy = fy;
-        this.rotationSpeed = (Math.random() - 0.5) * 8;
-        
-        // Disable collision once flung
-        this.collisionLayer = CollisionLayers.NONE;
-        this.collisionMask = CollisionLayers.NONE;
     }
 
     update(dt, context) {

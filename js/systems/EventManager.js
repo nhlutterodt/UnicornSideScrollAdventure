@@ -54,6 +54,14 @@ class EventManager {
             }
         });
     }
+
+    /**
+     * Clear all registered event listeners. Primarily used to reset state between tests.
+     */
+    clearAll() {
+        this.listeners.clear();
+        logger.info('EventManager', 'All event listeners cleared');
+    }
 }
 
 export const eventManager = new EventManager();

@@ -105,12 +105,24 @@ export const Config = {
         PATTERNS: './js/config/patterns.json'
     },
 
-    // --- Hazard Mapping ---
-    // Stage names map to hazard IDs resolved by SpawnManager's local registry.
-    STAGE_HAZARD_MAP: {
-        'Crystal Caverns': 'ice_spike',
-        'Inferno Ridge': 'lava_geyser',
-        'Cyber City': 'neon_barrier'
+    // --- Hazard Interactions ---
+    // Maps sorted hazard-type pairs to collision action rules and visual effects.
+    HAZARD_INTERACTIONS: {
+        'ice_spike+lava_geyser': {
+            action: 'destroy_both',
+            particleEffect: 'STEAM_BURST',
+            particleColor: '#ffffff'
+        },
+        'ice_spike+neon_barrier': {
+            action: 'destroy_first', // Neon barrier shatters the ice spike
+            particleEffect: 'IMPACT_SPARK',
+            particleColor: '#82ccdd'
+        },
+        'lava_geyser+neon_barrier': {
+            action: 'destroy_both', // Lava shorts out neon barrier
+            particleEffect: 'ROAR',
+            particleColor: '#ffa500'
+        }
     },
 
     // --- Fallbacks (minimal safe defaults) ---
@@ -119,6 +131,10 @@ export const Config = {
             {
                 levelStart: 1,
                 name: 'Safe Mode',
+                hazards: [
+                    { id: 'obstacle', weight: 1 }
+                ],
+                eligiblePatterns: [],
                 theme: {
                     primary: '#8ce68c',
                     secondary: '#76c476',

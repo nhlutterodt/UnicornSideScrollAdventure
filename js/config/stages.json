@@ -1,11 +1,15 @@
 {
   "version": "1.0.0",
-  "lastModified": "2026-01-23",
+  "lastModified": "2026-07-03",
   "stages": [
     {
       "levelStart": 1,
       "name": "Morning Meadow",
       "entityBudget": 110,
+      "hazards": [
+        { "id": "obstacle", "weight": 10 }
+      ],
+      "eligiblePatterns": ["staircase", "tunnel"],
       "spawnRates": {
         "obstacleIntervalMultiplier": 1.15,
         "platformIntervalMultiplier": 1.2,
@@ -31,6 +35,10 @@
       "levelStart": 5,
       "name": "Twilight Clouds",
       "entityBudget": 120,
+      "hazards": [
+        { "id": "obstacle", "weight": 10 }
+      ],
+      "eligiblePatterns": ["staircase", "tunnel"],
       "spawnRates": {
         "obstacleIntervalMultiplier": 1.0,
         "platformIntervalMultiplier": 1.5,
@@ -56,6 +64,10 @@
       "levelStart": 10,
       "name": "Gravity Void",
       "entityBudget": 130,
+      "hazards": [
+        { "id": "obstacle", "weight": 10 }
+      ],
+      "eligiblePatterns": ["staircase", "tunnel", "leap_of_faith"],
       "spawnRates": {
         "obstacleIntervalMultiplier": 0.95,
         "platformIntervalMultiplier": 1.4,
@@ -81,6 +93,11 @@
       "levelStart": 15,
       "name": "Crystal Caverns",
       "entityBudget": 140,
+      "hazards": [
+        { "id": "ice_spike", "weight": 8 },
+        { "id": "obstacle", "weight": 2 }
+      ],
+      "eligiblePatterns": ["staircase", "leap_of_faith"],
       "spawnRates": {
         "obstacleIntervalMultiplier": 0.9,
         "platformIntervalMultiplier": 1.35,
@@ -106,6 +123,11 @@
       "levelStart": 20,
       "name": "Inferno Ridge",
       "entityBudget": 145,
+      "hazards": [
+        { "id": "lava_geyser", "weight": 8 },
+        { "id": "obstacle", "weight": 2 }
+      ],
+      "eligiblePatterns": ["leap_of_faith"],
       "spawnRates": {
         "obstacleIntervalMultiplier": 0.85,
         "platformIntervalMultiplier": 1.25,
@@ -131,6 +153,11 @@
       "levelStart": 25,
       "name": "Cyber City",
       "entityBudget": 150,
+      "hazards": [
+        { "id": "neon_barrier", "weight": 8 },
+        { "id": "obstacle", "weight": 2 }
+      ],
+      "eligiblePatterns": ["tunnel", "leap_of_faith"],
       "spawnRates": {
         "obstacleIntervalMultiplier": 0.8,
         "platformIntervalMultiplier": 1.2,

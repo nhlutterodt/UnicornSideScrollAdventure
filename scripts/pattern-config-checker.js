@@ -47,8 +47,12 @@ function validatePatterns(patterns, sourceLabel) {
                 return;
             }
 
-            if (entity.type !== 'hazard' && entity.type !== 'platform') {
-                errors.push(`${entityPath}.type must be "hazard" or "platform"`);
+            const allowedTypes = [
+                'hazard', 'platform', 'crumbling_platform', 'jump_pad', 'item',
+                'obstacle', 'ice_spike', 'lava_geyser', 'neon_barrier'
+            ];
+            if (!allowedTypes.includes(entity.type)) {
+                errors.push(`${entityPath}.type must be one of: ${allowedTypes.join(', ')}`);
             }
 
             if (!Number.isFinite(entity.dx)) {
@@ -59,7 +63,7 @@ function validatePatterns(patterns, sourceLabel) {
                 errors.push(`${entityPath}.dy must be a finite number when present`);
             }
 
-            if (entity.type === 'platform') {
+            if (entity.type === 'platform' || entity.type === 'crumbling_platform') {
                 if ('width' in entity && (!Number.isFinite(entity.width) || entity.width <= 0)) {
                     errors.push(`${entityPath}.width must be a positive number when present`);
                 }
@@ -69,6 +73,24 @@ function validatePatterns(patterns, sourceLabel) {
                 }
             }
         });
+
+        // Jump Playability Verification
+        if (pattern.entities) {
+            const platforms = pattern.entities
+                .filter(ent => ent && (ent.type === 'platform' || ent.type === 'crumbling_platform'))
+                .sort((a, b) => a.dx - b.dx);
+
+            for (let i = 0; i < platforms.length - 1; i++) {
+                const p1 = platforms[i];
+                const p2 = platforms[i + 1];
+                const w1 = ('width' in p1) ? p1.width : 100;
+                const jumpDistance = p2.dx - (p1.dx + w1);
+                
+                if (jumpDistance > 450) {
+                    console.warn(`[WARNING] Pattern "${patternName}" in ${sourceLabel}: jump distance between consecutive platforms is ${jumpDistance}px (exceeds playability threshold of 450px)`);
+                }
+            }
+        }
     });
 
     return errors;

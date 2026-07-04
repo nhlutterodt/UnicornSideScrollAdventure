@@ -1,6 +1,8 @@
 import { Entity } from '../core/Entity.js';
 import { CollisionLayers } from '../utils/PhysicsUtils.js';
 import { eventManager } from '../systems/EventManager.js';
+import { Config } from '../Config.js';
+import { logger } from '../utils/Logger.js';
 
 /**
  * HAZARD.js
@@ -21,7 +23,7 @@ export class Hazard extends Entity {
      */
     _configureHazard(yOffset = 0) {
         this.collisionLayer = CollisionLayers.OBSTACLE;
-        this.collisionMask = CollisionLayers.PLAYER;
+        this.collisionMask = CollisionLayers.PLAYER | CollisionLayers.OBSTACLE;
 
         this.renderLayer = 2; // Z_LAYERS.ENTITIES
         this.passed = false;
@@ -41,9 +43,67 @@ export class Hazard extends Entity {
         this.vy = fy;
         this.rotationSpeed = (Math.random() - 0.5) * 8;
         
-        // Disable collision once flung
-        this.collisionLayer = CollisionLayers.NONE;
-        this.collisionMask = CollisionLayers.NONE;
+        // When flung, keep obstacle layer active but remove PLAYER from mask
+        // so it cannot damage the player but can still collide with other obstacles
+        this.collisionLayer = CollisionLayers.OBSTACLE;
+        this.collisionMask = CollisionLayers.OBSTACLE;
+    }
+
+    onCollision(other, particles, context) {
+        if (this.isDead || other.isDead) return;
+        if ((other.collisionLayer & CollisionLayers.OBSTACLE) !== 0) {
+            this.handleHazardInteraction(other, particles, context);
+        }
+    }
+
+    handleHazardInteraction(other, particles, context) {
+        if (!Config.HAZARD_INTERACTIONS) return;
+
+        // Sort types alphabetically to construct key
+        const key = [this.entityType, other.entityType].sort().join('+');
+        const interaction = Config.HAZARD_INTERACTIONS[key];
+
+        if (interaction) {
+            logger.info('Hazard', `Collision interaction [${key}]: action=${interaction.action}`);
+            
+            // Execute action
+            if (interaction.action === 'destroy_both') {
+                this.destroy();
+                other.destroy();
+            } else if (interaction.action === 'destroy_first') {
+                const types = [this.entityType, other.entityType].sort();
+                if (this.entityType === types[0]) {
+                    this.destroy();
+                } else {
+                    other.destroy();
+                }
+            } else if (interaction.action === 'destroy_second') {
+                const types = [this.entityType, other.entityType].sort();
+                if (this.entityType === types[1]) {
+                    this.destroy();
+                } else {
+                    other.destroy();
+                }
+            }
+
+            // Emit Telemetry/Scoring Event
+            eventManager.emit('HAZARD_INTERACTION', {
+                typeA: this.entityType,
+                typeB: other.entityType,
+                action: interaction.action,
+                x: (this.x + other.x) / 2,
+                y: (this.y + other.y) / 2
+            });
+
+            // Trigger Particle Effect at midpoint
+            if (particles && interaction.particleEffect) {
+                particles.play(interaction.particleEffect, {
+                    x: (this.x + other.x) / 2,
+                    y: (this.y + other.y) / 2,
+                    color: interaction.particleColor
+                });
+            }
+        }
     }
 
     update(dt, context) {
