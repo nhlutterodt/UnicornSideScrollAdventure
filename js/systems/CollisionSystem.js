@@ -42,7 +42,11 @@ export class CollisionSystem {
                     // Use the largest padding for the check
                     const padding = Math.max(a.collisionPadding || 0, b.collisionPadding || 0);
                     
-                    if (PhysicsUtils.checkCollision(a, b, padding)) {
+                    const overlaps = PhysicsUtils.checkCollision(a, b, padding);
+                    const crossesPlatform = PhysicsUtils.checkPlatformCrossing(a, b) ||
+                        PhysicsUtils.checkPlatformCrossing(b, a);
+
+                    if (overlaps || crossesPlatform) {
                         if (a.onCollision && !a.isDead) a.onCollision(b, particles, context);
                         if (b.onCollision && !b.isDead) b.onCollision(a, particles, context);
                     }

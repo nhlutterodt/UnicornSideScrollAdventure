@@ -17,6 +17,8 @@ export class Player extends Entity {
         super(80, 0, 50, 50, 'player');
         this.vy = 0;
         this.isGrounded = false;
+        this.previousY = this.y;
+        this._platformSupport = null;
         this.rotation = 0;
 
         // Input forgiveness (coyote time + jump buffering)
@@ -59,6 +61,8 @@ export class Player extends Entity {
     update(dt, context) {
         const { config, logicalHeight, platforms } = context;
         const wasGrounded = this.isGrounded;
+        this.previousY = this.y;
+        this._platformSupport = null;
 
         // Update Abilities (Time-based constraints)
         this.updateAbilities(dt);
@@ -79,12 +83,10 @@ export class Player extends Entity {
         
         if (!this.isGrounded) {
             const worldGravityMod = context.worldModifiers?.gravityMultiplier || 1.0;
-            const frictionMod = context.worldModifiers?.friction || 1.0;
-            
-            // If friction is low, gravity feels lighter (floaty)
-            const floatyEffect = frictionMod < 1 ? frictionMod : 1.0;
-            
-            const gravity = config.GRAVITY * this.physicsMod.gravityMultiplier * worldGravityMod * floatyEffect;
+            // Friction describes horizontal surface traction. The runner has no
+            // player horizontal velocity, so it must not be misapplied as an
+            // airborne gravity multiplier.
+            const gravity = config.GRAVITY * this.physicsMod.gravityMultiplier * worldGravityMod;
             this.vy += gravity * dt;
             this.rotation = Math.min(Math.PI / 8, this.vy * 0.002);
         } else {
@@ -184,9 +186,18 @@ export class Player extends Entity {
         }
 
         if (other.entityType === 'platform') {
-            // Semi-solid platform logic
-            if (this.vy >= 0 && (this.y + this.height - other.y) < 20) {
+            // One-way platform logic: only land when the player's previous
+            // bottom was above the surface and the current bottom crossed it.
+            const previousBottom = this.previousY + this.height;
+            const currentBottom = this.y + this.height;
+            const crossedSurface = previousBottom <= other.y && currentBottom >= other.y;
+
+            if (this.vy >= 0 && crossedSurface) {
                 const bounciness = context?.worldModifiers?.bounciness || 0;
+
+                // Choose the highest valid surface, independent of registry order.
+                if (this._platformSupport && this._platformSupport.y <= other.y) return;
+                this._platformSupport = other;
                 
                 logger.game(VerbosityLevel.HIGH, 'Player', '🟢 Landed on platform', { bounciness });
                 

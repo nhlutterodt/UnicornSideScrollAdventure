@@ -35,6 +35,25 @@ describe('Decoupled Physics & Collision Resolution', () => {
         engineRegistry.clear();
     });
 
+    describe('Surface modifier semantics', () => {
+        test('friction does not alter airborne gravity without horizontal player movement', () => {
+            const run = (friction) => {
+                const testPlayer = new Player();
+                testPlayer.y = 100;
+                testPlayer.vy = 0;
+                testPlayer.isGrounded = false;
+                testPlayer.update(0.1, {
+                    ...context,
+                    worldModifiers: { gravityMultiplier: 1, friction, bounciness: 0 },
+                    gameSpeed: 0
+                });
+                return { y: testPlayer.y, vy: testPlayer.vy };
+            };
+
+            expect(run(0.5)).toEqual(run(1.5));
+        });
+    });
+
     describe('JumpPad Resolution', () => {
         test('launches a falling player upward', () => {
             const jumpPad = new JumpPad(80, 150); // Underneath the player
@@ -100,6 +119,50 @@ describe('Decoupled Physics & Collision Resolution', () => {
             CollisionSystem.resolve(engineRegistry, particlesMock, context);
 
             expect(crumbling.isCrumbling).toBe(false);
+        });
+    });
+
+    describe('Player platform crossing resolution', () => {
+        test('does not land from an existing side or underside overlap', () => {
+            const platform = new CrumblingPlatform(80, 150, 100, 20);
+            player.previousY = 130;
+            player.y = 130;
+            player.vy = 10;
+
+            engineRegistry.register(platform, 'platform');
+            CollisionSystem.resolve(engineRegistry, particlesMock, context);
+
+            expect(player.isGrounded).toBe(false);
+            expect(player.y).toBe(130);
+        });
+
+        test('selects the highest crossed platform independent of registration order', () => {
+            const lower = new CrumblingPlatform(80, 300, 100, 20);
+            const higher = new CrumblingPlatform(80, 280, 100, 20);
+            player.previousY = 200;
+            player.y = 270;
+            player.vy = 10;
+
+            // Register lower first to prove resolution is not insertion-order based.
+            engineRegistry.register(lower, 'platform');
+            engineRegistry.register(higher, 'platform');
+            CollisionSystem.resolve(engineRegistry, particlesMock, context);
+
+            expect(player.isGrounded).toBe(true);
+            expect(player.y).toBe(higher.y - player.height);
+        });
+
+        test('resolves a thin platform crossed during a large update', () => {
+            const platform = new CrumblingPlatform(80, 150, 100, 20);
+            player.previousY = 80;
+            player.y = 220;
+            player.vy = 1400;
+
+            engineRegistry.register(platform, 'platform');
+            CollisionSystem.resolve(engineRegistry, particlesMock, context);
+
+            expect(player.isGrounded).toBe(true);
+            expect(player.y).toBe(platform.y - player.height);
         });
     });
 

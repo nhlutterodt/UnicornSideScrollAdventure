@@ -35,6 +35,7 @@ export class GameInputHandler {
         this.particles = null;
         this.effects = null;
         this.ui = null;
+        this._handlers = new Map();
         
         logger.info('GameInputHandler', 'Initialized');
     }
@@ -49,6 +50,7 @@ export class GameInputHandler {
      * @param {UIManager} ui - UI manager for updating ability display
      */
     bindGameCommands(player, particles, effects, ui) {
+        this._unbindGameCommands();
         this.player = player;
         this.particles = particles;
         this.effects = effects;
@@ -62,11 +64,36 @@ export class GameInputHandler {
     }
 
     /**
+     * Removes this handler's callbacks before rebinding.
+     * @private
+     */
+    _unbindGameCommands() {
+        if (typeof this.input.off !== 'function') {
+            this._handlers.clear();
+            return;
+        }
+
+        for (const [action, callback] of this._handlers) {
+            this.input.off(action, callback);
+        }
+        this._handlers.clear();
+    }
+
+    /**
+     * Registers one callback owned by this handler.
+     * @private
+     */
+    _registerHandler(action, callback) {
+        this.input.on(action, callback);
+        this._handlers.set(action, callback);
+    }
+
+    /**
      * Sets up the jump command handler
      * @private
      */
     _setupJumpHandler() {
-        this.input.on('jump', () => {
+        this._registerHandler('jump', () => {
             if (this.state.current === 'PLAYING' && this.player) {
                 this.player.jump(Config, (x, y, color) => {
                     this.particles.play('LAND_DUST', { x, y, color });
@@ -80,7 +107,7 @@ export class GameInputHandler {
      * @private
      */
     _setupAbilityHandler() {
-        this.input.on('useAbility', () => {
+        this._registerHandler('useAbility', () => {
             if (this.state.current === 'PLAYING' && this.player) {
                 const context = { 
                     registry: engineRegistry, 
@@ -97,14 +124,14 @@ export class GameInputHandler {
      * @private
      */
     _setupAbilityCycleHandlers() {
-        this.input.on('cycleLeft', () => {
+        this._registerHandler('cycleLeft', () => {
             if (this.state.current === 'PLAYING' && this.player) {
                 this.player.cycleAbility(-1);
                 this.ui.updateAbilityInventory();
             }
         });
 
-        this.input.on('cycleRight', () => {
+        this._registerHandler('cycleRight', () => {
             if (this.state.current === 'PLAYING' && this.player) {
                 this.player.cycleAbility(1);
                 this.ui.updateAbilityInventory();

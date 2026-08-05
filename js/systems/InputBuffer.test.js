@@ -1,4 +1,37 @@
+import { jest } from '@jest/globals';
 import { InputBuffer } from './InputBuffer.js';
+import { GameInputHandler } from './GameInputHandler.js';
+
+describe('GameInputHandler rebinding', () => {
+    test('rebinds without duplicating action callbacks', () => {
+        const callbacks = new Map();
+        const input = {
+            on: (action, callback) => {
+                if (!callbacks.has(action)) callbacks.set(action, []);
+                callbacks.get(action).push(callback);
+            },
+            off: (action, callback) => {
+                callbacks.set(action, (callbacks.get(action) || []).filter((registered) => registered !== callback));
+            }
+        };
+        const state = { current: 'PLAYING' };
+        const player = {
+            jump: jest.fn(),
+            useAbility: jest.fn(),
+            cycleAbility: jest.fn()
+        };
+        const ui = { updateAbilityInventory: jest.fn() };
+        const handler = new GameInputHandler(input, state);
+
+        handler.bindGameCommands(player, null, null, ui);
+        handler.bindGameCommands(player, null, null, ui);
+
+        expect(callbacks.get('jump')).toHaveLength(1);
+        expect(callbacks.get('useAbility')).toHaveLength(1);
+        expect(callbacks.get('cycleLeft')).toHaveLength(1);
+        expect(callbacks.get('cycleRight')).toHaveLength(1);
+    });
+});
 
 describe('InputBuffer', () => {
     let buffer;

@@ -32,6 +32,24 @@ export class PhysicsUtils {
     }
 
     /**
+     * Detects a player crossing a one-way platform top between updates.
+     * @param {Object} player
+     * @param {Object} platform
+     * @returns {boolean}
+     */
+    static checkPlatformCrossing(player, platform) {
+        if (player.entityType !== 'player' || platform.entityType !== 'platform') return false;
+        if (!Number.isFinite(player.previousY) || player.vy < 0) return false;
+
+        const previousBottom = player.previousY + player.height;
+        const currentBottom = player.y + player.height;
+        const horizontalOverlap = player.x < platform.x + platform.width &&
+            player.x + player.width > platform.x;
+
+        return horizontalOverlap && previousBottom <= platform.y && currentBottom >= platform.y;
+    }
+
+    /**
      * Checks if two entities should collide based on their layers and masks.
      * @param {Entity} a 
      * @param {Entity} b 

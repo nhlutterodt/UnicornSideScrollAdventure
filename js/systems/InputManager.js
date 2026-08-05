@@ -18,7 +18,7 @@ export class InputManager {
     init() {
         // Keyboard listeners
         const keyHandler = (e) => {
-            if (e.code === 'Space') this.triggerAction('jump');
+            if (e.code === 'Space' && !e.repeat) this.triggerAction('jump');
             if (e.code === 'KeyE') this.triggerAction('useAbility');
             if (e.code === 'KeyQ') this.triggerAction('cycleLeft');
             if (e.code === 'KeyR') this.triggerAction('cycleRight');
@@ -46,6 +46,21 @@ export class InputManager {
     on(actionName, callback) {
         if (!this.actions[actionName]) this.actions[actionName] = [];
         this.actions[actionName].push(callback);
+    }
+
+    /**
+     * Unsubscribe a previously registered action callback.
+     * @param {string} actionName
+     * @param {Function} callback
+     */
+    off(actionName, callback) {
+        const callbacks = this.actions[actionName];
+        if (!callbacks) return;
+
+        this.actions[actionName] = callbacks.filter((registered) => registered !== callback);
+        if (this.actions[actionName].length === 0) {
+            delete this.actions[actionName];
+        }
     }
 
     /**
