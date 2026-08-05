@@ -155,9 +155,7 @@ async function initLab() {
     try {
         await Config.loadExternalConfig();
         window.lab = new PowersLab();
-    } catch (err) {
-        ErrorHandler.handle('PowersLab', err.message, true);
-    }
+    } catch (err) { ErrorHandler.handle('PowersLab', err.message, true); }
 }
 
 // Auto-init

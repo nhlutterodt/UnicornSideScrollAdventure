@@ -280,9 +280,7 @@ export class AudioSystem {
             this.registerSound('game-over', gameOverUrl);
             
             logger.info('AudioSystem', 'All procedural sounds registered successfully');
-        } catch (error) {
-            logger.warn('AudioSystem', 'Failed to generate/register procedural sounds:', error);
-        }
+        } catch (error) { logger.warn('AudioSystem', 'Failed to generate/register procedural sounds:', error); }
     }
 
     setupEventListeners() {
