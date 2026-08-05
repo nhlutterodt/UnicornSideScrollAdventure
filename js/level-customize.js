@@ -43,24 +43,6 @@ export class LevelStudio {
             sunset: 'url(#bg-sunset)'
         };
 
-        this.terrains = {
-            grass: '#4CAF50',
-            stone: '#795548',
-            candy: '#E91E63'
-        };
-
-        this.obstacles = {
-            rock: '<path d="M0,20 L20,0 L40,20 Z" fill="#5D4037" transform="scale(1.5)" />',
-            crystal: '<path d="M10,0 L20,15 L10,30 L0,15 Z" fill="#00BCD4" opacity="0.8" transform="scale(1.5)" />',
-            spike: '<path d="M0,30 L10,0 L20,30 M20,30 L30,0 L40,30" stroke="#333" stroke-width="2" fill="#BDBDBD" />'
-        };
-
-        this.collectibles = {
-            star: '<polygon points="20,0 25,12 38,12 28,20 31,32 20,25 9,32 12,20 2,12 15,12" fill="gold" />',
-            gem: '<path d="M10,0 L30,0 L40,15 L20,40 L0,15 Z" fill="#9C27B0" />',
-            heart: '<path d="M20,35 L5,20 Q0,10 10,5 Q20,10 20,15 Q20,10 30,5 Q40,10 35,20 Z" fill="#F44336" />'
-        };
-
         this.init();
     }
 
@@ -244,31 +226,28 @@ export class LevelStudio {
         }
 
         // Terrain
-        this.previewGround.setAttribute('fill', this.terrains[this.state.terrain]);
+        this.previewGround.setAttribute('fill', '#4CAF50');
         this.previewGround.setAttribute('opacity', this.state.surface === 'slippery' ? '0.7' : '1');
 
-        // Obstacles
+        // Obstacles (static preview)
         this.previewObstacles.innerHTML = '';
         const obs1 = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        obs1.innerHTML = this.obstacles[this.state.obstacle];
+        obs1.innerHTML = '<path d="M0,20 L20,0 L40,20 Z" fill="#5D4037" transform="scale(1.5)" />';
         obs1.setAttribute('transform', 'translate(0, 0)');
-
         const obs2 = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        obs2.innerHTML = this.obstacles[this.state.obstacle];
+        obs2.innerHTML = '<path d="M0,20 L20,0 L40,20 Z" fill="#5D4037" transform="scale(1.5)" />';
         obs2.setAttribute('transform', 'translate(80, -10) scale(0.8)');
-
         this.previewObstacles.appendChild(obs1);
         this.previewObstacles.appendChild(obs2);
 
-        // Collectibles
+        // Collectibles (static preview)
         this.previewCollectibles.innerHTML = '';
         for (let i = 0; i < 3; i++) {
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            g.innerHTML = this.collectibles[this.state.collectible];
+            g.innerHTML = '<polygon points="20,0 25,12 38,12 28,20 31,32 20,25 9,32 12,20 2,12 15,12" fill="gold" />';
             const x = i * 40;
             const y = Math.abs(i - 1) * -20;
             g.setAttribute('transform', `translate(${x}, ${y})`);
-
             const animate = document.createElementNS('http://www.w3.org/2000/svg', 'animateTransform');
             animate.setAttribute('attributeName', 'transform');
             animate.setAttribute('type', 'translate');
@@ -276,7 +255,6 @@ export class LevelStudio {
             animate.setAttribute('dur', '2s');
             animate.setAttribute('repeatCount', 'indefinite');
             animate.setAttribute('begin', `${i * 0.2}s`);
-
             g.appendChild(animate);
             this.previewCollectibles.appendChild(g);
         }
@@ -295,14 +273,9 @@ export class LevelStudio {
         item.classList.add('active');
 
         if (item.dataset.bg) this.state.bg = item.dataset.bg;
-        if (item.dataset.terrain) this.state.terrain = item.dataset.terrain;
-        if (item.dataset.obstacle) this.state.obstacle = item.dataset.obstacle;
-        if (item.dataset.collectible) this.state.collectible = item.dataset.collectible;
         if (item.dataset.surface) this.state.surface = item.dataset.surface;
-        if (item.dataset.effect) this.state.effect = item.dataset.effect;
         if (item.dataset.flora) this.state.flora = item.dataset.flora;
         if (item.dataset.sky) this.state.sky = item.dataset.sky;
-        if (item.dataset.pace) this.state.pace = item.dataset.pace;
 
         this.updatePreview();
 
@@ -319,14 +292,9 @@ export class LevelStudio {
         const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
         this.state.bg = pick(['day', 'night', 'sunset']);
-        this.state.terrain = pick(['grass', 'stone', 'candy']);
-        this.state.obstacle = pick(['rock', 'crystal', 'spike']);
-        this.state.collectible = pick(['star', 'gem', 'heart']);
         this.state.surface = pick(['normal', 'slippery', 'bouncy']);
-        this.state.effect = pick(['none', 'sparkles', 'mist', 'rain']);
         this.state.flora = pick(['none', 'flowers', 'mushrooms']);
         this.state.sky = pick(['clouds', 'stars', 'dragons']);
-        this.state.pace = pick(['zen', 'normal', 'turbo']);
 
         this.updateUI();
         this.updatePreview();
@@ -343,14 +311,9 @@ export class LevelStudio {
         document.querySelectorAll('.acc-item').forEach(item => {
             item.classList.remove('active');
             if (item.dataset.bg === this.state.bg) item.classList.add('active');
-            if (item.dataset.terrain === this.state.terrain) item.classList.add('active');
-            if (item.dataset.obstacle === this.state.obstacle) item.classList.add('active');
-            if (item.dataset.collectible === this.state.collectible) item.classList.add('active');
             if (item.dataset.surface === this.state.surface) item.classList.add('active');
-            if (item.dataset.effect === this.state.effect) item.classList.add('active');
             if (item.dataset.flora === this.state.flora) item.classList.add('active');
             if (item.dataset.sky === this.state.sky) item.classList.add('active');
-            if (item.dataset.pace === this.state.pace) item.classList.add('active');
         });
     }
 

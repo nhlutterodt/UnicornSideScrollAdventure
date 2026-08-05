@@ -135,22 +135,17 @@ describe('validateCharacterData', () => {
 describe('Level Schema Defaults', () => {
     test('LEVEL_DEFAULTS has all required fields', () => {
         expect(LEVEL_DEFAULTS).toHaveProperty('bg');
-        expect(LEVEL_DEFAULTS).toHaveProperty('terrain');
-        expect(LEVEL_DEFAULTS).toHaveProperty('obstacle');
-        expect(LEVEL_DEFAULTS).toHaveProperty('collectible');
         expect(LEVEL_DEFAULTS).toHaveProperty('surface');
-        expect(LEVEL_DEFAULTS).toHaveProperty('effect');
         expect(LEVEL_DEFAULTS).toHaveProperty('flora');
         expect(LEVEL_DEFAULTS).toHaveProperty('sky');
-        expect(LEVEL_DEFAULTS).toHaveProperty('pace');
     });
 
     test('LEVEL_DEFAULTS bg is day', () => {
         expect(LEVEL_DEFAULTS.bg).toBe('day');
     });
 
-    test('LEVEL_DEFAULTS pace is normal', () => {
-        expect(LEVEL_DEFAULTS.pace).toBe('normal');
+    test('LEVEL_DEFAULTS surface is normal', () => {
+        expect(LEVEL_DEFAULTS.surface).toBe('normal');
     });
 });
 
@@ -158,18 +153,15 @@ describe('validateLevelData', () => {
     test('accepts valid level data', () => {
         const result = validateLevelData({
             bg: 'night',
-            terrain: 'stone',
-            obstacle: 'crystal',
-            collectible: 'gem',
             surface: 'bouncy',
-            effect: 'sparkles',
             flora: 'flowers',
-            sky: 'stars',
-            pace: 'turbo'
+            sky: 'stars'
         });
         expect(result.valid).toBe(true);
         expect(result.data.bg).toBe('night');
-        expect(result.data.pace).toBe('turbo');
+        expect(result.data.surface).toBe('bouncy');
+        expect(result.data.flora).toBe('flowers');
+        expect(result.data.sky).toBe('stars');
         expect(result.errors).toHaveLength(0);
     });
 
@@ -199,8 +191,9 @@ describe('validateLevelData', () => {
         const result = validateLevelData({ bg: 'sunset' });
         expect(result.valid).toBe(false);
         expect(result.data.bg).toBe('sunset');
-        expect(result.data.terrain).toBe('grass'); // default
-        expect(result.data.pace).toBe('normal'); // default
+        expect(result.data.surface).toBe('normal'); // default
+        expect(result.data.flora).toBe('none'); // default
+        expect(result.data.sky).toBe('clouds'); // default
     });
 });
 

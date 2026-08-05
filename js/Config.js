@@ -226,14 +226,14 @@ export const Config = {
     // Maps Level Studio terms to actual game modifiers
     ENVIRONMENT_MAPPING: {
         surfaces: {
-            normal: { friction: 1.0, bounciness: 0 },
-            slippery: { friction: 0.2, bounciness: 0.1 },
-            bouncy: { friction: 0.8, bounciness: 0.8 }
+            normal: { bounciness: 0 },
+            slippery: { bounciness: 0.1 },
+            bouncy: { bounciness: 0.8 }
         },
         paces: {
-            zen: { timeScale: 0.7 },
-            normal: { timeScale: 1.0 },
-            turbo: { timeScale: 1.4 }
+            zen: { gravityMultiplier: 0.85 },
+            normal: { gravityMultiplier: 1.0 },
+            turbo: { gravityMultiplier: 1.15 }
         },
         skies: {
             clouds: { gravityMultiplier: 0.9 },

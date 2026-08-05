@@ -271,9 +271,6 @@ export class LevelSystem {
         if (mapping.surfaces[user.surface]) {
             Object.assign(customizedStage.modifiers, mapping.surfaces[user.surface]);
         }
-        if (mapping.paces[user.pace]) {
-            Object.assign(customizedStage.modifiers, mapping.paces[user.pace]);
-        }
         if (mapping.skies[user.sky]) {
             Object.assign(customizedStage.modifiers, mapping.skies[user.sky]);
         }

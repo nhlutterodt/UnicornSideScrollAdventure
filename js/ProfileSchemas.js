@@ -62,26 +62,16 @@ export const LEVEL_SCHEMA_VERSION = 1;
 
 export const LEVEL_DEFAULTS = {
     bg: 'day',
-    terrain: 'grass',
-    obstacle: 'rock',
-    collectible: 'star',
     surface: 'normal',
-    effect: 'none',
     flora: 'none',
-    sky: 'clouds',
-    pace: 'normal'
+    sky: 'clouds'
 };
 
 export const LEVEL_FIELDS = {
     bg: { type: 'string', allowed: ['day', 'night', 'sunset'], default: 'day' },
-    terrain: { type: 'string', allowed: ['grass', 'stone', 'candy'], default: 'grass' },
-    obstacle: { type: 'string', allowed: ['rock', 'crystal', 'spike'], default: 'rock' },
-    collectible: { type: 'string', allowed: ['star', 'gem', 'heart'], default: 'star' },
     surface: { type: 'string', allowed: ['normal', 'slippery', 'bouncy'], default: 'normal' },
-    effect: { type: 'string', allowed: ['none', 'sparkles', 'mist', 'rain'], default: 'none' },
     flora: { type: 'string', allowed: ['none', 'flowers', 'mushrooms'], default: 'none' },
-    sky: { type: 'string', allowed: ['clouds', 'stars', 'dragons'], default: 'clouds' },
-    pace: { type: 'string', allowed: ['zen', 'normal', 'turbo'], default: 'normal' }
+    sky: { type: 'string', allowed: ['clouds', 'stars', 'dragons'], default: 'clouds' }
 };
 
 // --- Validation ---
