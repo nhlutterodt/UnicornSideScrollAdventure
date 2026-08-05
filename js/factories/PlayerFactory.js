@@ -46,8 +46,8 @@ export class PlayerFactory {
      * @returns {Player} Configured player instance
      */
     create(onGameOverCallback = null) {
-        // Load saved outfit or use defaults
-        const outfit = Storage.load('current_outfit', this.defaultOutfit);
+        // Load active character profile or fall back to old system, then to defaults
+        const outfit = this._loadActiveOutfit();
 
         // Create player with outfit
         const player = new Player(outfit);
@@ -60,6 +60,43 @@ export class PlayerFactory {
         logger.debug('PlayerFactory', `Created player with outfit: ${JSON.stringify(outfit)}`);
 
         return player;
+    }
+
+    /**
+     * Load the active outfit from the profile system, with fallback chain:
+     * 1. Active character profile (new system)
+     * 2. Old single-outfit storage (migration path)
+     * 3. Hardcoded defaults
+     * @returns {Object} Outfit configuration
+     * @private
+     */
+    _loadActiveOutfit() {
+        // Try new profile system first
+        const profiles = Storage.load('characterProfiles', null);
+        if (profiles) {
+            const activeId = Storage.load('activeCharacterProfile', 'default');
+            if (profiles[activeId]) {
+                logger.debug('PlayerFactory', `Loaded active profile: ${activeId}`);
+                return { ...profiles[activeId] };
+            }
+            // Active profile missing, fall back to first available or default
+            const firstKey = Object.keys(profiles)[0];
+            if (firstKey && profiles[firstKey]) {
+                logger.warn('PlayerFactory', `Active profile "${activeId}" not found, using "${firstKey}"`);
+                return { ...profiles[firstKey] };
+            }
+        }
+
+        // Fall back to old single-outfit storage
+        const oldOutfit = Storage.load('current_outfit', null);
+        if (oldOutfit) {
+            logger.debug('PlayerFactory', 'Using legacy current_outfit');
+            return { ...oldOutfit };
+        }
+
+        // Ultimate fallback
+        logger.debug('PlayerFactory', 'Using default outfit');
+        return { ...this.defaultOutfit };
     }
 
     /**

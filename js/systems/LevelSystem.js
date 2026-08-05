@@ -6,6 +6,11 @@ import { Config } from '../Config.js';
 import { logger, VerbosityLevel } from '../utils/Logger.js';
 import { eventManager } from './EventManager.js';
 import { Storage } from './Storage.js';
+import {
+    LEVEL_DEFAULTS,
+    validateLevelData,
+    unwrapProfileData
+} from '../ProfileSchemas.js';
 
 function lerp(a, b, t) {
     return a + (b - a) * t;
@@ -36,8 +41,8 @@ export class LevelSystem {
         this.entityBudget = Config.COLLISION_SYSTEM.MAX_ENTITIES;
         this.stageSpawnRates = null;
         
-        // Abstracted User Customization
-        this.userCustomization = Storage.load('levelConfig', null);
+        // Abstracted User Customization — load from active level profile
+        this.userCustomization = this._loadActiveLevelConfig();
 
         this.init();
     }
@@ -54,6 +59,42 @@ export class LevelSystem {
         if (!name || typeof name !== 'string') return 'normal';
         if (Config.DIFFICULTY_PRESETS[name]) return name;
         return 'normal';
+    }
+
+    /**
+     * Load the active level config from the profile system, with fallback chain:
+     * 1. Active level profile (new system)
+     * 2. Old single levelConfig key (migration path)
+     * 3. Hardcoded defaults
+     * @returns {Object|null} Level config or null if none
+     * @private
+     */
+    _loadActiveLevelConfig() {
+        // Try new profile system first
+        const profiles = Storage.load('levelProfiles', null);
+        if (profiles) {
+            const activeId = Storage.load('activeLevelProfile', 'default');
+            if (profiles[activeId]) {
+                logger.debug('LevelSystem', `Loaded active level profile: ${activeId}`);
+                return unwrapProfileData(profiles[activeId], validateLevelData, LEVEL_DEFAULTS);
+            }
+            // Active profile missing, try first available
+            const firstKey = Object.keys(profiles)[0];
+            if (firstKey && profiles[firstKey]) {
+                logger.warn('LevelSystem', `Active level profile "${activeId}" not found, using "${firstKey}"`);
+                return unwrapProfileData(profiles[firstKey], validateLevelData, LEVEL_DEFAULTS);
+            }
+        }
+
+        // Fall back to old single levelConfig key
+        const oldConfig = Storage.load('levelConfig', null);
+        if (oldConfig) {
+            logger.debug('LevelSystem', 'Using legacy levelConfig');
+            const result = validateLevelData(oldConfig);
+            return result.data;
+        }
+
+        return null;
     }
 
     /**
@@ -256,8 +297,8 @@ export class LevelSystem {
         this.rampElapsed = 0;
         this.rampDuration = 0;
 
-        // Reload user config case they changed it in the lab
-        this.userCustomization = Storage.load('levelConfig', null);
+        // Reload user config in case they changed it in the lab
+        this.userCustomization = this._loadActiveLevelConfig();
         this.updateStage();
     }
 }
