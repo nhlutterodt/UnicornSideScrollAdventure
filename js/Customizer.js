@@ -113,6 +113,17 @@ export class Customizer {
     }
 
     /**
+     * Attach click listeners to all elements matching a selector.
+     * @param {string} selector - CSS selector
+     * @param {Function} callback - Called with each matching element
+     */
+    attachListeners(selector, callback) {
+        Dom.all(selector).forEach(el => {
+            el.addEventListener('click', () => callback(el));
+        });
+    }
+
+    /**
      * Create the profile management UI elements
      */
     createProfileUI() {

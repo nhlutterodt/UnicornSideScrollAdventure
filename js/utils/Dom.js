@@ -35,5 +35,17 @@ export const Dom = {
     toggleClass(el, className, force) {
         if (!el) return;
         el.classList.toggle(className, force);
+    },
+
+    /**
+     * Creates a DOM element with an optional class name.
+     * @param {string} tag - HTML tag name
+     * @param {string} [className] - Optional class name
+     * @returns {HTMLElement}
+     */
+    create(tag, className = '') {
+        const el = document.createElement(tag);
+        if (className) el.className = className;
+        return el;
     }
 };

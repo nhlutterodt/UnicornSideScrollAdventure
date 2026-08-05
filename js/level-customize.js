@@ -2,6 +2,7 @@
 
 import { Storage } from './systems/Storage.js';
 import { logger } from './utils/Logger.js';
+import { Dom } from './utils/Dom.js';
 import {
     LEVEL_DEFAULTS,
     LEVEL_SCHEMA_VERSION,
@@ -97,8 +98,7 @@ export class LevelStudio {
         const controlsSection = document.querySelector('.controls-section');
         if (!controlsSection) return;
 
-        const profileContainer = document.createElement('div');
-        profileContainer.className = 'profile-management';
+        const profileContainer = Dom.create('div', 'profile-management');
         profileContainer.innerHTML = `
             <div class="control-group">
                 <label class="control-label">Profile Name</label>
@@ -528,7 +528,7 @@ export class LevelStudio {
         });
 
         profileIds.forEach(id => {
-            const option = document.createElement('option');
+            const option = Dom.create('option');
             option.value = id;
             option.textContent = id;
             this.profileList.appendChild(option);
