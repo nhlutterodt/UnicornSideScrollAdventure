@@ -20,8 +20,8 @@ The same core/systems modules are reused by several other entry points, each wit
 | Page | Bootstrap module | Purpose |
 | --- | --- | --- |
 | `index.html` | `js/main.js` | The game |
-| `customize.html` | `js/Customizer.js` + `js/customize-main.js` | Unicorn outfit customization |
-| `level-customize.html` | `js/level-customize.js` | "Level Studio" — user-authored overrides for stage 1, persisted via `Storage` and blended in by `LevelSystem` |
+| `customize.html` | `js/Customizer.js` + `js/customize-main.js` | Unicorn outfit customization with named profile management (save/load/delete/reset), versioned schema validation, and migration from legacy single-outfit storage |
+| `level-customize.html` | `js/level-customize.js` | "Level Studio" — user-authored overrides for stage 1, persisted via `Storage` with named profile management (save/load/delete/reset), blended in by `LevelSystem` |
 | `item-lab.html` | `js/item-lab-main.js` | Item authoring/preview sandbox |
 | `items-test.html` | `js/items-test-main.js` | Item testing harness |
 | `particle-test.html` | `js/particle-test-main.js` | Particle effect sandbox |
@@ -128,7 +128,40 @@ All entities extend `Entity` (`js/core/Entity.js`) directly or via a subclass; c
 
 ## Factories (`js/factories/`)
 
-Only `Player` is built through a factory — everything else (`SpawnManager`, `LevelUtils`) constructs entities with a bare `new`. `PlayerFactory` loads/creates the persisted outfit (`Storage.load('current_outfit', ...)`) and exposes `create()`, `createWithOutfit()`, `createDefault()`, and `getDefaultOutfit()`.
+Only `Player` is built through a factory — everything else (`SpawnManager`, `LevelUtils`) constructs entities with a bare `new`. `PlayerFactory` loads/creates the persisted outfit from the active character profile (with fallback chain: new profile system → legacy `current_outfit` → hardcoded defaults) and exposes `create()`, `createWithOutfit()`, `createDefault()`, and `getDefaultOutfit()`.
+
+## Profile System (`js/ProfileSchemas.js`)
+
+Both the character customizer and level studio use a shared profile system defined in `js/ProfileSchemas.js`. Profiles are versioned, validated, and portable:
+
+```js
+{
+    schemaVersion: 1,
+    id: "profile-id",
+    name: "My Profile",
+    updatedAt: "2026-08-05T00:00:00.000Z",
+    data: { /* validated authoring data */ }
+}
+```
+
+**Storage keys**:
+- `characterProfiles` — map of profile ID → versioned profile for character outfits
+- `activeCharacterProfile` — string ID of the active character profile
+- `levelProfiles` — map of profile ID → versioned profile for level configs
+- `activeLevelProfile` — string ID of the active level profile
+- `levelConfig` — legacy key, still written for backward compatibility
+
+**Validation**: `validateCharacterData()` and `validateLevelData()` check every field against its schema (type, allowed enum values, required fields). Invalid or missing values are replaced with safe defaults. Malformed profiles cannot crash startup.
+
+**Migration**: On first load after the profile system is introduced, the old `current_outfit` key is automatically migrated to a versioned profile under `characterProfiles['default']`. The old `levelConfig` key is still consumed as a fallback if no level profiles exist.
+
+**Consumption flow**:
+```
+editor UI → in-memory form state → validateCharacterData/validateLevelData
+→ createProfile (versioned wrapper) → Storage.save → active profile ID
+→ PlayerFactory._loadActiveOutfit() / LevelSystem._loadActiveLevelConfig()
+→ validated, cloned runtime data → Player / LevelSystem
+```
 
 ## Configuration (`js/Config.js` + `js/config/*.json`)
 

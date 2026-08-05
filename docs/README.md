@@ -24,6 +24,17 @@ Welcome to **Unicorn Magic Run**, a magical side-scrolling adventure game!
 -   **[Item System Architecture](item_system_architecture.md)**: Details on the decoupled Item and Ability system (Manager Pattern).
 -   **[Testing & CI](testing_and_ci.md)**: Jest unit tests, Playwright integration/regression tests, and the GitHub Actions pipeline.
 
+## 🎨 Customization & Profile System
+
+Both the Character Customizer and Level Studio now support named profiles with save/load/delete/reset:
+
+- **Character profiles**: Edit outfit (body, mane, accessory, trail), name a profile, save locally, load existing profiles, delete or reset. The active profile is applied to the main game on start/retry.
+- **Level profiles**: Edit level settings (atmosphere, terrain, obstacles, collectibles, surface physics, game pace, etc.), save as named profiles, load/delete/reset. The active level profile affects gameplay on stage 1.
+- **Schema validation**: All profile data is validated against canonical schemas. Invalid or missing values are replaced with safe defaults. Malformed data cannot crash startup.
+- **Migration**: Existing saved data from the legacy single-outfit system is automatically migrated to the new versioned profile format on first load.
+
+See [ProfileSchemas.js](../js/ProfileSchemas.js) for the schema definitions and validation logic.
+
 ## ⚙️ Configuration & Data Management
 
 -   **[Configuration JSON Schemas](config_json_schemas.md)**: Complete reference for editing stages, items, abilities, patterns, and effects.

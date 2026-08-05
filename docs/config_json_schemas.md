@@ -2,7 +2,7 @@
 
 **Date:** January 23, 2026  
 **Purpose:** Define the structure and validation rules for external configuration files  
-**Related:** [config_externalization_implementation_plan.md](config_externalization_implementation_plan.md)
+**Related:** [config_externalization_implementation_plan.md](config_externalization_implementation_plan.md), [ProfileSchemas.js](../js/ProfileSchemas.js) (character and level profile schemas)
 
 ---
 

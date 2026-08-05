@@ -11,8 +11,8 @@ The repo is actually a small family of pages that share the same core/systems/co
 | Page | Bootstrap | Purpose |
 |---|---|---|
 | `index.html` | `js/main.js` | The game |
-| `customize.html` | `js/customize-main.js` | Outfit customization |
-| `level-customize.html` | `js/level-customize.js` | "Level Studio" user overrides for stage 1 |
+| `customize.html` | `js/customize-main.js` | Outfit customization with named profile management (save/load/delete/reset) |
+| `level-customize.html` | `js/level-customize.js` | "Level Studio" user overrides for stage 1, with named profile management |
 | `item-lab.html`, `items-test.html` | `js/item-lab-main.js`, `js/items-test-main.js` | Item authoring/testing |
 | `particle-test.html`, `powers-test.html`, `audio-test.html` | matching `*-main.js` | Isolated sandboxes |
 | `settings.html` | `js/settings-main.js` | Settings page |
@@ -75,12 +75,20 @@ Entities (`js/entities/`) are close to pure state containers. Business logic bel
 
 `Player.jump()` goes through a small generic dt-driven timer-buffer, not a bare `isGrounded` check: coyote time (a grace window armed on *any* `isGrounded: true → false` transition, not just jumping) and jump buffering (a jump pressed while airborne queues and fires on next landing). Windows are `Config.INPUT_TIMING.JUMP_COYOTE_MS`/`JUMP_BUFFER_MS`.
 
+### Profile system (`js/ProfileSchemas.js`)
+
+Both the character customizer and level studio use a shared profile system with versioned, validated profiles. See `js/ProfileSchemas.js` for schema definitions, validation functions (`validateCharacterData`, `validateLevelData`), and profile wrapper utilities (`createProfile`, `unwrapProfileData`, `migrateCharacterProfile`).
+
+**Storage keys**: `characterProfiles`, `activeCharacterProfile`, `levelProfiles`, `activeLevelProfile`. Legacy keys `current_outfit` and `levelConfig` are still consumed as fallbacks.
+
+**Consumption**: `PlayerFactory._loadActiveOutfit()` reads the active character profile with fallback chain. `LevelSystem._loadActiveLevelConfig()` reads the active level profile with fallback chain.
+
 ### Known gotchas
 
 - **`LogOverlay`** is always instantiated by `Game.js` and defaults to visible regardless of `Config.DEBUG`, rendering at `z-index: 9999`, bottom-right, 500px wide - wide enough to cover most of a narrow/mobile viewport. New bottom-of-screen UI needs a higher `z-index` or it will silently become unclickable.
-- **`ScoreManager.test.js`** has 3 known-failing tests from a test-isolation bug in its own event-mocking helper (`captureEvents()`/`restoreEvents()` never restores the original `eventManager.emit`, so stacked wrappers accumulate across tests) - not a bug in `ScoreManager.js` itself.
 - **Playwright integration/regression tests currently match zero files** - `playwright.config.js` points at `./tests`, which doesn't exist yet.
 - Single entry point per HTML page is enforced by convention: never add a second `<script>` tag for a library. UMD libraries (e.g. Howler.js) get an ESM wrapper that dynamically injects the script (`js/libs/howler-wrapper.js`).
+- **`npm test` now passes cleanly** — the two pre-existing baseline failures (empty catch blocks in `powers-test-main.js` and `AudioSystem.js`) have been fixed.
 
 ## Where to look for more detail
 

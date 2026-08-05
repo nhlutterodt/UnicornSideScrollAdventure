@@ -16,6 +16,7 @@ This project has no build step and no ESLint — quality is enforced through a m
   - `js/core/EntityPool.test.js` — the per-class object pool backing entity spawning (identity reuse, revive() correctness, double-release guard).
   - `js/systems/RenderSystem.test.js` — the registry-version-driven draw-order cache (no re-sort/reallocation when nothing spawned/despawned).
   - `js/systems/CollisionSystem.test.js` — the O(n²) collision entity-count budget warning (edge-triggered, not spammed every frame).
+  - `js/ProfileSchemas.test.js` — schema defaults, valid/invalid data round-trips, malformed JSON, unknown fields, version migration, profile wrapping/unwrapping, and character/level profile creation. 34 tests covering both character and level schemas.
 
 **`ScoreManager.test.js`'s test-isolation bug is fixed.** It previously had 3 known-failing tests because its `captureEvents()` helper (called in `beforeEach`) monkey-patched `eventManager.emit`, but `restoreEvents()` (called in `afterEach`) only reset the `capturedEvents` object — it never restored the original `emit`. Since `eventManager` is a singleton, each test's `beforeEach` wrapped whatever the *previous* test already wrapped, so by the 3rd+ test a single `addPoints()` call fired through several stacked wrapper layers, inflating the captured-event counts. The fix: `captureEvents()`/`restoreEvents()` now capture the true original `emit` once, at module scope, before any test runs, and restore to that same reference — not to whatever the previous test left behind. All 26 tests in the file pass.
 
@@ -48,7 +49,7 @@ Plain Node ES modules, no ESLint involved. **These were CommonJS (`require`/`mod
 
 `npm test` chains `standard-checker → import-export-checker → identifier-usage-checker → escape-sequence-checker`, stopping at the first failure. See [AI Quality Protocol](ai_quality_protocol.md) for the reasoning behind each rule and [Coding Standards](coding_standards.md) for the underlying style guide.
 
-**Current state**: `npm test` passes cleanly (all 4 checkers). Note that `standard-checker`'s "empty catch block" rule is a naive regex checking only whether `{` sits on the same line as `catch (err)`, not whether the block is actually empty — a legitimately non-empty `catch (error) {` block will still be flagged unless the brace is moved to its own line (`catch (error)\n{`), which is the established workaround used throughout this codebase (e.g. `Config.js`, `main.js`, `AssetManager.js`).
+**Current state**: `npm test` passes cleanly (all 4 checkers). The two pre-existing baseline failures (`js/powers-test-main.js:158` and `js/systems/AudioSystem.js:283` — empty catch blocks) have been fixed by restructuring the catch blocks to use `ErrorHandler.handle()` and `logger.warn()` respectively, with the body on the same line as the `catch` to satisfy the checker's regex.
 
 **These now run in CI as a blocking step** (see the pipeline below) — previously they were enforced only by convention (the AI Quality Protocol's "run `npm test` after every modification"), not by CI itself.
 
