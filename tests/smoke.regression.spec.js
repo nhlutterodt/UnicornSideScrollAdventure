@@ -9,7 +9,7 @@ test.describe('hybrid controls regression', () => {
         const pageErrors = [];
         page.on('pageerror', (err) => pageErrors.push(String(err)));
 
-        await page.goto('/index.html', { waitUntil: 'load' });
+        await page.goto('/play.html', { waitUntil: 'load' });
 
         const controlsHost = page.locator('#gameControlsHost');
         await expect(controlsHost).toBeVisible();
