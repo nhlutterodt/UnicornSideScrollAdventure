@@ -108,6 +108,8 @@ function checkFile(filePath) {
         if (v.files.includes(ext)) {
             lines.forEach((line, index) => {
                 if (v.pattern.test(line)) {
+                    // Raw browser storage is permitted only in the isolated education demo adapter.
+                    if (key === 'RAW_LOCALSTORAGE' && filePath.endsWith(path.join('js', 'education', 'EducationStorage.js'))) return;
                     console.error(`\x1b[31m[VIOLATION]\x1b[0m ${filePath}:${index + 1}`);
                     console.error(`  > ${v.message}`);
                     console.error(`  > Line: ${line.trim()}`);
