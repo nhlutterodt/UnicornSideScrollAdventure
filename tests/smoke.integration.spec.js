@@ -16,7 +16,7 @@ test.describe('game boots and renders', () => {
         const pageErrors = [];
         page.on('pageerror', (err) => pageErrors.push(String(err)));
 
-        await page.goto('/index.html', { waitUntil: 'load' });
+        await page.goto('/play.html', { waitUntil: 'load' });
 
         const canvas = page.locator('#gameCanvas');
         await expect(canvas).toBeVisible();
@@ -30,7 +30,7 @@ test.describe('game boots and renders', () => {
     });
 
     test('canvas actually paints pixels, not just an empty element', async ({ page }) => {
-        await page.goto('/index.html', { waitUntil: 'load' });
+        await page.goto('/play.html', { waitUntil: 'load' });
 
         // The first paint happens inside GameLoop's requestAnimationFrame loop,
         // which only starts once Game.init() finishes (after the async
@@ -59,7 +59,7 @@ test.describe('game boots and renders', () => {
         const pageErrors = [];
         page.on('pageerror', (err) => pageErrors.push(String(err)));
 
-        await page.goto('/index.html', { waitUntil: 'load' });
+        await page.goto('/play.html', { waitUntil: 'load' });
 
         const startScreen = page.locator('#startScreen');
         await expect(startScreen).toBeVisible();
