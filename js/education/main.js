@@ -1,5 +1,5 @@
 // Grade Space v1: isolated educational domain. Never import game runtime or Storage.
-const KEY='unicorn_grade_space_v1';
+import { educationStorage } from './EducationStorage.js';
 const seedQuestions=[
 ['What is 8 × 7?','choice',['54','56','64','48'],'56','8 × 5 = 40 and 8 × 2 = 16; together that makes 56.'],
 ['What is 6 × 40?','choice',['24','240','2,400','46'],'240','Six groups of four tens equals 24 tens, or 240.'],
@@ -14,12 +14,12 @@ const seedQuestions=[
 ].map((q,i)=>({id:'q'+(i+1),prompt:q[0],type:q[1],options:q[2],answer:q[3],explanation:q[4],skill:i<3?'Facts and place value':i<6?'Strategies':'Application'}));
 const sample={id:'sample-multiplication',version:1,title:'Multiplication Practice',grade:4,subject:'Mathematics',status:'published',questions:seedQuestions,createdAt:new Date().toISOString()};
 const clone=x=>JSON.parse(JSON.stringify(x));
-function load(){try{const o=JSON.parse(localStorage.getItem(KEY));if(o&&Array.isArray(o.assignments)&&Array.isArray(o.attempts))return o}catch{}return {assignments:[clone(sample)],attempts:[]}}
+function load(){try{const o=educationStorage.read();if(o&&Array.isArray(o.assignments)&&Array.isArray(o.attempts))return o}catch{}return {assignments:[clone(sample)],attempts:[]}}
 let state=load(),view='student',active=null,draft=null,feedback='';
 const root=document.getElementById('app');
 const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=String(txt);if(cls)e.className=cls;return e};
 const add=(parent,...children)=>{children.forEach(x=>parent.append(x));return parent};
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state));return true}catch{feedback='Browser storage unavailable; work was not saved.';return false}}
+function save(){try{educationStorage.write(state);return true}catch{feedback='Browser storage unavailable; work was not saved.';return false}}
 const btn=(title,fn,primary=false)=>{const b=el('button',title,primary?'primary':'');b.type='button';b.addEventListener('click',fn);return b};
 function field(label,value,change,kind='input'){const box=el('div'),l=el('label',label),i=el(kind);i.value=value??'';i.addEventListener('input',()=>change(i.value));return add(box,l,i)}
 const panel=(heading)=>add(el('section',undefined,'panel'),el('h2',heading));
