@@ -4,7 +4,7 @@ test.describe('spawning and hazard interactions integration tests', () => {
     
     test.beforeEach(async ({ page }) => {
         // Load index and transition to PLAYING state before each test
-        await page.goto('/index.html', { waitUntil: 'load' });
+        await page.goto('/play.html', { waitUntil: 'load' });
         await page.click('[data-action-id="startGame"]');
         const gameContainer = page.locator('#gameContainer');
         await expect(gameContainer).toHaveAttribute('data-state', 'PLAYING');
