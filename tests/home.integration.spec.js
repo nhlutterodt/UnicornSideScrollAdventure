@@ -26,7 +26,7 @@ test.describe('Magic World home routing',()=>{
  });
  test('study guide has distinct instructional content',async({page})=>{
    await page.goto('/');await page.getByRole('link',{name:/Study Guide/}).click();
-   await expect(page).toHaveURL(/study-guide\\.html$/);
+   await expect(page).toHaveURL(/study-guide[.]html$/);
    await expect(page.getByRole('heading',{name:'Multiplication Study Guide'})).toBeVisible();
    await expect(page.getByText('23 × 4',{exact:false})).toBeVisible();
  });
