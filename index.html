@@ -1,58 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unicorn Magic Run</title>
-    <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/game.css">
-    <link rel="stylesheet" href="css/ui.css">
-    <link rel="stylesheet" href="css/abilities.css">
-    <link rel="stylesheet" href="css/log-overlay.css">
-</head>
-
-<body>
-
-    <main id="gameContainer" class="game-viewport" data-state="START">
-        <section class="game-stage">
-            <div class="stats-container">
-                <div id="scoreBoard" class="score-display">Score: 0</div>
-                <div id="livesDisplay" class="lives-display">💖 x1</div>
-            </div>
-            <div id="abilityInventory" class="ability-inventory" aria-label="Power-up Inventory" role="status" aria-live="polite"></div>
-            <div id="abilityHint" class="ability-hint hidden" aria-hidden="true">E Use &middot; Q/R Cycle</div>
-            <div id="safeStartCountdown" class="safe-start-countdown hidden" role="status" aria-live="polite"></div>
-
-            <canvas id="gameCanvas" class="game-canvas">
-                Your browser does not support the HTML5 canvas tag.
-            </canvas>
-
-            <!-- Start Screen -->
-            <section id="startScreen" class="overlay start-screen">
-                <h1 class="ui-text">🦄 Unicorn Magic Run</h1>
-                <p class="ui-text">Jump over the dark crystals!</p>
-                <a href="customize.html" class="studio-link">Unicorn Studio &rarr;</a>
-                <a href="education.html" class="studio-link">My Homework &amp; Study Space &rarr;</a>
-                <p class="ui-text ui-subtext">Use controls below to begin</p>
-                <p id="startHighScore" class="ui-text high-score-label">High Score: 0</p>
-            </section>
-
-            <!-- Game Over Screen -->
-            <section id="gameOverScreen" class="overlay game-over-screen">
-                <h1 class="ui-text">Magic Faded!</h1>
-                <p id="finalScore" class="ui-text">Score: 0</p>
-                <p id="gameOverHighScore" class="ui-text final-high-score">High Score: 0</p>
-                <a href="customize.html" class="studio-link">Unicorn Studio &rarr;</a>
-            </section>
-        </section>
-
-        <section id="gameControlsHost" class="game-controls-host" aria-label="Game Controls"></section>
-    </main>
-
-    <!-- Bootstrap the Game Engine -->
-    <script type="module" src="./js/main.js"></script>
-</body>
-
-</html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Unicorn Magic World: play, practice mathematics, and explore learning activities."><title>Unicorn Magic World | Home</title><link rel="stylesheet" href="css/home.css"></head>
+<body><main class="world"><header class="header"><a class="wordmark" href="index.html" aria-label="Unicorn Magic World home"><span aria-hidden="true">✦</span> Unicorn Magic World</a><span class="tag">Explore • Play • Learn</span></header>
+<section class="welcome"><span class="eyebrow">YOUR MAGICAL WORLD</span><h1>What shall we do today?</h1><p>Choose an adventure, explore your homework, or practice something new.</p></section>
+<section class="activities" aria-label="Choose an activity">
+<a href="play.html" class="tile game"><span class="symbol" aria-hidden="true">🦄</span><h2>Play My Game</h2><p>Jump into Unicorn Magic Run.</p><span class="go">Play now →</span></a>
+<a href="education.html" class="tile homework"><span class="symbol" aria-hidden="true">✏️</span><h2>My Homework</h2><p>Practice multiplication and try assigned activities.</p><span class="go">Open homework →</span></a>
+<a href="education.html" class="tile study"><span class="symbol" aria-hidden="true">📖</span><h2>Study Guide</h2><p>Review explanations in the sample math practice.</p><span class="go">Explore practice →</span></a>
+<div class="tile progress" aria-label="My Progress is planned"><span class="symbol" aria-hidden="true">⭐</span><h2>My Progress</h2><p>Track what you've learned over time.</p><span class="soon">Coming later</span></div>
+</section><footer><p>Made for imagination and learning.</p><p class="warning">Educational activities are currently a browser-local demo. Do not enter personal student information. Parent access and cloud saving are not yet available.</p></footer></main></body></html>
