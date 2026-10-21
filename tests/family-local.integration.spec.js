@@ -35,6 +35,17 @@ test.describe('Family Space local authoring journey',()=>{
    await page.getByLabel('Correct number').fill('24');
    await page.getByRole('button',{name:'Save question revision'}).click();
    await expect(page.getByText('A quick multiplication check',{exact:false}).first()).toBeVisible();
+   const vaultRecord=await page.evaluate(()=>new Promise((resolve,reject)=>{
+     const open=indexedDB.open('family-space-private-v1',1);
+     open.onsuccess=()=>{const tx=open.result.transaction('vault','readonly'),req=tx.objectStore('vault').get('data');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)};
+     open.onerror=()=>reject(open.error);
+   }));
+   expect(JSON.stringify(vaultRecord)).not.toContain('A quick multiplication check');
+   expect(vaultRecord.ciphertext.length).toBeGreaterThan(20);
+   await page.reload();
+   await page.getByLabel('Passphrase (minimum 12 characters)').fill('temporary-ci-passphrase-123');
+   await page.getByRole('button',{name:'Unlock or create vault'}).click();
+   await expect(page.getByText('A quick multiplication check',{exact:false}).first()).toBeVisible();
    await page.getByRole('button',{name:'Workbooks',exact:true}).click();
    await page.getByRole('button',{name:'Create workbook'}).click();
    await page.getByLabel('Workbook title').fill('Multiplication Workbook');
