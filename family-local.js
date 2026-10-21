@@ -1,3 +1,4 @@
+import * as vault from './js/education/EncryptedVault.js';
 import {validateQuestion,validateAssignment,validateProposal,learnerAssignment} from './js/education/domain/AuthoringContract.js';
 // Local-only workbench. No game imports, model API calls, browser data persistence, or HTML injection.
 const $=s=>document.querySelector(s), host=$('#content'), note=$('#message');
@@ -11,7 +12,44 @@ function panel(title){return node('section',undefined)}
 function card(parent,title){const e=node('div');e.className='card stack';e.append(node('h3',title));parent.append(e);return e}
 const newQuestion=()=>({schemaVersion:version,id:uid(),revision:1,title:'',subject:'Mathematics',prompt:'',parts:[{id:uid(),kind:'short_text',prompt:''}]});
 const newWorkbook=()=>({schemaVersion:version,id:uid(),revision:1,title:'',instructions:'',sections:[{id:uid(),title:'Section 1',category:'',items:[]}]});
-async function request(path,body){const r=await fetch('/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const obj=await r.json();if(!r.ok)throw Error(obj.error||'Request failed');return obj.data}
+async function request(path,body){
+ const state=await vault.read();
+ if(path==='questions'||path==='assignments'){
+  if(!body)return state[path].map(x=>structuredClone(x));
+  const validate=path==='questions'?validateQuestion:validateAssignment;
+  const issues=validate(body);if(issues.length)throw Error(issues.map(e=>e.path+': '+e.message).join('; '));
+  const index=state[path].findIndex(x=>x.id===body.id);
+  if(index>=0 && body.revision<=state[path][index].revision)throw Error('Revision must increase');
+  if(index>=0)state[path][index]=structuredClone(body);else state[path].push(structuredClone(body));
+  await vault.write(state);return body;
+ }
+ if(path.startsWith('preview/')){
+  const assignment=state.assignments.find(x=>x.id===path.slice(8));
+  if(!assignment)throw Error('Workbook not found');
+  return learnerAssignment(assignment);
+ }
+ if(path==='attempts'&&body){
+  const assignment=state.assignments.find(x=>x.id===body.assignmentId);
+  if(!assignment)throw Error('Workbook not found');
+  if(!body.answers||typeof body.answers!=='object')throw Error('Answer map required');
+  const feedback={};
+  for(const section of assignment.sections)for(const item of section.items)for(const part of item.questionSnapshot.parts){
+   const id=item.id+':'+part.id,answer=body.answers[id],spec=part.answerSpec;
+   let status='manual_review';
+   if(spec&&Object.prototype.hasOwnProperty.call(spec,'correct')&&part.kind!=='long_text'){
+    let valid=false;
+    if(part.kind==='multi_choice')valid=Array.isArray(answer)&&Array.isArray(spec.correct)&&answer.length===spec.correct.length&&answer.every(x=>spec.correct.includes(x));
+    else if(part.kind==='number')valid=String(answer??'').trim()!==''&&Number(answer)===spec.correct;
+    else valid=String(answer??'').trim().toLocaleLowerCase()===String(spec.correct).trim().toLocaleLowerCase();
+    status=valid?'correct':'incorrect';
+   }
+   feedback[id]={status};
+  }
+  const attemptId=crypto.randomUUID();state.attempts.push({id:attemptId,assignmentId:assignment.id,revision:assignment.revision,answers:structuredClone(body.answers),feedback,submittedAt:new Date().toISOString()});
+  await vault.write(state);return {attemptId,feedback};
+ }
+ throw Error('Unsupported operation');
+}
 function alertMessage(text){note.textContent=text}
 async function refresh(){questions=await request('questions');assignments=await request('assignments')}
 function execute(fn){return async()=>{try{await fn();alertMessage('Saved successfully.');await refresh();render()}catch(e){alertMessage(e.message)}}}
@@ -61,6 +99,7 @@ function download(name,data){const blob=new Blob([JSON.stringify(data,null,2)],{
 function portabilityEditor(){const e=card(host,'Backup and import');e.append(node('p','Export your current fictional authoring library as JSON. Import proposals through the AI proposal tab. Keep backups outside your browser.'));e.append(button('Export all questions and workbooks',()=>download('family-space-local-backup.json',{schemaVersion:version,questions,assignments})));
  const file=node('input');file.type='file';file.accept='.json,application/json';file.setAttribute('aria-label','Import exported authoring backup JSON');
  e.append(file);
+ e.append(button('Download encrypted vault backup',async()=>{try{download('family-space-private-backup.json',await vault.exportVault());alertMessage('Encrypted backup downloaded. Keep the passphrase separately.')}catch(e){alertMessage(e.message)}}));
  e.append(button('Validate and import backup',execute(async()=>{
    if(!file.files?.[0])throw Error('Choose a JSON backup');
    const raw=await file.files[0].text();
@@ -76,4 +115,16 @@ function portabilityEditor(){const e=card(host,'Backup and import');e.append(nod
    for(const workbook of obj.assignments)await request('assignments',workbook);
  })));}
 function render(){host.replaceChildren();if(mode==='question')questionEditor();if(mode==='workbook')workbookEditor();if(mode==='agent')agentEditor();if(mode==='student')studentEditor();if(mode==='question'||mode==='workbook')portabilityEditor()}
-refresh().then(render).catch(e=>alertMessage('Local database unavailable: '+e.message));
+function unlockScreen(){
+ host.replaceChildren();const area=card(host,'Encrypted Family Space vault');
+ area.append(node('p','All records stay encrypted in this browser. No cloud sync. Losing the passphrase means losing access. Use a different browser profile for any student preview.'));
+ const label=node('label','Passphrase (minimum 12 characters)'),input=node('input');input.type='password';input.autocomplete='off';label.append(input);area.append(label);
+ area.append(button('Unlock or create vault',async()=>{try{await vault.unlock(input.value);input.value='';await refresh();document.querySelector('.tabs').hidden=false;showLockButton();render();alertMessage('Vault unlocked on this device. Export an encrypted backup regularly.')}catch(error){alertMessage(error.message)}}));
+}
+function showLockButton(){
+ if(document.querySelector('#lock-vault'))return;
+ const b=button('Lock Family Space',()=>{vault.lock();questions=[];assignments=[];q=null;w=null;student=null;answers={};proposal=null;document.querySelector('.tabs').hidden=true;b.remove();unlockScreen();alertMessage('Vault locked.');});
+ b.id='lock-vault';document.querySelector('.top').append(b);
+}
+document.querySelector('.tabs').hidden=true;
+unlockScreen();
