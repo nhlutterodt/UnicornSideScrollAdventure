@@ -2,6 +2,10 @@
 import importlib.util
 import sqlite3
 import tempfile
+import threading
+from http.server import ThreadingHTTPServer
+from urllib.request import urlopen, Request
+import json
 import unittest
 from pathlib import Path
 
@@ -53,6 +57,26 @@ class SqlitePrototypeTests(unittest.TestCase):
         with family.connect() as db:
             with self.assertRaises(sqlite3.IntegrityError):
                 db.execute("UPDATE family_attempts SET answers_json='{}' WHERE id='attempt-1'")
+    def test_http_authoring_roundtrip(self):
+        server=ThreadingHTTPServer(("127.0.0.1",0),family.Handler)
+        worker=threading.Thread(target=server.serve_forever,daemon=True)
+        worker.start()
+        try:
+            base="http://127.0.0.1:"+str(server.server_port)
+            with urlopen(base+"/family-local.html") as response:
+                self.assertIn(b"Family Space",response.read())
+            with urlopen(base+"/family-local.js") as response:
+                self.assertIn(b"Question Library",response.read())
+            body=json.dumps(question()).encode()
+            req=Request(base+"/api/questions",data=body,headers={"Content-Type":"application/json"},method="POST")
+            with urlopen(req) as response:
+                self.assertEqual(response.status,200)
+            with urlopen(base+"/api/questions") as response:
+                self.assertEqual(json.load(response)["data"][0]["id"],"q1")
+        finally:
+            server.shutdown()
+            worker.join(timeout=5)
+
     def test_invalid_question_rejected(self):
         q=question();q["parts"][0]["kind"]="exec_sql"
         with self.assertRaises(ValueError):family.save_document("questions",q)
