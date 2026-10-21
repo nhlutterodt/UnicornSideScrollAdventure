@@ -33,7 +33,7 @@ test.describe('Family Space local authoring journey',()=>{
    await page.getByLabel('Correct number').fill('24');
    await page.getByRole('button',{name:'Save question revision'}).click();
    await expect(page.getByText('A quick multiplication check',{exact:false}).first()).toBeVisible();
-   await page.getByRole('button',{name:'Workbooks'}).click();
+   await page.getByRole('button',{name:'Workbooks',exact:true}).click();
    await page.getByRole('button',{name:'Create workbook'}).click();
    await page.getByLabel('Workbook title').fill('Multiplication Workbook');
    await page.getByLabel('Add library question').selectOption({index:1});
