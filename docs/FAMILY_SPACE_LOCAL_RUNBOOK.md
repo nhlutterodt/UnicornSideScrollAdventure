@@ -36,5 +36,5 @@ The repository CI workflow also executes the SQLite integration suite. Run from 
 - Not an end-to-end workbook publishing system; authoring snapshot versions are immutable and revision saves create new records.
 - No model API connection; AI proposal is manual copy/paste. No automated grading of long descriptive answers.
 - Objective evaluation uses development-only server logic; not a substitute for the eventual authenticated Supabase service.
-- Import of an entire backup library, advanced rubric review and true mobile browser QA are not yet completed.
+- Backup import/export is supported with duplicate-ID rejection, but multi-record import is not yet transactional; partial imports are possible if a later record fails. Advanced rubric review and true mobile browser QA are not yet completed.
 - Separate dedicated Supabase project is the migration target. The existing Vista Solutions Supabase database must never be used for Family Space.
