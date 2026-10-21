@@ -32,6 +32,13 @@ jobs:
     - name: Validate Family Space browser JavaScript syntax
       run: node --check family-local.js
 
+    - name: Build isolated Family Space static artifact
+      run: |
+        node scripts/build-family-static.js
+        test -f family-static-dist/index.html
+        test ! -e family-static-dist/server/family_local.py
+        test ! -e family-static-dist/play.html
+
     - name: Run Family Space SQLite integration tests
       run: python3 -m unittest discover -s tests -p 'test_family_sqlite.py' -v
 
