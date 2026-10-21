@@ -96,29 +96,19 @@ function studentEditor(){
  e.append(button('Submit fictional answers',execute(async()=>{const response=await request('attempts',{assignmentId:student.id,answers});alertMessage(JSON.stringify(response.feedback));student=null})));
 }
 function download(name,data){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const link=node('a');link.href=url;link.download=name;link.click();URL.revokeObjectURL(url)}
-function portabilityEditor(){const e=card(host,'Backup and import');e.append(node('p','Export your current fictional authoring library as JSON. Import proposals through the AI proposal tab. Keep backups outside your browser.'));e.append(button('Export all questions and workbooks',()=>download('family-space-local-backup.json',{schemaVersion:version,questions,assignments})));
- const file=node('input');file.type='file';file.accept='.json,application/json';file.setAttribute('aria-label','Import exported authoring backup JSON');
- e.append(file);
- e.append(button('Download encrypted vault backup',async()=>{try{download('family-space-private-backup.json',await vault.exportVault());alertMessage('Encrypted backup downloaded. Keep the passphrase separately.')}catch(e){alertMessage(e.message)}}));
- e.append(button('Validate and import backup',execute(async()=>{
-   if(!file.files?.[0])throw Error('Choose a JSON backup');
-   const raw=await file.files[0].text();
-   if(raw.length>1024*1024)throw Error('Import exceeds 1 MB');
-   const obj=JSON.parse(raw);
-   if(obj.schemaVersion!==version||!Array.isArray(obj.questions)||!Array.isArray(obj.assignments))throw Error('Invalid backup format');
-   const errors=[...obj.questions.flatMap(x=>validateQuestion(x)),...obj.assignments.flatMap(x=>validateAssignment(x))];
-   if(errors.length)throw Error('Invalid backup: '+errors[0].path+' '+errors[0].message);
-   const existing=new Set([...questions,...assignments].map(x=>x.id));
-   if([...obj.questions,...obj.assignments].some(x=>existing.has(x.id)))throw Error('Import blocked: identifier already exists. Existing records were not overwritten.');
-   if(!confirm('Import '+obj.questions.length+' questions and '+obj.assignments.length+' workbooks? This local prototype imports records individually.'))return;
-   for(const question of obj.questions)await request('questions',question);
-   for(const workbook of obj.assignments)await request('assignments',workbook);
- })));}
+function portabilityEditor(){
+ const e=card(host,'Encrypted backup');
+ e.append(node('p','Download an encrypted vault backup. Keep your passphrase separately. Backups contain no readable answers without the passphrase.'));
+ e.append(button('Download encrypted backup',async()=>{try{download('family-space-encrypted-backup.json',await vault.exportVault());alertMessage('Encrypted backup downloaded.')}catch(error){alertMessage(error.message)}}));
+ e.append(node('p','Backups can be restored on a device that does not already have a vault. Existing data will never be overwritten.'));
+}
 function render(){host.replaceChildren();if(mode==='question')questionEditor();if(mode==='workbook')workbookEditor();if(mode==='agent')agentEditor();if(mode==='student')studentEditor();if(mode==='question'||mode==='workbook')portabilityEditor()}
 function unlockScreen(){
  host.replaceChildren();const area=card(host,'Encrypted Family Space vault');
  area.append(node('p','All records stay encrypted in this browser. No cloud sync. Losing the passphrase means losing access. Use a different browser profile for any student preview.'));
  const label=node('label','Passphrase (minimum 12 characters)'),input=node('input');input.type='password';input.autocomplete='off';label.append(input);area.append(label);
+ const restore=node('input');restore.type='file';restore.accept='.json,application/json';restore.setAttribute('aria-label','Restore encrypted backup');area.append(restore);
+ area.append(button('Restore encrypted backup',async()=>{try{if(!restore.files?.[0])throw Error('Choose a backup file');const raw=await restore.files[0].text();if(raw.length>4*1024*1024)throw Error('Backup file too large');await vault.importVault(JSON.parse(raw));alertMessage('Backup restored. Enter your original passphrase to unlock.')}catch(error){alertMessage(error.message)}}));
  area.append(button('Unlock or create vault',async()=>{try{await vault.unlock(input.value);input.value='';await refresh();document.querySelector('.tabs').hidden=false;showLockButton();render();alertMessage('Vault unlocked on this device. Export an encrypted backup regularly.')}catch(error){alertMessage(error.message)}}));
 }
 function showLockButton(){
