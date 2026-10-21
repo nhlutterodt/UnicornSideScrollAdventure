@@ -77,6 +77,30 @@ class SqlitePrototypeTests(unittest.TestCase):
             server.shutdown()
             worker.join(timeout=5)
 
+    def test_thirty_question_three_section_workbook(self):
+        a=workbook()
+        a["sections"]=[]
+        for section_index in range(3):
+            section={"id":"s"+str(section_index),"title":"Section "+str(section_index+1),"category":["Fluency","Word Problems","Reasoning"][section_index],"items":[]}
+            for question_index in range(10):
+                q=question()
+                q["id"]="q"+str(section_index)+"-"+str(question_index)
+                q["parts"][0]["kind"]="number" if question_index%2==0 else "single_choice"
+                if question_index%2:
+                    q["parts"][0]["options"]=["4","5","6"]
+                    q["parts"][0]["answerSpec"]={"correct":"5"}
+                item_id="i"+str(section_index)+"-"+str(question_index)
+                section["items"].append({"id":item_id,"questionId":q["id"],"questionRevision":1,"questionSnapshot":q})
+            a["sections"].append(section)
+        family.save_document("assignments",a)
+        loaded=family.list_documents("assignments")[0]
+        self.assertEqual(sum(len(s["items"]) for s in loaded["sections"]),30)
+        projected=family.learner_workbook(loaded)
+        self.assertNotIn("answerSpec",json.dumps(projected))
+        result=family.submit_attempt({"id":"workbook-attempt","assignmentId":"a1","answers":{}})
+        self.assertEqual(len(result["feedback"]),60)
+        self.assertTrue(any(v["status"]=="manual_review" for v in result["feedback"].values()))
+
     def test_invalid_question_rejected(self):
         q=question();q["parts"][0]["kind"]="exec_sql"
         with self.assertRaises(ValueError):family.save_document("questions",q)
