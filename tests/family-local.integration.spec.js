@@ -25,6 +25,8 @@ test.describe('Family Space local authoring journey',()=>{
  test('create reusable question, add to workbook, preview learner, reject answer exposure',async({page})=>{
    await page.goto('http://127.0.0.1:8765/family-local.html');
    await expect(page.getByRole('heading',{name:'Questions & Workbooks'})).toBeVisible();
+   await page.getByLabel('Passphrase (minimum 12 characters)').fill('temporary-ci-passphrase-123');
+   await page.getByRole('button',{name:'Unlock or create vault'}).click();
    await page.getByRole('button',{name:'Create question'}).click();
    await page.getByLabel('Title').fill('A quick multiplication check');
    await page.getByLabel('Main prompt').fill('Six groups of four');
