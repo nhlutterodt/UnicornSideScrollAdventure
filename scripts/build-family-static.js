@@ -19,4 +19,4 @@ writeFileSync(join(out,'vercel.json'),JSON.stringify({
   {key:'Permissions-Policy',value:'camera=(), microphone=(), geolocation=()'}
  ]}]
 },null,2));
-console.log('Built isolated Family Space static output:',copies.length,'files');
+// Output is intentionally minimal and includes no server/database assets.
