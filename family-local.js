@@ -58,6 +58,22 @@ function studentEditor(){
  e.append(button('Submit fictional answers',execute(async()=>{const response=await request('attempts',{assignmentId:student.id,answers});alertMessage(JSON.stringify(response.feedback));student=null})));
 }
 function download(name,data){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const link=node('a');link.href=url;link.download=name;link.click();URL.revokeObjectURL(url)}
-function portabilityEditor(){const e=card(host,'Backup and import');e.append(node('p','Export your current fictional authoring library as JSON. Import proposals through the AI proposal tab. Keep backups outside your browser.'));e.append(button('Export all questions and workbooks',()=>download('family-space-local-backup.json',{schemaVersion:version,questions,assignments})))}
+function portabilityEditor(){const e=card(host,'Backup and import');e.append(node('p','Export your current fictional authoring library as JSON. Import proposals through the AI proposal tab. Keep backups outside your browser.'));e.append(button('Export all questions and workbooks',()=>download('family-space-local-backup.json',{schemaVersion:version,questions,assignments})));
+ const file=node('input');file.type='file';file.accept='.json,application/json';file.setAttribute('aria-label','Import exported authoring backup JSON');
+ e.append(file);
+ e.append(button('Validate and import backup',execute(async()=>{
+   if(!file.files?.[0])throw Error('Choose a JSON backup');
+   const raw=await file.files[0].text();
+   if(raw.length>1024*1024)throw Error('Import exceeds 1 MB');
+   const obj=JSON.parse(raw);
+   if(obj.schemaVersion!==version||!Array.isArray(obj.questions)||!Array.isArray(obj.assignments))throw Error('Invalid backup format');
+   const errors=[...obj.questions.flatMap(x=>validateQuestion(x)),...obj.assignments.flatMap(x=>validateAssignment(x))];
+   if(errors.length)throw Error('Invalid backup: '+errors[0].path+' '+errors[0].message);
+   const existing=new Set([...questions,...assignments].map(x=>x.id));
+   if([...obj.questions,...obj.assignments].some(x=>existing.has(x.id)))throw Error('Import blocked: identifier already exists. Existing records were not overwritten.');
+   if(!confirm('Import '+obj.questions.length+' questions and '+obj.assignments.length+' workbooks? This local prototype imports records individually.'))return;
+   for(const question of obj.questions)await request('questions',question);
+   for(const workbook of obj.assignments)await request('assignments',workbook);
+ }));}
 function render(){host.replaceChildren();if(mode==='question')questionEditor();if(mode==='workbook')workbookEditor();if(mode==='agent')agentEditor();if(mode==='student')studentEditor();if(mode==='question'||mode==='workbook')portabilityEditor()}
 refresh().then(render).catch(e=>alertMessage('Local database unavailable: '+e.message));
