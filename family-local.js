@@ -74,6 +74,6 @@ function portabilityEditor(){const e=card(host,'Backup and import');e.append(nod
    if(!confirm('Import '+obj.questions.length+' questions and '+obj.assignments.length+' workbooks? This local prototype imports records individually.'))return;
    for(const question of obj.questions)await request('questions',question);
    for(const workbook of obj.assignments)await request('assignments',workbook);
- }));}
+ })));}
 function render(){host.replaceChildren();if(mode==='question')questionEditor();if(mode==='workbook')workbookEditor();if(mode==='agent')agentEditor();if(mode==='student')studentEditor();if(mode==='question'||mode==='workbook')portabilityEditor()}
 refresh().then(render).catch(e=>alertMessage('Local database unavailable: '+e.message));
