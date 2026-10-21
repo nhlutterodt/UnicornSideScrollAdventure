@@ -29,6 +29,9 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
 
+    - name: Run Family Space SQLite integration tests
+      run: python3 -m unittest discover -s tests -p 'test_family_sqlite.py' -v
+
     - name: Run Unit Tests (Jest)
       run: npm run test:unit
 
