@@ -169,7 +169,7 @@ class Handler(BaseHTTPRequestHandler):
             docs=list_documents("assignments")
             a=next((x for x in docs if x["id"]==key),None)
             return self.reply(200,{"data":learner_workbook(a)}) if a else self.reply(404,{"error":"Not found"})
-        allowed={"/":("family-local.html","text/html"),"/family-local.html":("family-local.html","text/html"),"/family-local.js":("family-local.js","text/javascript"),"/css/education.css":("css/education.css","text/css"),"/js/education/domain/AuthoringContract.js":("js/education/domain/AuthoringContract.js","text/javascript")}
+        allowed={"/":("family-local.html","text/html"),"/family-local.html":("family-local.html","text/html"),"/family-local.js":("family-local.js","text/javascript"),"/css/education.css":("css/education.css","text/css"),"/js/education/domain/AuthoringContract.js":("js/education/domain/AuthoringContract.js","text/javascript"),"/js/education/EncryptedVault.js":("js/education/EncryptedVault.js","text/javascript")}
         if path not in allowed:return self.reply(404,{"error":"Not found"})
         filename,mime=allowed[path]
         raw=(ROOT / filename).read_bytes()
